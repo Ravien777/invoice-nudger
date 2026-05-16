@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String             @id @default(cuid())
+  name             String?
+  email            String             @unique
+  emailVerified    DateTime?
+  image            String?
+  invoices         Invoice[]
+  reminderSchedules ReminderSchedule[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+}
+
+model Invoice {
+  id            String   @id @default(cuid())
+  invoiceNumber String?
+  clientName    String
+  clientEmail   String
+  amount        Float
+  currency      String   @default("USD")
+  dueDate       DateTime
+  status        String   @default("unpaid")
+  notes         String?
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  reminders     ReminderLog[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model ReminderSchedule {
+  id            String         @id @default(cuid())
+  name          String
+  isDefault     Boolean        @default(false)
+  userId        String
+  user          User           @relation(fields: [userId], references: [id])
+  steps         ReminderStep[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model ReminderStep {
+  id                 String           @id @default(cuid())
+  daysOffset         Int
+  emailTemplate      String
+  reminderScheduleId String
+  schedule           ReminderSchedule @relation(fields: [reminderScheduleId], references: [id])
+}
+
+model ReminderLog {
+  id        String   @id @default(cuid())
+  invoiceId String
+  invoice   Invoice  @relation(fields: [invoiceId], references: [id])
+  sentAt    DateTime @default(now())
+  stepName  String
+}
