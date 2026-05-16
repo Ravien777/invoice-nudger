@@ -23,6 +23,7 @@
 # misc
 .DS_Store
 *.pem
+magic-link.txt
 
 # debug
 npm-debug.log*

@@ -1,9 +1,17 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import Link from "next/link";
 import { AuthActions } from "@/app/components/AuthActions";
 
 export default async function Home() {
   const session = await getServerSession(authOptions);
+
+  if (session) {
+    redirect("/dashboard");
+  }
+
+  const isDev = process.env.NODE_ENV === "development";
 
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-16 text-slate-900">
@@ -37,18 +45,26 @@ export default async function Home() {
               Quick test
             </p>
             <ul className="mt-4 space-y-3 text-slate-600">
-              <li>• Sign in with a magic link</li>
-              <li>• Create invoices</li>
-              <li>• Upload CSV invoices later</li>
+              <li> Sign in with a magic link</li>
+              <li> Create invoices</li>
+              <li> Upload CSV invoices later</li>
             </ul>
           </div>
         </div>
 
-        {session ? (
-          <p className="text-sm text-slate-500">
-            You are signed in as <strong>{session.user?.email}</strong>.
-          </p>
-        ) : null}
+        {isDev && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+            <p className="text-sm font-medium text-amber-800">
+              Development mode:{" "}
+              <Link
+                href="/dev-signin"
+                className="underline hover:text-amber-900"
+              >
+                Quick sign in (no email needed)
+              </Link>
+            </p>
+          </div>
+        )}
       </div>
     </main>
   );

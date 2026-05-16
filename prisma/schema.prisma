@@ -56,20 +56,22 @@ model VerificationToken {
 }
 
 model Invoice {
-  id            String   @id @default(cuid())
-  invoiceNumber String?
-  clientName    String
-  clientEmail   String
-  amount        Float
-  currency      String   @default("USD")
-  dueDate       DateTime
-  status        String   @default("unpaid")
-  notes         String?
-  userId        String
-  user          User     @relation(fields: [userId], references: [id])
-  reminders     ReminderLog[]
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id                   String   @id @default(cuid())
+  invoiceNumber        String?
+  clientName           String
+  clientEmail          String
+  amount               Float
+  currency             String   @default("USD")
+  dueDate              DateTime
+  status               String   @default("unpaid")
+  notes                String?
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id])
+  reminderScheduleId   String?
+  reminderSchedule     ReminderSchedule? @relation(fields: [reminderScheduleId], references: [id])
+  reminders            ReminderLog[]
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 }
 
 model ReminderSchedule {
@@ -79,6 +81,7 @@ model ReminderSchedule {
   userId        String
   user          User           @relation(fields: [userId], references: [id])
   steps         ReminderStep[]
+  invoices      Invoice[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 }
