@@ -150,6 +150,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
   }
 
+  await prisma.reminderLog.deleteMany({ where: { invoiceId: id } });
   await prisma.invoice.delete({ where: { id } });
 
   return NextResponse.json({ success: true });

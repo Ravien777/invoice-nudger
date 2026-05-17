@@ -2,7 +2,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
-import { startOfMonth, endOfMonth, startOfDay } from "date-fns";
+import { startOfMonth, endOfMonth } from "date-fns";
+import DashboardClient from "./DashboardClient";
 
 function StatCard({
   label,
@@ -32,9 +33,8 @@ export default async function DashboardPage() {
     where: { email: session.user.email },
   });
 
-  const today = startOfDay(new Date());
-  const monthStart = startOfMonth(today);
-  const monthEnd = endOfMonth(today);
+  const monthStart = startOfMonth(new Date());
+  const monthEnd = endOfMonth(new Date());
 
   const [unpaidCount, overdueCount, paidThisMonth, totalInvoices] =
     await Promise.all([
@@ -42,11 +42,7 @@ export default async function DashboardPage() {
         where: { userId: user!.id, status: "unpaid" },
       }),
       prisma.invoice.count({
-        where: {
-          userId: user!.id,
-          status: "unpaid",
-          dueDate: { lt: today },
-        },
+        where: { userId: user!.id, status: "overdue" },
       }),
       prisma.invoice.count({
         where: {
@@ -59,6 +55,38 @@ export default async function DashboardPage() {
         where: { userId: user!.id },
       }),
     ]);
+
+  if (totalInvoices === 0) {
+    return (
+      <div>
+        <h1 className="mb-6 text-2xl font-bold text-slate-900">Dashboard</h1>
+        <DashboardClient>
+          <div className="rounded-lg border border-slate-200 bg-white p-6">
+            <h2 className="mb-2 text-lg font-semibold text-slate-900">
+              Quick Actions
+            </h2>
+            <p className="mb-4 text-sm text-slate-500">
+              Get started by creating your first invoice.
+            </p>
+            <div className="flex gap-3">
+              <a
+                href="/invoices/new"
+                className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
+              >
+                New Invoice
+              </a>
+              <a
+                href="/invoices"
+                className="rounded-md bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-slate-300 hover:bg-slate-50"
+              >
+                View All Invoices
+              </a>
+            </div>
+          </div>
+        </DashboardClient>
+      </div>
+    );
+  }
 
   return (
     <div>

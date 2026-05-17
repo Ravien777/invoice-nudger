@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
 
@@ -28,6 +27,8 @@ interface InvoiceTableProps {
   invoices: Invoice[];
   onUploadCsv?: () => void;
   scheduleSteps?: ScheduleStep[];
+  onMarkPaid?: (id: string) => Promise<{ success: boolean; error?: string }>;
+  onDelete?: (id: string) => Promise<{ success: boolean }>;
 }
 
 function formatCurrency(amount: number, currency: string): string {
@@ -62,10 +63,10 @@ function stepLabel(step: ScheduleStep): string {
   return `${step.daysOffset}d after — ${step.emailTemplate}`;
 }
 
-export default function InvoiceTable({ invoices, onUploadCsv, scheduleSteps }: InvoiceTableProps) {
-  const router = useRouter();
-  const [deleting, setDeleting] = useState<string | null>(null);
+export default function InvoiceTable({ invoices, onUploadCsv, scheduleSteps, onMarkPaid, onDelete }: InvoiceTableProps) {
   const [sending, setSending] = useState<string | null>(null);
+  const [markingPaid, setMarkingPaid] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -86,19 +87,37 @@ export default function InvoiceTable({ invoices, onUploadCsv, scheduleSteps }: I
     setDeleting(id);
 
     try {
-      const res = await fetch(`/api/invoices/${id}`, { method: "DELETE" });
-
-      if (!res.ok) {
+      const result = await onDelete?.(id);
+      if (!result?.success) {
         toast.error("Failed to delete invoice");
-        return;
+      } else {
+        toast.success("Invoice deleted");
       }
-
-      toast.success("Invoice deleted");
-      router.refresh();
     } catch {
       toast.error("Network error. Please try again.");
     } finally {
       setDeleting(null);
+    }
+  }
+
+  async function handleMarkPaid(id: string) {
+    setMarkingPaid(id);
+
+    try {
+      const result = await onMarkPaid?.(id);
+      if (!result?.success) {
+        if (result?.error === "Invoice is already paid") {
+          toast("Invoice is already paid", { icon: "✓" });
+        } else {
+          toast.error(result?.error || "Failed to mark as paid");
+        }
+      } else {
+        toast.success("Invoice marked as paid");
+      }
+    } catch {
+      toast.error("Network error. Please try again.");
+    } finally {
+      setMarkingPaid(null);
     }
   }
 
@@ -131,7 +150,7 @@ export default function InvoiceTable({ invoices, onUploadCsv, scheduleSteps }: I
   if (invoices.length === 0) {
     return (
       <div className="rounded-lg border border-slate-200 bg-white p-12 text-center">
-        <p className="text-slate-500">No invoices yet.</p>
+        <p className="text-slate-500">No invoices found.</p>
         <div className="mt-4 flex items-center justify-center gap-3">
           <Link
             href="/invoices/new"
@@ -198,7 +217,16 @@ export default function InvoiceTable({ invoices, onUploadCsv, scheduleSteps }: I
                   >
                     Edit
                   </Link>
-                  {inv.status !== "paid" && scheduleSteps && scheduleSteps.length > 0 && (
+                  {inv.status !== "paid" && inv.status !== "cancelled" && (
+                    <button
+                      onClick={() => handleMarkPaid(inv.id)}
+                      disabled={markingPaid === inv.id}
+                      className="rounded-md px-2 py-1 text-xs font-medium text-green-700 hover:bg-green-50 disabled:opacity-50"
+                    >
+                      {markingPaid === inv.id ? "Marking..." : "Mark Paid"}
+                    </button>
+                  )}
+                  {inv.status !== "paid" && inv.status !== "cancelled" && scheduleSteps && scheduleSteps.length > 0 && (
                     <div className="relative" ref={openDropdown === inv.id ? dropdownRef : undefined}>
                       <button
                         onClick={() => setOpenDropdown(openDropdown === inv.id ? null : inv.id)}

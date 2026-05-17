@@ -2,6 +2,7 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import EmailProvider from "next-auth/providers/email";
 import { Resend } from "resend";
 import { prisma } from "./prisma";
+import { seedDefaultSchedule } from "./seed";
 import type { NextAuthOptions } from "next-auth";
 import { writeFileSync, mkdirSync, existsSync } from "fs";
 import { join, dirname } from "path";
@@ -83,4 +84,12 @@ export const authOptions: NextAuthOptions = {
     strategy: "database",
   },
   secret: process.env.NEXTAUTH_SECRET,
+  callbacks: {
+    async signIn({ user }) {
+      if (user.id) {
+        await seedDefaultSchedule(user.id);
+      }
+      return true;
+    },
+  },
 };

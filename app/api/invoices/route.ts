@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { invoiceSchema } from "@/lib/validations";
 
-export async function GET() {
+export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.email) {
@@ -19,8 +19,16 @@ export async function GET() {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
+  const { searchParams } = new URL(request.url);
+  const statusFilter = searchParams.get("status");
+
+  const where: Record<string, unknown> = { userId: user.id };
+  if (statusFilter && statusFilter !== "all") {
+    where.status = statusFilter;
+  }
+
   const invoices = await prisma.invoice.findMany({
-    where: { userId: user.id },
+    where,
     orderBy: { createdAt: "desc" },
   });
 
