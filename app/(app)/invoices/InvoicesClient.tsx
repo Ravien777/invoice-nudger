@@ -89,17 +89,17 @@ export default function InvoicesClient({ initialInvoices, scheduleSteps }: Invoi
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900">Invoices</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Invoices</h1>
         <div className="flex items-center gap-3">
           <button
             onClick={() => setCsvModalOpen(true)}
-            className="rounded-md bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-slate-300 hover:bg-slate-50"
+            className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-slate-300 transition hover:bg-slate-50 dark:bg-slate-700 dark:text-slate-200 dark:ring-slate-600 dark:hover:bg-slate-600"
           >
             Upload CSV
           </button>
           <Link
             href="/invoices/new"
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
+            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400"
           >
             New Invoice
           </Link>
@@ -111,10 +111,10 @@ export default function InvoicesClient({ initialInvoices, scheduleSteps }: Invoi
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
               filter === f
-                ? "bg-slate-900 text-white"
-                : "bg-white text-slate-600 ring-1 ring-slate-300 hover:bg-slate-50"
+                ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
+                : "bg-white text-slate-600 ring-1 ring-slate-300 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-600 dark:hover:bg-slate-700"
             }`}
           >
             {f.charAt(0).toUpperCase() + f.slice(1)}

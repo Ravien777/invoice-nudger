@@ -98,25 +98,25 @@ export default function SettingsClient({ schedule }: SettingsClientProps) {
 
   if (!schedule) {
     return (
-      <div className="rounded-lg border border-slate-200 bg-white p-8 text-center">
-        <p className="text-slate-500">No default reminder schedule found.</p>
+      <div className="rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <p className="text-slate-500 dark:text-slate-400">No default reminder schedule found.</p>
       </div>
     );
   }
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-slate-900">Settings</h1>
+      <h1 className="mb-6 text-2xl font-bold text-slate-900 dark:text-white">Settings</h1>
 
-      <div className="rounded-lg border border-slate-200 bg-white p-6">
-        <h2 className="mb-4 text-lg font-semibold text-slate-900">
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">
           Default Reminder Schedule
         </h2>
 
         <div className="mb-6">
           <label
             htmlFor="scheduleName"
-            className="block text-sm font-medium text-slate-700"
+            className="block text-sm font-medium text-slate-700 dark:text-slate-300"
           >
             Schedule Name
           </label>
@@ -125,16 +125,16 @@ export default function SettingsClient({ schedule }: SettingsClientProps) {
             id="scheduleName"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="mt-1 block w-full max-w-xs rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="mt-1 block w-full max-w-xs rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
           />
         </div>
 
         <div className="mb-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-slate-700">Steps</h3>
+            <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300">Steps</h3>
             <button
               onClick={handleAddStep}
-              className="rounded-md bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-200"
+              className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
             >
               + Add Step
             </button>
@@ -144,14 +144,14 @@ export default function SettingsClient({ schedule }: SettingsClientProps) {
             {steps.map((step, index) => (
               <div
                 key={step.id ?? index}
-                className="flex items-center gap-3 rounded-lg border border-slate-200 p-3"
+                className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50/50 p-3 dark:border-slate-700 dark:bg-slate-700/50"
               >
-                <span className="w-8 text-center text-sm font-medium text-slate-500">
+                <span className="w-8 text-center text-sm font-medium text-slate-500 dark:text-slate-400">
                   {index + 1}
                 </span>
 
                 <div className="w-36">
-                  <label className="block text-xs text-slate-500">
+                  <label className="block text-xs text-slate-500 dark:text-slate-400">
                     Days offset
                   </label>
                   <input
@@ -160,21 +160,21 @@ export default function SettingsClient({ schedule }: SettingsClientProps) {
                     onChange={(e) =>
                       handleStepChange(index, "daysOffset", e.target.value)
                     }
-                    className="mt-0.5 w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="mt-0.5 w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
                   />
                 </div>
 
                 <div className="w-40">
-                  <label className="block text-xs text-slate-500">
+                  <label className="block text-xs text-slate-500 dark:text-slate-400">
                     Timing
                   </label>
-                  <p className="mt-0.5 text-sm text-slate-700">
+                  <p className="mt-0.5 text-sm text-slate-700 dark:text-slate-200">
                     {offsetLabel(step.daysOffset)}
                   </p>
                 </div>
 
                 <div className="flex-1">
-                  <label className="block text-xs text-slate-500">
+                  <label className="block text-xs text-slate-500 dark:text-slate-400">
                     Email template
                   </label>
                   <input
@@ -184,14 +184,14 @@ export default function SettingsClient({ schedule }: SettingsClientProps) {
                       handleStepChange(index, "emailTemplate", e.target.value)
                     }
                     placeholder="e.g. gentle_reminder"
-                    className="mt-0.5 w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="mt-0.5 w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
                   />
                 </div>
 
                 <button
                   onClick={() => handleRemoveStep(index)}
                   disabled={steps.length <= 1}
-                  className="mt-4 rounded-md p-1 text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-30"
+                  className="mt-4 rounded-lg p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-30 dark:hover:bg-red-900/30 dark:hover:text-red-400"
                   title="Remove step"
                 >
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -203,11 +203,11 @@ export default function SettingsClient({ schedule }: SettingsClientProps) {
           </div>
         </div>
 
-        <div className="flex items-center gap-3 border-t border-slate-200 pt-4">
+        <div className="flex items-center gap-3 border-t border-slate-200 pt-4 dark:border-slate-700">
           <button
             onClick={handleSave}
             disabled={saving}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 disabled:opacity-50"
+            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-400"
           >
             {saving ? "Saving..." : "Save Changes"}
           </button>

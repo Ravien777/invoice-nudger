@@ -49,11 +49,13 @@ function formatDate(dateStr: string): string {
 function statusBadge(status: string): string {
   switch (status) {
     case "paid":
-      return "bg-green-100 text-green-700";
+      return "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400";
     case "cancelled":
-      return "bg-slate-100 text-slate-600";
+      return "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300";
+    case "overdue":
+      return "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400";
     default:
-      return "bg-amber-100 text-amber-700";
+      return "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400";
   }
 }
 
@@ -149,19 +151,19 @@ export default function InvoiceTable({ invoices, onUploadCsv, scheduleSteps, onM
 
   if (invoices.length === 0) {
     return (
-      <div className="rounded-lg border border-slate-200 bg-white p-12 text-center">
-        <p className="text-slate-500">No invoices found.</p>
+      <div className="rounded-xl border border-slate-200 bg-white p-12 text-center shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <p className="text-slate-500 dark:text-slate-400">No invoices found.</p>
         <div className="mt-4 flex items-center justify-center gap-3">
           <Link
             href="/invoices/new"
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400"
           >
             Create your first invoice
           </Link>
           {onUploadCsv && (
             <button
               onClick={onUploadCsv}
-              className="rounded-md bg-white px-4 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50"
+              className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-300 transition hover:bg-slate-50 dark:bg-slate-700 dark:text-slate-200 dark:ring-slate-600 dark:hover:bg-slate-600"
             >
               Upload CSV
             </button>
@@ -172,34 +174,34 @@ export default function InvoiceTable({ invoices, onUploadCsv, scheduleSteps, onM
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
       <table className="w-full text-left text-sm">
-        <thead className="border-b border-slate-200 bg-slate-50">
+        <thead className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/80">
           <tr>
-            <th className="px-4 py-3 font-medium text-slate-600">Invoice #</th>
-            <th className="px-4 py-3 font-medium text-slate-600">Client</th>
-            <th className="px-4 py-3 font-medium text-slate-600">Amount</th>
-            <th className="px-4 py-3 font-medium text-slate-600">Due Date</th>
-            <th className="px-4 py-3 font-medium text-slate-600">Status</th>
-            <th className="px-4 py-3 font-medium text-slate-600">Actions</th>
+            <th className="px-4 py-3 font-medium text-slate-600 dark:text-slate-300">Invoice #</th>
+            <th className="px-4 py-3 font-medium text-slate-600 dark:text-slate-300">Client</th>
+            <th className="px-4 py-3 font-medium text-slate-600 dark:text-slate-300">Amount</th>
+            <th className="px-4 py-3 font-medium text-slate-600 dark:text-slate-300">Due Date</th>
+            <th className="px-4 py-3 font-medium text-slate-600 dark:text-slate-300">Status</th>
+            <th className="px-4 py-3 font-medium text-slate-600 dark:text-slate-300">Actions</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100">
+        <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
           {invoices.map((inv) => (
-            <tr key={inv.id} className="hover:bg-slate-50">
-              <td className="px-4 py-3 text-slate-500">
+            <tr key={inv.id} className="transition hover:bg-slate-50 dark:hover:bg-slate-700/50">
+              <td className="px-4 py-3 text-slate-500 dark:text-slate-400">
                 {inv.invoiceNumber || "-"}
               </td>
               <td className="px-4 py-3">
-                <div className="font-medium text-slate-900">
+                <div className="font-medium text-slate-900 dark:text-white">
                   {inv.clientName}
                 </div>
-                <div className="text-xs text-slate-500">{inv.clientEmail}</div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">{inv.clientEmail}</div>
               </td>
-              <td className="px-4 py-3 font-medium text-slate-900">
+              <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">
                 {formatCurrency(inv.amount, inv.currency)}
               </td>
-              <td className="px-4 py-3 text-slate-600">
+              <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
                 {formatDate(inv.dueDate)}
               </td>
               <td className="px-4 py-3">
@@ -210,10 +212,10 @@ export default function InvoiceTable({ invoices, onUploadCsv, scheduleSteps, onM
                 </span>
               </td>
               <td className="px-4 py-3">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <Link
                     href={`/invoices/${inv.id}/edit`}
-                    className="rounded-md px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50"
+                    className="rounded-md px-2 py-1 text-xs font-medium text-blue-600 transition hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30"
                   >
                     Edit
                   </Link>
@@ -221,7 +223,7 @@ export default function InvoiceTable({ invoices, onUploadCsv, scheduleSteps, onM
                     <button
                       onClick={() => handleMarkPaid(inv.id)}
                       disabled={markingPaid === inv.id}
-                      className="rounded-md px-2 py-1 text-xs font-medium text-green-700 hover:bg-green-50 disabled:opacity-50"
+                      className="rounded-md px-2 py-1 text-xs font-medium text-green-700 transition hover:bg-green-50 disabled:opacity-50 dark:text-green-400 dark:hover:bg-green-900/30"
                     >
                       {markingPaid === inv.id ? "Marking..." : "Mark Paid"}
                     </button>
@@ -231,18 +233,18 @@ export default function InvoiceTable({ invoices, onUploadCsv, scheduleSteps, onM
                       <button
                         onClick={() => setOpenDropdown(openDropdown === inv.id ? null : inv.id)}
                         disabled={sending === inv.id}
-                        className="rounded-md px-2 py-1 text-xs font-medium text-amber-700 hover:bg-amber-50 disabled:opacity-50"
+                        className="rounded-md px-2 py-1 text-xs font-medium text-amber-700 transition hover:bg-amber-50 disabled:opacity-50 dark:text-amber-400 dark:hover:bg-amber-900/30"
                       >
                         {sending === inv.id ? "Sending..." : "Send Reminder"}
                       </button>
                       {openDropdown === inv.id && (
-                        <div className="absolute right-0 z-10 mt-1 w-56 rounded-md border border-slate-200 bg-white shadow-lg">
+                        <div className="absolute right-0 z-10 mt-1 w-56 rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800">
                           <div className="py-1">
                             {scheduleSteps.map((step) => (
                               <button
                                 key={step.emailTemplate}
                                 onClick={() => handleSendReminder(inv.id, step.emailTemplate)}
-                                className="block w-full px-4 py-2 text-left text-xs text-slate-700 hover:bg-slate-50"
+                                className="block w-full px-4 py-2 text-left text-xs text-slate-700 transition hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700"
                               >
                                 {stepLabel(step)}
                               </button>
@@ -255,7 +257,7 @@ export default function InvoiceTable({ invoices, onUploadCsv, scheduleSteps, onM
                   <button
                     onClick={() => handleDelete(inv.id)}
                     disabled={deleting === inv.id}
-                    className="rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+                    className="rounded-md px-2 py-1 text-xs font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-900/30"
                   >
                     {deleting === inv.id ? "Deleting..." : "Delete"}
                   </button>

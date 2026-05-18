@@ -37,7 +37,7 @@ export default async function EditInvoicePage({
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-slate-900">
+      <h1 className="mb-6 text-2xl font-bold text-slate-900 dark:text-white">
         Edit Invoice
       </h1>
       <InvoiceForm
