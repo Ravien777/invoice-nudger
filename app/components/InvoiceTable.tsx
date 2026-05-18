@@ -49,23 +49,30 @@ function formatDate(dateStr: string): string {
 function statusBadge(status: string): string {
   switch (status) {
     case "paid":
-      return "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400";
+      return "bg-[var(--success-muted)] text-[var(--success)]";
     case "cancelled":
-      return "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300";
+      return "bg-surface-muted text-muted";
     case "overdue":
-      return "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400";
+      return "bg-[var(--danger-muted)] text-[var(--danger)]";
     default:
-      return "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400";
+      return "bg-[var(--warning-muted)] text-[var(--warning)]";
   }
 }
 
 function stepLabel(step: ScheduleStep): string {
-  if (step.daysOffset < 0) return `${Math.abs(step.daysOffset)}d before — ${step.emailTemplate}`;
+  if (step.daysOffset < 0)
+    return `${Math.abs(step.daysOffset)}d before — ${step.emailTemplate}`;
   if (step.daysOffset === 0) return `On due date — ${step.emailTemplate}`;
   return `${step.daysOffset}d after — ${step.emailTemplate}`;
 }
 
-export default function InvoiceTable({ invoices, onUploadCsv, scheduleSteps, onMarkPaid, onDelete }: InvoiceTableProps) {
+export default function InvoiceTable({
+  invoices,
+  onUploadCsv,
+  scheduleSteps,
+  onMarkPaid,
+  onDelete,
+}: InvoiceTableProps) {
   const [sending, setSending] = useState<string | null>(null);
   const [markingPaid, setMarkingPaid] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -75,7 +82,10 @@ export default function InvoiceTable({ invoices, onUploadCsv, scheduleSteps, onM
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
         setOpenDropdown(null);
       }
     }
@@ -151,19 +161,19 @@ export default function InvoiceTable({ invoices, onUploadCsv, scheduleSteps, onM
 
   if (invoices.length === 0) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-12 text-center shadow-sm dark:border-slate-700 dark:bg-slate-800">
-        <p className="text-slate-500 dark:text-slate-400">No invoices found.</p>
+      <div className="rounded-xl border border-border bg-surface p-12 text-center shadow-sm">
+        <p className="text-muted">No invoices found.</p>
         <div className="mt-4 flex items-center justify-center gap-3">
           <Link
             href="/invoices/new"
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400"
+            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-surface transition hover:brightness-110"
           >
             Create your first invoice
           </Link>
           {onUploadCsv && (
             <button
               onClick={onUploadCsv}
-              className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-300 transition hover:bg-slate-50 dark:bg-slate-700 dark:text-slate-200 dark:ring-slate-600 dark:hover:bg-slate-600"
+              className="rounded-lg bg-surface px-4 py-2 text-sm font-medium text-foreground ring-1 ring-border transition hover:bg-surface-muted"
             >
               Upload CSV
             </button>
@@ -174,34 +184,34 @@ export default function InvoiceTable({ invoices, onUploadCsv, scheduleSteps, onM
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+    <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
       <table className="w-full text-left text-sm">
-        <thead className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/80">
+        <thead className="border-b border-border bg-surface-muted">
           <tr>
-            <th className="px-4 py-3 font-medium text-slate-600 dark:text-slate-300">Invoice #</th>
-            <th className="px-4 py-3 font-medium text-slate-600 dark:text-slate-300">Client</th>
-            <th className="px-4 py-3 font-medium text-slate-600 dark:text-slate-300">Amount</th>
-            <th className="px-4 py-3 font-medium text-slate-600 dark:text-slate-300">Due Date</th>
-            <th className="px-4 py-3 font-medium text-slate-600 dark:text-slate-300">Status</th>
-            <th className="px-4 py-3 font-medium text-slate-600 dark:text-slate-300">Actions</th>
+            <th className="px-4 py-3 font-medium text-muted">Invoice #</th>
+            <th className="px-4 py-3 font-medium text-muted">Client</th>
+            <th className="px-4 py-3 font-medium text-muted">Amount</th>
+            <th className="px-4 py-3 font-medium text-muted">Due Date</th>
+            <th className="px-4 py-3 font-medium text-muted">Status</th>
+            <th className="px-4 py-3 font-medium text-muted">Actions</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+        <tbody className="divide-y divide-border">
           {invoices.map((inv) => (
-            <tr key={inv.id} className="transition hover:bg-slate-50 dark:hover:bg-slate-700/50">
-              <td className="px-4 py-3 text-slate-500 dark:text-slate-400">
+            <tr key={inv.id} className="transition hover:bg-surface-muted">
+              <td className="px-4 py-3 text-muted">
                 {inv.invoiceNumber || "-"}
               </td>
               <td className="px-4 py-3">
-                <div className="font-medium text-slate-900 dark:text-white">
+                <div className="font-medium text-foreground">
                   {inv.clientName}
                 </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400">{inv.clientEmail}</div>
+                <div className="text-xs text-muted">{inv.clientEmail}</div>
               </td>
-              <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">
+              <td className="px-4 py-3 font-medium text-foreground">
                 {formatCurrency(inv.amount, inv.currency)}
               </td>
-              <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+              <td className="px-4 py-3 text-muted">
                 {formatDate(inv.dueDate)}
               </td>
               <td className="px-4 py-3">
@@ -215,7 +225,7 @@ export default function InvoiceTable({ invoices, onUploadCsv, scheduleSteps, onM
                 <div className="flex items-center gap-1.5">
                   <Link
                     href={`/invoices/${inv.id}/edit`}
-                    className="rounded-md px-2 py-1 text-xs font-medium text-blue-600 transition hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30"
+                    className="rounded-md px-2 py-1 text-xs font-medium text-accent transition hover:bg-surface-muted"
                   >
                     Edit
                   </Link>
@@ -223,41 +233,56 @@ export default function InvoiceTable({ invoices, onUploadCsv, scheduleSteps, onM
                     <button
                       onClick={() => handleMarkPaid(inv.id)}
                       disabled={markingPaid === inv.id}
-                      className="rounded-md px-2 py-1 text-xs font-medium text-green-700 transition hover:bg-green-50 disabled:opacity-50 dark:text-green-400 dark:hover:bg-green-900/30"
+                      className="rounded-md px-2 py-1 text-xs font-medium text-[var(--success)] transition hover:bg-[var(--success-muted)] disabled:opacity-50"
                     >
                       {markingPaid === inv.id ? "Marking..." : "Mark Paid"}
                     </button>
                   )}
-                  {inv.status !== "paid" && inv.status !== "cancelled" && scheduleSteps && scheduleSteps.length > 0 && (
-                    <div className="relative" ref={openDropdown === inv.id ? dropdownRef : undefined}>
-                      <button
-                        onClick={() => setOpenDropdown(openDropdown === inv.id ? null : inv.id)}
-                        disabled={sending === inv.id}
-                        className="rounded-md px-2 py-1 text-xs font-medium text-amber-700 transition hover:bg-amber-50 disabled:opacity-50 dark:text-amber-400 dark:hover:bg-amber-900/30"
+                  {inv.status !== "paid" &&
+                    inv.status !== "cancelled" &&
+                    scheduleSteps &&
+                    scheduleSteps.length > 0 && (
+                      <div
+                        className="relative"
+                        ref={openDropdown === inv.id ? dropdownRef : undefined}
                       >
-                        {sending === inv.id ? "Sending..." : "Send Reminder"}
-                      </button>
-                      {openDropdown === inv.id && (
-                        <div className="absolute right-0 z-10 mt-1 w-56 rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800">
-                          <div className="py-1">
-                            {scheduleSteps.map((step) => (
-                              <button
-                                key={step.emailTemplate}
-                                onClick={() => handleSendReminder(inv.id, step.emailTemplate)}
-                                className="block w-full px-4 py-2 text-left text-xs text-slate-700 transition hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700"
-                              >
-                                {stepLabel(step)}
-                              </button>
-                            ))}
+                        <button
+                          onClick={() =>
+                            setOpenDropdown(
+                              openDropdown === inv.id ? null : inv.id,
+                            )
+                          }
+                          disabled={sending === inv.id}
+                          className="rounded-md px-2 py-1 text-xs font-medium text-accent transition hover:bg-surface-muted disabled:opacity-50"
+                        >
+                          {sending === inv.id ? "Sending..." : "Send Reminder"}
+                        </button>
+                        {openDropdown === inv.id && (
+                          <div className="absolute right-0 z-10 mt-1 w-56 rounded-lg border border-border bg-surface shadow-lg">
+                            <div className="py-1">
+                              {scheduleSteps.map((step) => (
+                                <button
+                                  key={step.emailTemplate}
+                                  onClick={() =>
+                                    handleSendReminder(
+                                      inv.id,
+                                      step.emailTemplate,
+                                    )
+                                  }
+                                  className="block w-full px-4 py-2 text-left text-xs text-foreground transition hover:bg-surface-muted"
+                                >
+                                  {stepLabel(step)}
+                                </button>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                        )}
+                      </div>
+                    )}
                   <button
                     onClick={() => handleDelete(inv.id)}
                     disabled={deleting === inv.id}
-                    className="rounded-md px-2 py-1 text-xs font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-900/30"
+                    className="rounded-md px-2 py-1 text-xs font-medium text-[var(--danger)] transition hover:bg-[var(--danger-muted)] disabled:opacity-50"
                   >
                     {deleting === inv.id ? "Deleting..." : "Delete"}
                   </button>

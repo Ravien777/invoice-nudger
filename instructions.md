@@ -1,219 +1,218 @@
-You are a senior full-stack developer. Build the complete MVP of a SaaS application called “Invoice Nudger” by following the steps below. The app automatically sends polite, escalating email reminders for unpaid invoices.
+# Invoice Nudger — AI Coding Agent Instructions
 
-Project overview
-Invoice Nudger solves the painful problem of chasing late payments. Freelancers and small businesses manually add invoices (or upload a CSV), and the app sends a sequence of reminder emails until the invoice is marked as paid.
+## Overview
 
-Core MVP features
+This document is an implementation guide for AI coding agents working on Invoice Nudger. It is organized into clear, task-driven features and release phases.
 
-1. User authentication (email magic link).
-2. Add, edit, delete invoices manually.
-3. Bulk upload invoices via CSV.
-4. Define default reminder schedules (e.g., 3 days before due, on due date, 3/7/14 days after due).
-5. Each invoice can have its own reminder schedule or inherit the default.
-6. A daily scheduled job checks all unpaid invoices and sends the appropriate reminder email.
-7. Emails use escalating tone templates and are sent via Resend.
-8. Dashboard showing unpaid, overdue, paid invoices.
-9. Mark an invoice as paid (manual or via a shared payment link).
-10. Simple landing page and onboarding.
+## Priority
 
-Tech stack (use exactly this)
+1. Phase 1 — Immediate monetisation & marketing
+   - Feature 1: Stripe payment links
+   - Feature 2: Stripe webhook auto-pay
+   - Feature 3: Subscription tiers with usage limits
+   - Feature 4: Public email templates page
+2. Phase 2 — Advanced platform expansion
+   - Feature 5: Accounting integrations
+   - Feature 6: AI-generated reminder copy
+   - Feature 7: White-labeled client portal
+   - Feature 8: Automated reconciliation
+   - Feature 9: Promise detection workflow
+   - Feature 10: SMS & WhatsApp nudges
+   - Feature 11: Late fees / interest calculator
 
-- Next.js (App Router) with TypeScript
-- Tailwind CSS for styling
-- Prisma as ORM
-- PostgreSQL (hosted on Supabase or Neon)
-- NextAuth.js for authentication (Email provider using Resend)
-- Resend for sending transactional emails
-- Vercel Cron Jobs for the daily reminder scheduler
-- Vercel for deployment
-- PapaParse for CSV parsing
+## Agent rules
 
-Database schema (use Prisma)
-model User {
-id String @id @default(cuid())
-name String?
-email String @unique
-emailVerified DateTime?
-image String?
-invoices Invoice[]
-reminderSchedules ReminderSchedule[]
-createdAt DateTime @default(now())
-updatedAt DateTime @updatedAt
-}
+- Work inside the existing Next.js App Router codebase.
+- Keep changes focused on the task and avoid unrelated refactors.
+- Use Prisma migrations for database changes.
+- Prefer explicit, incremental commits or patches.
+- When implementing a feature, include the minimum UI flows needed to verify it.
 
-model Invoice {
-id String @id @default(cuid())
-invoiceNumber String?
-clientName String
-clientEmail String
-amount Float
-currency String @default("USD")
-dueDate DateTime
-status String @default("unpaid") // unpaid, paid, cancelled
-notes String?
-userId String
-user User @relation(fields: [userId], references: [id])
-reminders ReminderLog[]
-createdAt DateTime @default(now())
-updatedAt DateTime @updatedAt
-}
+---
 
-model ReminderSchedule {
-id String @id @default(cuid())
-name String // e.g. "Default schedule"
-isDefault Boolean @default(false)
-userId String
-user User @relation(fields: [userId], references: [id])
-steps ReminderStep[]
-createdAt DateTime @default(now())
-updatedAt DateTime @updatedAt
-}
+## Phase 1 — Immediate Monetisation & Marketing
 
-model ReminderStep {
-id String @id @default(cuid())
-daysOffset Int // negative = before due, positive = after due
-emailTemplate String // reference to template name (e.g. "gentle_reminder", "firm", "final_notice")
-reminderScheduleId String
-schedule ReminderSchedule @relation(fields: [reminderScheduleId], references: [id])
-}
+### Feature 1: Stripe Payment Links
 
-model ReminderLog {
-id String @id @default(cuid())
-invoiceId String
-invoice Invoice @relation(fields: [invoiceId], references: [id])
-sentAt DateTime @default(now())
-stepName String // which step triggered this
-}
+**Goal:** Add a direct “Pay Now” experience from invoices and reminder emails.
 
-Environment variables you will need (store in .env.example and .env)
-DATABASE_URL
-NEXTAUTH_SECRET
-NEXTAUTH_URL
-RESEND_API_KEY
-EMAIL_FROM
+**Implementation:**
 
-Build the app step by step. After each step, give the user instructions on how to test that step locally. Only proceed when the step is complete.
+- Install Stripe and add env variables: `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`.
+- Add `paymentLink String?` to the `Invoice` Prisma model and migrate.
+- Create `/api/stripe/create-payment-link`.
+- Validate ownership and `unpaid` status.
+- Create a Stripe PaymentLink with invoice amount, currency, and metadata.
+- Save the generated URL to the invoice.
+- Show the payment link in invoice UI.
+- Add a “Pay Now” button inside email templates.
+- Add a thank-you page at `/pay/success`.
 
-─────────────────────────────
-STEP 1: Project initialization & basic configuration
-─────────────────────────────
+**Notes:**
 
-1. Create a new Next.js app with TypeScript and Tailwind.
-2. Install all required dependencies:
-   - prisma, @prisma/client
-   - next-auth, @next-auth/prisma-adapter
-   - resend
-   - papaparse
-   - date-fns
-   - react-hot-toast (for notifications)
-3. Initialize Prisma with a PostgreSQL provider.
-4. Add the database schema (copy the models above) to prisma/schema.prisma.
-5. Run `npx prisma db push` to create the tables.
-6. Set up NextAuth with the Email provider (using Resend). Use the Prisma adapter.
-7. Create a simple home page (“/”) that shows “Invoice Nudger” and a sign-in button if not logged in.
-8. Test: Can you sign in with an email magic link? (Use Resend’s test mode.)
+- Use `metadata: { invoiceId }`.
+- Redirect to `${process.env.NEXTAUTH_URL}/pay/success?invoiceId=...`.
 
-─────────────────────────────
-STEP 2: Invoice CRUD & dashboard
-─────────────────────────────
+### Feature 2: Stripe Webhook Auto-Mark Paid
 
-1. Create an authenticated layout that protects all `/app/*` routes.
-2. Build an invoices page (`/invoices`) with a table showing all invoices for the logged-in user (client name, amount, due date, status).
-3. Add a “New Invoice” form (modal or separate page) with fields: clientName, clientEmail, amount, dueDate, notes.
-4. Implement API routes for creating, updating, deleting invoices (RESTful: /api/invoices).
-5. Add the ability to edit and delete invoices inline from the table.
-6. Build a simple dashboard (`/dashboard`) showing counts: total unpaid, overdue, paid this month.
-7. Test: Log in, create 3 invoices with different statuses, and check the dashboard.
+**Goal:** Automatically mark invoices paid after Stripe checkout.
 
-─────────────────────────────
-STEP 3: CSV upload for bulk invoices
-─────────────────────────────
+**Implementation:**
 
-1. Add a button “Upload CSV” on the invoices page.
-2. Build a file upload component that accepts .csv files.
-3. In the API route, parse the CSV with PapaParse. Expected columns: Client Name, Client Email, Amount, Due Date (YYYY-MM-DD), Notes (optional).
-4. Create all valid invoices and return a summary (success count, errors).
-5. Show toast notifications for success/failure.
-6. Test: Prepare a CSV with 5 rows, upload, and verify they appear in the table.
+- Add `/app/api/webhooks/stripe/route.ts`.
+- Use raw body parsing for Stripe signature verification.
+- Handle `checkout.session.completed`.
+- Extract `metadata.invoiceId`, update invoice status, optionally set `paidAt`.
+- Log an `auto_paid` event in `ReminderLog`.
 
-─────────────────────────────
-STEP 4: Reminder schedules (default & per-invoice)
-─────────────────────────────
+**Safety:**
 
-1. Seed the database with a default ReminderSchedule named “Standard” that contains these steps:
-   - 3 days before due → “gentle_reminder”
-   - 0 days (on due) → “due_today”
-   - 3 days after → “overdue_notice”
-   - 7 days after → “firm_reminder”
-   - 14 days after → “final_notice”
-     Assign this schedule as `isDefault: true` for every new user when they sign up.
-2. Create a settings page (`/settings`) where the user can edit the default schedule (add/remove steps, change daysOffset, change email template name).
-3. On the invoice edit form, add an optional field “Reminder schedule” (dropdown). If not selected, the default schedule applies.
-4. Store the selected schedule on the invoice (add `reminderScheduleId` to Invoice model or keep it inferred via user default; simpler: just store `scheduleId` on Invoice).
-   - Update Prisma schema: add `reminderScheduleId String?` and relation to Invoice. Re-push DB.
-5. Test: Create an invoice without a specific schedule; it should use the default. Then assign a custom schedule to another invoice and verify.
+- Ignore already-paid invoices.
+- Return 200 if invoice is missing.
+- Optionally validate the paid amount.
 
-─────────────────────────────
-STEP 5: Email templates & sending logic
-─────────────────────────────
+**UI:**
 
-1. Inside `/lib/email-templates`, create five email template functions (or simple HTML strings) for the five tones:
-   - gentle_reminder
-   - due_today
-   - overdue_notice
-   - firm_reminder
-   - final_notice
-     Each template receives `clientName`, `invoiceNumber`, `amount`, `dueDate`, and a payment link.
-2. Build a utility function `sendReminderEmail(invoice, step)` that:
-   - Uses Resend to send an email from `EMAIL_FROM` to `invoice.clientEmail`.
-   - Subject and body come from the template corresponding to `step.emailTemplate`.
-   - Records the sent email in `ReminderLog` (create a new record).
-3. Build an API endpoint `/api/send-reminder` that accepts an invoice ID and a step name, and calls the utility. (This is useful for manual testing, but the real job will use the scheduler.)
-4. Test: Using an HTTP client or a button on the invoice row, trigger a reminder manually for an unpaid invoice. Check that the email arrives (Resend test mode) and a log is created.
+- Add a “Paid via Stripe” badge for paid invoices with a `paymentLink`.
+- Show paid status on `/pay/success`.
 
-─────────────────────────────
-STEP 6: Daily scheduler (Vercel Cron Job)
-─────────────────────────────
+### Feature 3: Subscription Tiers & Usage Limits
 
-1. Create a cron job in `vercel.json` that hits `/api/cron/send-reminders` every day at a reasonable hour (e.g., 8am UTC). Use Vercel Cron format:
-   `{ "crons": [ { "path": "/api/cron/send-reminders", "schedule": "0 8 * * *" } ] }`
-2. Build the API route `/api/cron/send-reminders` with a secret header check (to ensure only Vercel can call it).
-3. Inside the route handler:
-   - Query all unpaid invoices (status = “unpaid”) along with their user and schedule.
-   - For each invoice, determine which reminder step is due today (based on the due date and the step’s `daysOffset`).
-   - Also check that this step hasn’t already been sent (look up ReminderLog for the same invoice and step name).
-   - If due and not sent, call `sendReminderEmail`.
-4. Add logic to mark the invoice as “overdue” if `daysOffset > 0` and it’s the first overdue step (purely cosmetic in the UI).
-5. Test: Temporarily change your system clock (or adjust the due dates of test invoices) so that a reminder step becomes due today. Then manually hit `/api/cron/send-reminders` (with the secret header). Verify emails are sent and logs are created.
+**Goal:** Add paid plans and limit invoice usage by tier.
 
-─────────────────────────────
-STEP 7: Manual payment status & paid tracking
-─────────────────────────────
+**Implementation:**
 
-1. Add a “Mark as Paid” button on each invoice row in the dashboard and invoice table.
-2. Clicking it calls an API that sets `status = “paid”` and records a `ReminderLog` with stepName “manual_payment”.
-3. Add a filter on the invoices page to show: All, Unpaid, Paid, Overdue.
-4. Create a simple public payment confirmation page (`/pay/:invoiceId`) that shows the invoice details and a “Confirm Payment” button (just a mock – later you can add real payment integration). When confirmed, it marks the invoice as paid and shows a thank you message.
-5. Test: Mark an invoice as paid, verify it no longer appears in overdue/unpaid lists.
+- Add fields to `User`: `plan`, `stripeCustomerId`, `stripeSubscriptionId`, `stripePriceId`, `subscriptionStatus`.
+- Add a `/settings/billing` page.
+- Add `/api/stripe/create-checkout-session`.
+- Create Stripe subscription sessions and redirect users.
+- Extend webhook handling for subscription events.
+- Enforce monthly invoice creation limits.
+- Add usage indicators to dashboard.
+- Add Stripe Customer Portal support.
 
-─────────────────────────────
-STEP 8: Polish, onboarding & landing page
-─────────────────────────────
+**Suggested tiers:**
 
-1. Build a public landing page (`/`) that explains the product and includes a “Start Free Trial” button leading to sign-up.
-2. Improve the post-signup flow: after first login, show an onboarding modal that creates the default reminder schedule (if not already seeded) and suggests uploading a test CSV.
-3. Add a simple billing wall later (optional for MVP). For now, let the app be free during beta.
-4. Deploy to Vercel, set all environment variables, and activate the cron job.
-5. Test the entire flow end-to-end: sign up → add invoices → wait for scheduled reminders → mark paid.
+- Free: 5 invoices/month
+- Pro: 50 invoices/month
+- Agency: Unlimited
 
-─────────────────────────────
-WHAT TO DO NEXT (after MVP is live)
-─────────────────────────────
+### Feature 4: Public Email Templates Page
 
-- Add Stripe payment links to invoices so clients can pay directly.
-- Add Stripe webhook to auto-mark invoices as paid.
-- Build subscription tiers (with Stripe Checkout) and limit invoices per month.
-- Create a public “Invoice reminder email templates” page for SEO and lead generation.
-- Add integration to Xero, Quickbooks, Stripe
+**Goal:** Create an SEO-friendly templates page for lead capture.
 
-Build each step completely. Write clean, well-typed code. Use server actions where appropriate. After each step, give the user a short checklist of what to test and how to verify it works.
+**Implementation:**
+
+- Add a public page at `/templates` or `/email-templates`.
+- Display 5 escalation templates.
+- Add copy buttons with `navigator.clipboard`.
+- Add CTA to sign up.
+- Add metadata, Open Graph tags, and SEO schema.
+- Link the page from landing navigation and footer.
+
+**Optional:**
+
+- Add a PDF download / email capture flow.
+
+---
+
+## Phase 2 — Advanced Expansion
+
+### Feature 5: Accounting Integrations
+
+**Goal:** Sync invoices with Xero and QuickBooks.
+
+**Implementation:**
+
+- Add OAuth connectors for Xero and QuickBooks.
+- Store encrypted tokens in `AccountIntegration`.
+- Sync invoices into the app with `externalId` and `source`.
+- Push Invoice Nudger payments back to accounting.
+- Add UI for connection status and source icons.
+- Use scheduled sync jobs or a background queue.
+
+### Feature 6: AI-Generated Reminder Copy
+
+**Goal:** Generate personalized reminder emails with OpenAI.
+
+**Implementation:**
+
+- Add invoice metadata fields like `projectName`.
+- Create `/api/ai/generate-reminder`.
+- Build prompts for tone, overdue days, payment link, and client details.
+- Cache generated copy in `ReminderLog` with `emailBody`.
+- Gate the feature behind a paid plan.
+- Optionally add an approval/review workflow.
+
+### Feature 7: White-Labeled Client Portal
+
+**Goal:** Offer branded client invoice portals.
+
+**Implementation:**
+
+- Add `/portal/:clientToken`.
+- Generate secure client tokens for each client.
+- Show invoice list, statuses, due dates, and payment button.
+- Support branding from user settings.
+- Optionally support magic links or PIN access.
+- Reserve for higher-tier plans.
+
+### Feature 8: Automated Payment Reconciliation
+
+**Goal:** Keep invoice status synced across payment sources.
+
+**Implementation:**
+
+- Use Stripe webhook updates.
+- Add reconciliation for accounting sync and manual payments.
+- Add a dashboard metric for reconciled payments.
+
+### Feature 9: AI Promise Detection
+
+**Goal:** Pause reminders when clients promise payment.
+
+**Implementation:**
+
+- Receive reply emails via webhook.
+- Use AI to classify payment promises and extract dates.
+- Store `promisedDate` on the invoice.
+- Skip reminders until the promise date passes.
+- Notify the user when promises are detected.
+- Allow manual override.
+
+### Feature 10: SMS & WhatsApp Nudges
+
+**Goal:** Add alternative reminder channels.
+
+**Implementation:**
+
+- Add `clientPhone` and opt-in settings.
+- Use Twilio, MessageBird, or similar.
+- Send SMS/WhatsApp messages when email fails.
+- Require paid plan access.
+- Include opt-out language.
+
+### Feature 11: Late Fees & Interest
+
+**Goal:** Automatically apply late fees and interest.
+
+**Implementation:**
+
+- Add late fee policy settings.
+- Add invoice fields: `lateFeeEnabled`, `lateFeeAmount`, `interestRate`, `accruedFees`.
+- Calculate fees daily in the cron job.
+- Update invoice totals and include notes in emails.
+- Add a legal disclaimer that this is not legal advice.
+
+---
+
+## Strategy 2 Preview
+
+After Phase 1 and Phase 2 are stable, add analytics to make Invoice Nudger a strategic cashflow product:
+
+- Payment probability scoring
+- Client risk profiles
+- Industry benchmarks
+- Cash flow forecasting
+
+These should be planned once the core product is complete.

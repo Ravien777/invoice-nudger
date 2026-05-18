@@ -18,9 +18,7 @@ export default async function NewInvoicePage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-slate-900 dark:text-white">
-        New Invoice
-      </h1>
+      <h1 className="mb-6 text-2xl font-bold">New Invoice</h1>
       <InvoiceForm mode="create" schedules={schedules} />
     </div>
   );

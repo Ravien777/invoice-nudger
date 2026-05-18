@@ -17,27 +17,27 @@ export default async function AppLayout({
 
   return (
     <div className="min-h-screen">
-      <header className="border-b border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+      <header className="border-b border-border bg-surface">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <Link href="/dashboard" className="text-xl font-bold text-slate-900 dark:text-white">
+          <Link href="/dashboard" className="text-xl font-bold text-foreground">
             Invoice Nudger
           </Link>
           <nav className="flex items-center gap-6">
             <Link
               href="/dashboard"
-              className="text-sm text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+              className="text-sm text-muted transition hover:text-foreground"
             >
               Dashboard
             </Link>
             <Link
               href="/invoices"
-              className="text-sm text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+              className="text-sm text-muted transition hover:text-foreground"
             >
               Invoices
             </Link>
             <Link
               href="/settings"
-              className="text-sm text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+              className="text-sm text-muted transition hover:text-foreground"
             >
               Settings
             </Link>

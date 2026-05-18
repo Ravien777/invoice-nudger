@@ -13,15 +13,15 @@ export default async function Home() {
   const isDev = process.env.NODE_ENV === "development";
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="border-b border-slate-200 bg-white">
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
+      <header className="border-b border-border bg-surface/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <span className="text-xl font-bold text-slate-900">
+          <span className="text-xl font-bold text-foreground">
             Invoice Nudger
           </span>
           <Link
             href="/api/auth/signin"
-            className="rounded-lg bg-slate-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+            className="rounded-full bg-foreground px-5 py-2 text-sm font-medium text-surface shadow-(--shadow) transition hover:brightness-110"
           >
             Sign in
           </Link>
@@ -29,49 +29,49 @@ export default async function Home() {
       </header>
 
       <main className="flex-1">
-        <section className="border-b border-slate-200 bg-gradient-to-b from-slate-50 to-white px-6 py-20 sm:py-28">
+        <section className="border-b border-border bg-linear-to-b from-surface-muted via-surface to-surface-muted px-6 py-20 sm:py-28">
           <div className="mx-auto max-w-4xl text-center">
-            <p className="mb-4 text-sm font-semibold uppercase tracking-[0.25em] text-blue-600">
+            <p className="mb-4 text-sm font-semibold uppercase tracking-[0.25em] text-accent">
               Invoice Nudger
             </p>
-            <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
+            <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl ">
               Never chase a late payment again
             </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-slate-600">
+            <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted ">
               Automate polite, escalating email reminders for your unpaid
               invoices. From a gentle nudge to a final notice — we handle the
               follow-ups so you can focus on your work.
             </p>
-            <div className="mt-8 flex items-center justify-center gap-4">
+            <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link
                 href="/api/auth/signin"
-                className="rounded-lg bg-blue-600 px-6 py-3 text-base font-medium text-white shadow-sm transition hover:bg-blue-700"
+                className="rounded-full bg-accent px-6 py-3 text-base font-medium text-surface shadow-(--shadow) transition hover:brightness-110"
               >
                 Start Free Trial
               </Link>
               <Link
                 href="/api/auth/signin"
-                className="rounded-lg border border-slate-300 bg-white px-6 py-3 text-base font-medium text-slate-700 transition hover:bg-slate-50"
+                className="rounded-full border border-border bg-surface px-6 py-3 text-base font-medium text-foreground transition hover:bg-surface-muted"
               >
                 Sign in
               </Link>
             </div>
-            <p className="mt-4 text-sm text-slate-400">
+            <p className="mt-4 text-sm text-muted">
               Free during beta. No credit card required.
             </p>
           </div>
         </section>
 
-        <section className="border-b border-slate-200 bg-white px-6 py-20">
+        <section className="border-b border-border bg-surface px-6 py-20  ">
           <div className="mx-auto max-w-6xl">
-            <h2 className="text-center text-2xl font-bold text-slate-900 sm:text-3xl">
+            <h2 className="text-center text-2xl font-bold text-foreground sm:text-3xl ">
               Everything you need to get paid on time
             </h2>
             <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-              <div className="rounded-xl border border-slate-200 p-6">
-                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
+              <div className="rounded-3xl border border-border bg-surface-muted p-6 shadow-sm shadow-slate-900/5 transition hover:-translate-y-0.5 hover:shadow-md">
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-surface-muted text-accent">
                   <svg
-                    className="h-5 w-5 text-blue-600"
+                    className="h-5 w-5"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -84,18 +84,19 @@ export default async function Home() {
                     />
                   </svg>
                 </div>
-                <h3 className="font-semibold text-slate-900">
+                <h3 className="font-semibold text-foreground ">
                   Automated Reminder Sequences
                 </h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                <p className="mt-2 text-sm leading-relaxed text-muted">
                   Set it and forget it. We send 5 escalating reminders — from a
-                  gentle nudge 3 days before due to a final notice 14 days after.
+                  gentle nudge 3 days before due to a final notice 14 days
+                  after.
                 </p>
               </div>
-              <div className="rounded-xl border border-slate-200 p-6">
-                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
+              <div className="rounded-3xl border border-border bg-surface-muted p-6 shadow-sm shadow-slate-900/5 transition hover:-translate-y-0.5 hover:shadow-md ">
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-surface-muted text-accent">
                   <svg
-                    className="h-5 w-5 text-green-600"
+                    className="h-5 w-5"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -108,18 +109,18 @@ export default async function Home() {
                     />
                   </svg>
                 </div>
-                <h3 className="font-semibold text-slate-900">
+                <h3 className="font-semibold text-foreground ">
                   Bulk CSV Upload
                 </h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                <p className="mt-2 text-sm leading-relaxed text-muted ">
                   Import dozens of invoices in seconds. Just upload a CSV with
                   client details, amounts, and due dates. We handle the rest.
                 </p>
               </div>
-              <div className="rounded-xl border border-slate-200 p-6">
-                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">
+              <div className="rounded-3xl border border-border bg-surface-muted p-6 shadow-sm shadow-slate-900/5 transition hover:-translate-y-0.5 hover:shadow-md ">
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-surface-muted text-accent">
                   <svg
-                    className="h-5 w-5 text-purple-600"
+                    className="h-5 w-5"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -132,18 +133,18 @@ export default async function Home() {
                     />
                   </svg>
                 </div>
-                <h3 className="font-semibold text-slate-900">
+                <h3 className="font-semibold text-foreground ">
                   Customizable Schedules
                 </h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                <p className="mt-2 text-sm leading-relaxed text-muted ">
                   Tailor reminder timing and tone to your workflow. Each invoice
                   can follow its own schedule or inherit your default.
                 </p>
               </div>
-              <div className="rounded-xl border border-slate-200 p-6">
-                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100">
+              <div className="rounded-3xl border border-border bg-surface-muted p-6 shadow-sm shadow-slate-900/5 transition hover:-translate-y-0.5 hover:shadow-md ">
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-surface-muted text-accent">
                   <svg
-                    className="h-5 w-5 text-amber-600"
+                    className="h-5 w-5"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -156,18 +157,18 @@ export default async function Home() {
                     />
                   </svg>
                 </div>
-                <h3 className="font-semibold text-slate-900">
+                <h3 className="font-semibold text-foreground ">
                   Payment Tracking
                 </h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                <p className="mt-2 text-sm leading-relaxed text-muted ">
                   Clients can confirm payment via a shared link. Track paid,
                   unpaid, and overdue status at a glance on your dashboard.
                 </p>
               </div>
-              <div className="rounded-xl border border-slate-200 p-6">
-                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-red-100">
+              <div className="rounded-3xl border border-border bg-surface-muted p-6 shadow-sm shadow-slate-900/5 transition hover:-translate-y-0.5 hover:shadow-md ">
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-surface-muted text-accent">
                   <svg
-                    className="h-5 w-5 text-red-600"
+                    className="h-5 w-5"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -180,18 +181,18 @@ export default async function Home() {
                     />
                   </svg>
                 </div>
-                <h3 className="font-semibold text-slate-900">
+                <h3 className="font-semibold text-foreground ">
                   Secure & Private
                 </h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                <p className="mt-2 text-sm leading-relaxed text-muted ">
                   Your data is encrypted in transit and at rest. Authentication
                   uses email magic links — no passwords needed.
                 </p>
               </div>
-              <div className="rounded-xl border border-slate-200 p-6">
-                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-teal-100">
+              <div className="rounded-3xl border border-border bg-surface-muted p-6 shadow-sm shadow-slate-900/5 transition hover:-translate-y-0.5 hover:shadow-md ">
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-surface-muted text-accent">
                   <svg
-                    className="h-5 w-5 text-teal-600"
+                    className="h-5 w-5"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -204,10 +205,10 @@ export default async function Home() {
                     />
                   </svg>
                 </div>
-                <h3 className="font-semibold text-slate-900">
+                <h3 className="font-semibold text-foreground ">
                   Daily Cron Job
                 </h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                <p className="mt-2 text-sm leading-relaxed text-muted ">
                   Our scheduler checks every morning at 8am UTC to find which
                   reminders are due — so you never miss a send window.
                 </p>
@@ -216,44 +217,44 @@ export default async function Home() {
           </div>
         </section>
 
-        <section className="border-b border-slate-200 bg-slate-50 px-6 py-20">
+        <section className="border-b border-border bg-surface-muted px-6 py-20">
           <div className="mx-auto max-w-4xl">
-            <h2 className="text-center text-2xl font-bold text-slate-900 sm:text-3xl">
+            <h2 className="text-center text-2xl font-bold text-foreground sm:text-3xl">
               How it works
             </h2>
             <div className="mt-12 grid gap-8 sm:grid-cols-3">
               <div className="text-center">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-lg font-bold text-blue-600">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-surface-muted text-lg font-bold text-accent">
                   1
                 </div>
-                <h3 className="mt-4 font-semibold text-slate-900">
+                <h3 className="mt-4 font-semibold text-foreground ">
                   Add invoices
                 </h3>
-                <p className="mt-2 text-sm text-slate-600">
+                <p className="mt-2 text-sm text-muted">
                   Manually create invoices or bulk-upload a CSV. Add client
                   details, amounts, and due dates.
                 </p>
               </div>
               <div className="text-center">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-lg font-bold text-blue-600">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-surface-muted text-lg font-bold text-accent">
                   2
                 </div>
-                <h3 className="mt-4 font-semibold text-slate-900">
+                <h3 className="mt-4 font-semibold text-foreground ">
                   Set your schedule
                 </h3>
-                <p className="mt-2 text-sm text-slate-600">
+                <p className="mt-2 text-sm text-muted ">
                   Use the default reminder sequence or customize timing and tone
                   for each invoice.
                 </p>
               </div>
               <div className="text-center">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-lg font-bold text-blue-600">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-surface-muted text-lg font-bold text-accent">
                   3
                 </div>
-                <h3 className="mt-4 font-semibold text-slate-900">
+                <h3 className="mt-4 font-semibold text-foreground ">
                   We send reminders
                 </h3>
-                <p className="mt-2 text-sm text-slate-600">
+                <p className="mt-2 text-sm text-muted ">
                   Our daily cron job checks for due reminders and sends
                   escalating emails until the invoice is paid.
                 </p>
@@ -262,18 +263,18 @@ export default async function Home() {
           </div>
         </section>
 
-        <section className="bg-white px-6 py-20">
+        <section className="bg-surface px-6 py-20 ">
           <div className="mx-auto max-w-3xl text-center">
-            <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">
+            <h2 className="text-2xl font-bold text-foreground sm:text-3xl ">
               Ready to stop chasing payments?
             </h2>
-            <p className="mt-4 text-lg text-slate-600">
+            <p className="mt-4 text-lg text-muted ">
               Sign up free during beta. No credit card needed.
             </p>
             <div className="mt-8">
               <Link
                 href="/api/auth/signin"
-                className="inline-block rounded-lg bg-blue-600 px-8 py-3 text-base font-medium text-white shadow-sm transition hover:bg-blue-700"
+                className="inline-block rounded-full bg-accent px-8 py-3 text-base font-medium text-surface shadow-sm transition hover:brightness-110"
               >
                 Start Free Trial
               </Link>
@@ -282,16 +283,16 @@ export default async function Home() {
         </section>
       </main>
 
-      <footer className="border-t border-slate-200 bg-white px-6 py-8">
+      <footer className="border-t border-border bg-surface px-6 py-8  ">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 sm:flex-row">
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted ">
             &copy; {new Date().getFullYear()} Invoice Nudger. All rights
             reserved.
           </p>
           {isDev && (
             <Link
               href="/dev-signin"
-              className="text-sm text-amber-600 underline hover:text-amber-800"
+              className="text-sm text-accent underline hover:text-foreground"
             >
               Dev sign-in
             </Link>

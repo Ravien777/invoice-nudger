@@ -27,16 +27,14 @@ function offsetLabel(daysOffset: number): string {
 }
 
 export default function SettingsClient({ schedule }: SettingsClientProps) {
-  const [steps, setSteps] = useState<Step[]>(
-    schedule?.steps ?? []
-  );
+  const [steps, setSteps] = useState<Step[]>(schedule?.steps ?? []);
   const [name, setName] = useState(schedule?.name ?? "Standard");
   const [saving, setSaving] = useState(false);
 
   function handleStepChange(
     index: number,
     field: "daysOffset" | "emailTemplate",
-    value: string
+    value: string,
   ) {
     setSteps((prev) => {
       const next = [...prev];
@@ -49,10 +47,7 @@ export default function SettingsClient({ schedule }: SettingsClientProps) {
   }
 
   function handleAddStep() {
-    setSteps((prev) => [
-      ...prev,
-      { daysOffset: 0, emailTemplate: "" },
-    ]);
+    setSteps((prev) => [...prev, { daysOffset: 0, emailTemplate: "" }]);
   }
 
   function handleRemoveStep(index: number) {
@@ -98,25 +93,25 @@ export default function SettingsClient({ schedule }: SettingsClientProps) {
 
   if (!schedule) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm dark:border-slate-700 dark:bg-slate-800">
-        <p className="text-slate-500 dark:text-slate-400">No default reminder schedule found.</p>
+      <div className="rounded-xl border border-border bg-surface p-8 text-center shadow-sm">
+        <p className="text-muted">No default reminder schedule found.</p>
       </div>
     );
   }
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-slate-900 dark:text-white">Settings</h1>
+      <h1 className="mb-6 text-2xl font-bold">Settings</h1>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-        <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">
+      <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+        <h2 className="mb-4 text-lg font-semibold text-foreground">
           Default Reminder Schedule
         </h2>
 
         <div className="mb-6">
           <label
             htmlFor="scheduleName"
-            className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+            className="block text-sm font-medium text-muted"
           >
             Schedule Name
           </label>
@@ -125,16 +120,16 @@ export default function SettingsClient({ schedule }: SettingsClientProps) {
             id="scheduleName"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="mt-1 block w-full max-w-xs rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
+            className="mt-1 block w-full max-w-xs rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground shadow-sm transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
           />
         </div>
 
         <div className="mb-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300">Steps</h3>
+            <h3 className="text-sm font-medium text-muted">Steps</h3>
             <button
               onClick={handleAddStep}
-              className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
+              className="rounded-lg bg-surface px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-surface-muted"
             >
               + Add Step
             </button>
@@ -144,14 +139,14 @@ export default function SettingsClient({ schedule }: SettingsClientProps) {
             {steps.map((step, index) => (
               <div
                 key={step.id ?? index}
-                className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50/50 p-3 dark:border-slate-700 dark:bg-slate-700/50"
+                className="flex items-center gap-3 rounded-lg border border-border bg-surface-muted p-3"
               >
-                <span className="w-8 text-center text-sm font-medium text-slate-500 dark:text-slate-400">
+                <span className="w-8 text-center text-sm font-medium text-muted">
                   {index + 1}
                 </span>
 
                 <div className="w-36">
-                  <label className="block text-xs text-slate-500 dark:text-slate-400">
+                  <label className="block text-xs text-muted">
                     Days offset
                   </label>
                   <input
@@ -160,21 +155,19 @@ export default function SettingsClient({ schedule }: SettingsClientProps) {
                     onChange={(e) =>
                       handleStepChange(index, "daysOffset", e.target.value)
                     }
-                    className="mt-0.5 w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
+                    className="mt-0.5 w-full rounded-lg border border-border bg-surface px-2 py-1.5 text-sm text-foreground transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
                   />
                 </div>
 
                 <div className="w-40">
-                  <label className="block text-xs text-slate-500 dark:text-slate-400">
-                    Timing
-                  </label>
-                  <p className="mt-0.5 text-sm text-slate-700 dark:text-slate-200">
+                  <label className="block text-xs text-muted">Timing</label>
+                  <p className="mt-0.5 text-sm text-foreground">
                     {offsetLabel(step.daysOffset)}
                   </p>
                 </div>
 
                 <div className="flex-1">
-                  <label className="block text-xs text-slate-500 dark:text-slate-400">
+                  <label className="block text-xs text-muted">
                     Email template
                   </label>
                   <input
@@ -184,18 +177,28 @@ export default function SettingsClient({ schedule }: SettingsClientProps) {
                       handleStepChange(index, "emailTemplate", e.target.value)
                     }
                     placeholder="e.g. gentle_reminder"
-                    className="mt-0.5 w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
+                    className="mt-0.5 w-full rounded-lg border border-border bg-surface px-2 py-1.5 text-sm text-foreground transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
                   />
                 </div>
 
                 <button
                   onClick={() => handleRemoveStep(index)}
                   disabled={steps.length <= 1}
-                  className="mt-4 rounded-lg p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-30 dark:hover:bg-red-900/30 dark:hover:text-red-400"
+                  className="mt-4 rounded-lg p-1.5 text-muted transition hover:bg-surface-muted hover:text-foreground disabled:opacity-30"
                   title="Remove step"
                 >
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
                   </svg>
                 </button>
               </div>
@@ -203,11 +206,11 @@ export default function SettingsClient({ schedule }: SettingsClientProps) {
           </div>
         </div>
 
-        <div className="flex items-center gap-3 border-t border-slate-200 pt-4 dark:border-slate-700">
+        <div className="flex items-center gap-3 border-t border-border pt-4">
           <button
             onClick={handleSave}
             disabled={saving}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-400"
+            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-surface shadow-sm transition hover:brightness-110 disabled:opacity-50"
           >
             {saving ? "Saving..." : "Save Changes"}
           </button>

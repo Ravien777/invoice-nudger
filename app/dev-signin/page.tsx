@@ -52,22 +52,22 @@ export default function DevSigninPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
-      <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
-        <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-amber-600">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="w-full max-w-md rounded-xl border border-border bg-surface p-8 shadow-sm">
+        <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-accent">
           Development only
         </div>
-        <h1 className="mb-6 text-2xl font-bold text-slate-900">
+        <h1 className="mb-6 text-2xl font-bold text-foreground">
           Quick Sign In
         </h1>
 
         {loading ? (
-          <p className="text-slate-500">Loading...</p>
+          <p className="text-muted">Loading...</p>
         ) : (
           <div className="space-y-4">
             {users.length > 0 && (
               <div>
-                <p className="mb-2 text-sm font-medium text-slate-600">
+                <p className="mb-2 text-sm font-medium text-muted">
                   Existing users:
                 </p>
                 <div className="space-y-2">
@@ -76,19 +76,31 @@ export default function DevSigninPage() {
                       key={user.id}
                       onClick={() => handleSignIn(user.email)}
                       disabled={signingIn === user.email}
-                      className="flex w-full items-center justify-between rounded-lg border border-slate-200 px-4 py-3 text-left transition hover:border-blue-400 hover:bg-blue-50 disabled:opacity-50"
+                      className="flex w-full items-center justify-between rounded-lg border border-border px-4 py-3 text-left transition hover:border-accent hover:bg-surface-muted disabled:opacity-50"
                     >
                       <div>
-                        <p className="font-medium text-slate-900">
+                        <p className="font-medium text-foreground">
                           {user.name || user.email}
                         </p>
-                        <p className="text-xs text-slate-500">{user.email}</p>
+                        <p className="text-xs text-muted">{user.email}</p>
                       </div>
                       {signingIn === user.email ? (
-                        <span className="text-sm text-blue-600">Signing in...</span>
+                        <span className="text-sm text-accent">
+                          Signing in...
+                        </span>
                       ) : (
-                        <svg className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        <svg
+                          className="h-5 w-5 text-muted"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5l7 7-7 7"
+                          />
                         </svg>
                       )}
                     </button>
@@ -97,8 +109,8 @@ export default function DevSigninPage() {
               </div>
             )}
 
-            <div className="border-t border-slate-200 pt-4">
-              <p className="mb-2 text-sm font-medium text-slate-600">
+            <div className="border-t border-border pt-4">
+              <p className="mb-2 text-sm font-medium text-muted">
                 Or sign in as a new user:
               </p>
               <div className="flex gap-2">
@@ -108,22 +120,22 @@ export default function DevSigninPage() {
                   onChange={(e) => setNewEmail(e.target.value)}
                   placeholder="you@example.com"
                   onKeyDown={(e) => e.key === "Enter" && handleCreateUser()}
-                  className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="flex-1 rounded-lg border border-border px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-[var(--ring)]"
                 />
                 <button
                   onClick={handleCreateUser}
                   disabled={signingIn !== null || !newEmail.trim()}
-                  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                  className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-surface transition hover:brightness-110 disabled:opacity-50"
                 >
                   Sign In
                 </button>
               </div>
             </div>
 
-            <div className="border-t border-slate-200 pt-4">
+            <div className="border-t border-border pt-4">
               <Link
                 href="/"
-                className="text-sm text-slate-500 hover:text-slate-700"
+                className="text-sm text-muted hover:text-foreground"
               >
                 Back to home
               </Link>

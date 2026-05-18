@@ -32,7 +32,10 @@ interface InvoicesClientProps {
 const FILTERS = ["all", "unpaid", "overdue", "paid", "cancelled"] as const;
 type Filter = (typeof FILTERS)[number];
 
-export default function InvoicesClient({ initialInvoices, scheduleSteps }: InvoicesClientProps) {
+export default function InvoicesClient({
+  initialInvoices,
+  scheduleSteps,
+}: InvoicesClientProps) {
   const [invoices, setInvoices] = useState<Invoice[]>(initialInvoices);
   const [csvModalOpen, setCsvModalOpen] = useState(false);
   const [filter, setFilter] = useState<Filter>("all");
@@ -51,7 +54,9 @@ export default function InvoicesClient({ initialInvoices, scheduleSteps }: Invoi
 
   const handleMarkPaid = useCallback(async (id: string) => {
     try {
-      const res = await fetch(`/api/invoices/${id}/mark-paid`, { method: "POST" });
+      const res = await fetch(`/api/invoices/${id}/mark-paid`, {
+        method: "POST",
+      });
       const data = await res.json();
 
       if (!res.ok) {
@@ -59,7 +64,7 @@ export default function InvoicesClient({ initialInvoices, scheduleSteps }: Invoi
       }
 
       setInvoices((prev) =>
-        prev.map((inv) => (inv.id === id ? { ...inv, status: "paid" } : inv))
+        prev.map((inv) => (inv.id === id ? { ...inv, status: "paid" } : inv)),
       );
       return { success: true };
     } catch {
@@ -80,26 +85,35 @@ export default function InvoicesClient({ initialInvoices, scheduleSteps }: Invoi
     }
   }, []);
 
-  const filtered = filter === "all" ? invoices : invoices.filter((inv) => inv.status === filter);
-  const counts = FILTERS.reduce((acc, f) => {
-    acc[f] = f === "all" ? invoices.length : invoices.filter((inv) => inv.status === f).length;
-    return acc;
-  }, {} as Record<Filter, number>);
+  const filtered =
+    filter === "all"
+      ? invoices
+      : invoices.filter((inv) => inv.status === filter);
+  const counts = FILTERS.reduce(
+    (acc, f) => {
+      acc[f] =
+        f === "all"
+          ? invoices.length
+          : invoices.filter((inv) => inv.status === f).length;
+      return acc;
+    },
+    {} as Record<Filter, number>,
+  );
 
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Invoices</h1>
+        <h1 className="text-2xl font-bold">Invoices</h1>
         <div className="flex items-center gap-3">
           <button
             onClick={() => setCsvModalOpen(true)}
-            className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-slate-300 transition hover:bg-slate-50 dark:bg-slate-700 dark:text-slate-200 dark:ring-slate-600 dark:hover:bg-slate-600"
+            className="rounded-lg bg-surface px-4 py-2 text-sm font-medium text-foreground shadow-sm ring-1 ring-border transition hover:bg-surface-muted"
           >
             Upload CSV
           </button>
           <Link
             href="/invoices/new"
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400"
+            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-surface shadow-sm transition hover:brightness-110"
           >
             New Invoice
           </Link>
@@ -113,8 +127,8 @@ export default function InvoicesClient({ initialInvoices, scheduleSteps }: Invoi
             onClick={() => setFilter(f)}
             className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
               filter === f
-                ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
-                : "bg-white text-slate-600 ring-1 ring-slate-300 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-600 dark:hover:bg-slate-700"
+                ? "bg-accent text-surface"
+                : "bg-surface text-foreground ring-1 ring-border hover:bg-surface-muted"
             }`}
           >
             {f.charAt(0).toUpperCase() + f.slice(1)}

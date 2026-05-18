@@ -5,19 +5,11 @@ import { redirect } from "next/navigation";
 import { startOfMonth, endOfMonth } from "date-fns";
 import DashboardClient from "./DashboardClient";
 
-function StatCard({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: number;
-  color: string;
-}) {
+function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md dark:border-slate-700 dark:bg-slate-800">
-      <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{label}</p>
-      <p className={`mt-2 text-3xl font-bold ${color} dark:text-white`}>{value}</p>
+    <div className="rounded-xl border border-border bg-surface p-6 shadow-sm transition hover:shadow-md">
+      <p className="text-sm font-medium text-muted">{label}</p>
+      <p className="mt-2 text-3xl font-bold text-foreground">{value}</p>
     </div>
   );
 }
@@ -59,25 +51,25 @@ export default async function DashboardPage() {
   if (totalInvoices === 0) {
     return (
       <div>
-        <h1 className="mb-6 text-2xl font-bold text-slate-900 dark:text-white">Dashboard</h1>
+        <h1 className="mb-6 text-2xl font-bold">Dashboard</h1>
         <DashboardClient>
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-            <h2 className="mb-2 text-lg font-semibold text-slate-900 dark:text-white">
+          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+            <h2 className="mb-2 text-lg font-semibold text-foreground">
               Quick Actions
             </h2>
-            <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+            <p className="mb-4 text-sm text-muted">
               Get started by creating your first invoice.
             </p>
             <div className="flex gap-3">
               <a
                 href="/invoices/new"
-                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400"
+                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-surface shadow-sm transition hover:brightness-110"
               >
                 New Invoice
               </a>
               <a
                 href="/invoices"
-                className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-slate-300 transition hover:bg-slate-50 dark:bg-slate-700 dark:text-slate-200 dark:ring-slate-600 dark:hover:bg-slate-600"
+                className="rounded-lg bg-surface px-4 py-2 text-sm font-medium text-foreground shadow-sm ring-1 ring-border transition hover:bg-surface-muted"
               >
                 View All Invoices
               </a>
@@ -90,48 +82,32 @@ export default async function DashboardPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-slate-900 dark:text-white">Dashboard</h1>
+      <h1 className="mb-6 text-2xl font-bold">Dashboard</h1>
 
       <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          label="Total Invoices"
-          value={totalInvoices}
-          color="text-slate-900 dark:text-white"
-        />
-        <StatCard
-          label="Unpaid"
-          value={unpaidCount}
-          color="text-amber-600 dark:text-amber-400"
-        />
-        <StatCard
-          label="Overdue"
-          value={overdueCount}
-          color="text-red-600 dark:text-red-400"
-        />
-        <StatCard
-          label="Paid This Month"
-          value={paidThisMonth}
-          color="text-green-600 dark:text-green-400"
-        />
+        <StatCard label="Total Invoices" value={totalInvoices} />
+        <StatCard label="Unpaid" value={unpaidCount} />
+        <StatCard label="Overdue" value={overdueCount} />
+        <StatCard label="Paid This Month" value={paidThisMonth} />
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-        <h2 className="mb-2 text-lg font-semibold text-slate-900 dark:text-white">
+      <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+        <h2 className="mb-2 text-lg font-semibold text-foreground">
           Quick Actions
         </h2>
-        <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+        <p className="mb-4 text-sm text-muted">
           Manage your invoices and keep track of payments.
         </p>
         <div className="flex gap-3">
           <a
             href="/invoices/new"
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400"
+            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-surface shadow-sm transition hover:brightness-110"
           >
             New Invoice
           </a>
           <a
             href="/invoices"
-            className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-slate-300 transition hover:bg-slate-50 dark:bg-slate-700 dark:text-slate-200 dark:ring-slate-600 dark:hover:bg-slate-600"
+            className="rounded-lg bg-surface px-4 py-2 text-sm font-medium text-foreground shadow-sm ring-1 ring-border transition hover:bg-surface-muted"
           >
             View All Invoices
           </a>

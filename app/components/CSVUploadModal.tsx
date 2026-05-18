@@ -22,31 +22,33 @@ interface UploadResult {
 
 const COLUMN_MAP: Record<string, keyof ParsedRow> = {
   "client name": "clientName",
-  "clientname": "clientName",
+  clientname: "clientName",
   "client email": "clientEmail",
-  "clientemail": "clientEmail",
-  "amount": "amount",
+  clientemail: "clientEmail",
+  amount: "amount",
   "due date": "dueDate",
-  "duedate": "dueDate",
-  "notes": "notes",
+  duedate: "dueDate",
+  notes: "notes",
   "invoice number": "invoiceNumber",
-  "invoicenumber": "invoiceNumber",
+  invoicenumber: "invoiceNumber",
 };
 
-  function normalizeHeaders(headers: string[]): Record<string, string> {
-    const map: Record<string, string> = {};
-    for (const header of headers) {
-      const normalized = header.trim().toLowerCase().replace(/_/g, " ");
-      const key = normalized.replace(/\s/g, "");
-      const mapped = COLUMN_MAP[key] || COLUMN_MAP[normalized];
-      if (mapped) {
-        map[header] = mapped;
-      }
+function normalizeHeaders(headers: string[]): Record<string, string> {
+  const map: Record<string, string> = {};
+  for (const header of headers) {
+    const normalized = header.trim().toLowerCase().replace(/_/g, " ");
+    const key = normalized.replace(/\s/g, "");
+    const mapped = COLUMN_MAP[key] || COLUMN_MAP[normalized];
+    if (mapped) {
+      map[header] = mapped;
     }
-    return map;
   }
+  return map;
+}
 
-function parseCSVFile(file: File): Promise<{ rows: ParsedRow[]; errors: string[] }> {
+function parseCSVFile(
+  file: File,
+): Promise<{ rows: ParsedRow[]; errors: string[] }> {
   return new Promise((resolve) => {
     const errors: string[] = [];
 
@@ -66,7 +68,12 @@ function parseCSVFile(file: File): Promise<{ rows: ParsedRow[]; errors: string[]
         }
 
         const headerMap = normalizeHeaders(results.meta.fields);
-        const requiredFields = ["clientName", "clientEmail", "amount", "dueDate"];
+        const requiredFields = [
+          "clientName",
+          "clientEmail",
+          "amount",
+          "dueDate",
+        ];
         const foundFields = new Set(Object.values(headerMap));
 
         for (const field of requiredFields) {
@@ -90,7 +97,12 @@ function parseCSVFile(file: File): Promise<{ rows: ParsedRow[]; errors: string[]
               (parsed as Record<string, string>)[mappedKey] = value;
             }
           }
-          if (parsed.clientName && parsed.clientEmail && parsed.amount && parsed.dueDate) {
+          if (
+            parsed.clientName &&
+            parsed.clientEmail &&
+            parsed.amount &&
+            parsed.dueDate
+          ) {
             rows.push(parsed as ParsedRow);
           }
         }
@@ -107,7 +119,11 @@ interface CSVUploadModalProps {
   onUploadComplete?: () => void;
 }
 
-export default function CSVUploadModal({ open, onClose, onUploadComplete }: CSVUploadModalProps) {
+export default function CSVUploadModal({
+  open,
+  onClose,
+  onUploadComplete,
+}: CSVUploadModalProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -163,7 +179,7 @@ export default function CSVUploadModal({ open, onClose, onUploadComplete }: CSVU
         handleFile(droppedFile);
       }
     },
-    [handleFile]
+    [handleFile],
   );
 
   const handleFileInput = useCallback(
@@ -173,7 +189,7 @@ export default function CSVUploadModal({ open, onClose, onUploadComplete }: CSVU
         handleFile(selectedFile);
       }
     },
-    [handleFile]
+    [handleFile],
   );
 
   const handleUpload = async () => {
@@ -218,15 +234,25 @@ export default function CSVUploadModal({ open, onClose, onUploadComplete }: CSVU
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-2xl rounded-xl bg-white shadow-xl dark:bg-slate-800">
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-700">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Upload CSV</h2>
+      <div className="w-full max-w-2xl rounded-xl bg-surface shadow-xl">
+        <div className="flex items-center justify-between border-b border-border px-6 py-4">
+          <h2 className="text-lg font-semibold text-foreground">Upload CSV</h2>
           <button
             onClick={handleClose}
-            className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+            className="rounded-lg p-1.5 text-muted transition hover:bg-surface-muted hover:text-foreground"
           >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -234,20 +260,20 @@ export default function CSVUploadModal({ open, onClose, onUploadComplete }: CSVU
         <div className="px-6 py-4">
           {uploadResult ? (
             <div className="space-y-4">
-              <div className="rounded-lg bg-green-50 p-4 dark:bg-green-900/30">
-                <p className="font-medium text-green-800 dark:text-green-300">
+              <div className="rounded-lg bg-surface-muted p-4">
+                <p className="font-medium text-foreground">
                   {uploadResult.created} invoice(s) created successfully
                 </p>
               </div>
 
               {uploadResult.errors.length > 0 && (
                 <div>
-                  <h3 className="mb-2 text-sm font-medium text-red-700 dark:text-red-400">
+                  <h3 className="mb-2 text-sm font-medium text-foreground">
                     {uploadResult.errors.length} row(s) had errors:
                   </h3>
-                  <div className="max-h-48 overflow-y-auto rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20">
+                  <div className="max-h-48 overflow-y-auto rounded-lg border border-border bg-surface-muted p-3">
                     {uploadResult.errors.map((err, i) => (
-                      <p key={i} className="text-sm text-red-700 dark:text-red-300">
+                      <p key={i} className="text-sm text-foreground">
                         Row {err.row}: {err.reason}
                       </p>
                     ))}
@@ -258,7 +284,7 @@ export default function CSVUploadModal({ open, onClose, onUploadComplete }: CSVU
               <div className="flex justify-end">
                 <button
                   onClick={handleClose}
-                  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400"
+                  className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-surface transition hover:brightness-110"
                 >
                   Done
                 </button>
@@ -277,12 +303,12 @@ export default function CSVUploadModal({ open, onClose, onUploadComplete }: CSVU
                   onClick={() => fileInputRef.current?.click()}
                   className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition ${
                     isDragging
-                      ? "border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-900/20"
-                      : "border-slate-300 hover:border-slate-400 dark:border-slate-600 dark:hover:border-slate-500"
+                      ? "border-accent bg-surface-muted"
+                      : "border-border hover:border-foreground"
                   }`}
                 >
                   <svg
-                    className="mb-3 h-10 w-10 text-slate-400 dark:text-slate-500"
+                    className="mb-3 h-10 w-10 text-muted"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -294,11 +320,12 @@ export default function CSVUploadModal({ open, onClose, onUploadComplete }: CSVU
                       d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3"
                     />
                   </svg>
-                  <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                  <p className="text-sm font-medium text-foreground">
                     Drop your CSV file here, or click to browse
                   </p>
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                    Expected columns: Client Name, Client Email, Amount, Due Date (YYYY-MM-DD), Notes (optional)
+                  <p className="mt-1 text-xs text-muted">
+                    Expected columns: Client Name, Client Email, Amount, Due
+                    Date (YYYY-MM-DD), Notes (optional)
                   </p>
                   <input
                     ref={fileInputRef}
@@ -310,9 +337,14 @@ export default function CSVUploadModal({ open, onClose, onUploadComplete }: CSVU
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-3 dark:bg-slate-700/50">
+                  <div className="flex items-center justify-between rounded-lg bg-surface-muted px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <svg className="h-5 w-5 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg
+                        className="h-5 w-5 text-muted"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -321,24 +353,26 @@ export default function CSVUploadModal({ open, onClose, onUploadComplete }: CSVU
                         />
                       </svg>
                       <div>
-                        <p className="text-sm font-medium text-slate-900 dark:text-white">{file.name}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                        <p className="text-sm font-medium text-foreground">
+                          {file.name}
+                        </p>
+                        <p className="text-xs text-muted">
                           {parsedRows.length} rows ready to import
                         </p>
                       </div>
                     </div>
                     <button
                       onClick={resetState}
-                      className="text-xs text-slate-500 transition hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                      className="text-xs text-accent transition hover:text-foreground"
                     >
                       Change file
                     </button>
                   </div>
 
                   {parseErrors.length > 0 && (
-                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-900/20">
+                    <div className="rounded-lg border border-border bg-surface-muted p-3">
                       {parseErrors.map((err, i) => (
-                        <p key={i} className="text-sm text-amber-700 dark:text-amber-300">
+                        <p key={i} className="text-sm text-foreground">
                           {err}
                         </p>
                       ))}
@@ -346,31 +380,49 @@ export default function CSVUploadModal({ open, onClose, onUploadComplete }: CSVU
                   )}
 
                   {parsedRows.length > 0 && (
-                    <div className="max-h-64 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-700">
+                    <div className="max-h-64 overflow-y-auto rounded-lg border border-border">
                       <table className="w-full text-left text-xs">
-                        <thead className="sticky top-0 bg-slate-50 dark:bg-slate-700/80">
+                        <thead className="sticky top-0 bg-surface-muted">
                           <tr>
-                            <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">#</th>
-                            <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Client</th>
-                            <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Email</th>
-                            <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Amount</th>
-                            <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Due Date</th>
+                            <th className="px-3 py-2 font-medium text-muted">
+                              #
+                            </th>
+                            <th className="px-3 py-2 font-medium text-muted">
+                              Client
+                            </th>
+                            <th className="px-3 py-2 font-medium text-muted">
+                              Email
+                            </th>
+                            <th className="px-3 py-2 font-medium text-muted">
+                              Amount
+                            </th>
+                            <th className="px-3 py-2 font-medium text-muted">
+                              Due Date
+                            </th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+                        <tbody className="divide-y divide-border">
                           {parsedRows.slice(0, 20).map((row, i) => (
                             <tr key={i}>
-                              <td className="px-3 py-2 text-slate-400 dark:text-slate-500">{i + 1}</td>
-                              <td className="px-3 py-2 text-slate-900 dark:text-white">{row.clientName}</td>
-                              <td className="px-3 py-2 text-slate-500 dark:text-slate-400">{row.clientEmail}</td>
-                              <td className="px-3 py-2 text-slate-900 dark:text-white">{row.amount}</td>
-                              <td className="px-3 py-2 text-slate-500 dark:text-slate-400">{row.dueDate}</td>
+                              <td className="px-3 py-2 text-muted">{i + 1}</td>
+                              <td className="px-3 py-2 text-foreground">
+                                {row.clientName}
+                              </td>
+                              <td className="px-3 py-2 text-muted">
+                                {row.clientEmail}
+                              </td>
+                              <td className="px-3 py-2 text-foreground">
+                                {row.amount}
+                              </td>
+                              <td className="px-3 py-2 text-muted">
+                                {row.dueDate}
+                              </td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
                       {parsedRows.length > 20 && (
-                        <p className="border-t border-slate-200 px-3 py-2 text-center text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                        <p className="border-t border-border px-3 py-2 text-center text-xs text-muted">
                           Showing 20 of {parsedRows.length} rows
                         </p>
                       )}
@@ -380,16 +432,18 @@ export default function CSVUploadModal({ open, onClose, onUploadComplete }: CSVU
                   <div className="flex justify-end gap-3">
                     <button
                       onClick={resetState}
-                      className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-300 transition hover:bg-slate-50 dark:bg-slate-700 dark:text-slate-200 dark:ring-slate-600 dark:hover:bg-slate-600"
+                      className="rounded-lg bg-surface px-4 py-2 text-sm font-medium text-foreground ring-1 ring-border transition hover:bg-surface-muted"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleUpload}
                       disabled={uploading || parsedRows.length === 0}
-                      className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-400"
+                      className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-surface transition hover:brightness-110 disabled:opacity-50"
                     >
-                      {uploading ? "Uploading..." : `Import ${parsedRows.length} Invoice(s)`}
+                      {uploading
+                        ? "Uploading..."
+                        : `Import ${parsedRows.length} Invoice(s)`}
                     </button>
                   </div>
                 </div>

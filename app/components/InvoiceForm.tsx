@@ -35,7 +35,11 @@ function formatDateForInput(date: Date | string): string {
   return `${year}-${month}-${day}`;
 }
 
-export default function InvoiceForm({ initialData, mode, schedules }: InvoiceFormProps) {
+export default function InvoiceForm({
+  initialData,
+  mode,
+  schedules,
+}: InvoiceFormProps) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
@@ -54,7 +58,9 @@ export default function InvoiceForm({ initialData, mode, schedules }: InvoiceFor
   });
 
   function handleChange(
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
   ) {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -103,9 +109,7 @@ export default function InvoiceForm({ initialData, mode, schedules }: InvoiceFor
         return;
       }
 
-      toast.success(
-        mode === "create" ? "Invoice created" : "Invoice updated"
-      );
+      toast.success(mode === "create" ? "Invoice created" : "Invoice updated");
       router.push("/invoices");
       router.refresh();
     } catch {
@@ -116,14 +120,14 @@ export default function InvoiceForm({ initialData, mode, schedules }: InvoiceFor
   }
 
   const inputClass =
-    "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 dark:focus:border-blue-400 dark:focus:ring-blue-400/20";
+    "mt-1 block w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground shadow-sm transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-[var(--ring)]";
 
   return (
     <form onSubmit={handleSubmit} className="mx-auto max-w-2xl space-y-6">
       <div>
         <label
           htmlFor="invoiceNumber"
-          className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+          className="block text-sm font-medium text-muted"
         >
           Invoice Number (optional)
         </label>
@@ -136,7 +140,7 @@ export default function InvoiceForm({ initialData, mode, schedules }: InvoiceFor
           className={inputClass}
         />
         {errors.invoiceNumber && (
-          <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+          <p className="mt-1 text-xs text-[var(--danger)]">
             {errors.invoiceNumber[0]}
           </p>
         )}
@@ -145,7 +149,7 @@ export default function InvoiceForm({ initialData, mode, schedules }: InvoiceFor
       <div>
         <label
           htmlFor="clientName"
-          className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+          className="block text-sm font-medium text-muted"
         >
           Client Name
         </label>
@@ -159,14 +163,16 @@ export default function InvoiceForm({ initialData, mode, schedules }: InvoiceFor
           className={inputClass}
         />
         {errors.clientName && (
-          <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.clientName[0]}</p>
+          <p className="mt-1 text-xs text-[var(--danger)]">
+            {errors.clientName[0]}
+          </p>
         )}
       </div>
 
       <div>
         <label
           htmlFor="clientEmail"
-          className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+          className="block text-sm font-medium text-muted"
         >
           Client Email
         </label>
@@ -180,7 +186,9 @@ export default function InvoiceForm({ initialData, mode, schedules }: InvoiceFor
           className={inputClass}
         />
         {errors.clientEmail && (
-          <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.clientEmail[0]}</p>
+          <p className="mt-1 text-xs text-[var(--danger)]">
+            {errors.clientEmail[0]}
+          </p>
         )}
       </div>
 
@@ -188,7 +196,7 @@ export default function InvoiceForm({ initialData, mode, schedules }: InvoiceFor
         <div>
           <label
             htmlFor="amount"
-            className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+            className="block text-sm font-medium text-muted"
           >
             Amount
           </label>
@@ -204,14 +212,16 @@ export default function InvoiceForm({ initialData, mode, schedules }: InvoiceFor
             className={inputClass}
           />
           {errors.amount && (
-            <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.amount[0]}</p>
+            <p className="mt-1 text-xs text-[var(--danger)]">
+              {errors.amount[0]}
+            </p>
           )}
         </div>
 
         <div>
           <label
             htmlFor="currency"
-            className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+            className="block text-sm font-medium text-muted"
           >
             Currency
           </label>
@@ -232,7 +242,7 @@ export default function InvoiceForm({ initialData, mode, schedules }: InvoiceFor
       <div>
         <label
           htmlFor="dueDate"
-          className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+          className="block text-sm font-medium text-muted"
         >
           Due Date
         </label>
@@ -246,15 +256,14 @@ export default function InvoiceForm({ initialData, mode, schedules }: InvoiceFor
           className={inputClass}
         />
         {errors.dueDate && (
-          <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.dueDate[0]}</p>
+          <p className="mt-1 text-xs text-[var(--danger)]">
+            {errors.dueDate[0]}
+          </p>
         )}
       </div>
 
       <div>
-        <label
-          htmlFor="notes"
-          className="block text-sm font-medium text-slate-700 dark:text-slate-300"
-        >
+        <label htmlFor="notes" className="block text-sm font-medium text-muted">
           Notes (optional)
         </label>
         <textarea
@@ -266,7 +275,7 @@ export default function InvoiceForm({ initialData, mode, schedules }: InvoiceFor
           className={inputClass}
         />
         {errors.notes && (
-          <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.notes[0]}</p>
+          <p className="mt-1 text-xs text-[var(--danger)]">{errors.notes[0]}</p>
         )}
       </div>
 
@@ -274,7 +283,7 @@ export default function InvoiceForm({ initialData, mode, schedules }: InvoiceFor
         <div>
           <label
             htmlFor="reminderScheduleId"
-            className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+            className="block text-sm font-medium text-muted"
           >
             Reminder Schedule
           </label>
@@ -294,8 +303,9 @@ export default function InvoiceForm({ initialData, mode, schedules }: InvoiceFor
                 </option>
               ))}
           </select>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            Leave as &quot;Default schedule&quot; to use your standard reminder settings.
+          <p className="mt-1 text-xs text-muted">
+            Leave as &quot;Default schedule&quot; to use your standard reminder
+            settings.
           </p>
         </div>
       )}
@@ -304,7 +314,7 @@ export default function InvoiceForm({ initialData, mode, schedules }: InvoiceFor
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-400"
+          className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-surface shadow-sm transition hover:brightness-110 disabled:opacity-50"
         >
           {submitting
             ? "Saving..."
@@ -315,7 +325,7 @@ export default function InvoiceForm({ initialData, mode, schedules }: InvoiceFor
         <button
           type="button"
           onClick={() => router.push("/invoices")}
-          className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-slate-300 transition hover:bg-slate-50 dark:bg-slate-700 dark:text-slate-200 dark:ring-slate-600 dark:hover:bg-slate-600"
+          className="rounded-lg bg-surface px-4 py-2 text-sm font-medium text-foreground shadow-sm ring-1 ring-border transition hover:bg-surface-muted"
         >
           Cancel
         </button>

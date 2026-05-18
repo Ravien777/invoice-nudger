@@ -8,13 +8,13 @@ export function AuthActions() {
   if (session) {
     return (
       <div className="flex flex-col items-center gap-4">
-        <p className="text-center text-lg text-slate-900">
+        <p className="text-center text-lg text-foreground">
           Signed in as <strong>{session.user?.email}</strong>
         </p>
         <button
           type="button"
           onClick={() => signOut()}
-          className="rounded-full bg-slate-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+          className="rounded-full bg-foreground px-6 py-3 text-sm font-semibold text-surface transition hover:brightness-110"
         >
           Sign out
         </button>
@@ -26,7 +26,7 @@ export function AuthActions() {
     <button
       type="button"
       onClick={() => signIn("email")}
-      className="rounded-full bg-slate-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+      className="rounded-full bg-foreground px-6 py-3 text-sm font-semibold text-surface transition hover:brightness-110"
     >
       Sign in with email
     </button>

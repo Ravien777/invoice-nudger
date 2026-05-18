@@ -46,7 +46,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-full bg-[var(--background)] text-[var(--foreground)]">
+      <body className="min-h-full bg-background text-foreground">
         <Providers>{children}</Providers>
       </body>
     </html>
