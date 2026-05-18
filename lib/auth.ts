@@ -86,8 +86,19 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
     async signIn({ user }) {
-      if (user.id) {
-        await seedDefaultSchedule(user.id);
+      // Ensure we use the persisted Prisma user id when seeding the default schedule.
+      // `user` may be a NextAuth user object that doesn't map 1:1 to the DB row
+      // in some edge cases, so prefer looking up the user by email first.
+      if (user?.email) {
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { email: user.email },
+          });
+          const userId = dbUser?.id ?? user.id;
+          if (userId) await seedDefaultSchedule(userId);
+        } catch (err) {
+          console.error("Failed to seed default schedule:", err);
+        }
       }
       return true;
     },
