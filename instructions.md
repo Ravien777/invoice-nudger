@@ -4,6 +4,7 @@ Project overview
 Invoice Nudger solves the painful problem of chasing late payments. Freelancers and small businesses manually add invoices (or upload a CSV), and the app sends a sequence of reminder emails until the invoice is marked as paid.
 
 Core MVP features
+
 1. User authentication (email magic link).
 2. Add, edit, delete invoices manually.
 3. Bulk upload invoices via CSV.
@@ -16,6 +17,7 @@ Core MVP features
 10. Simple landing page and onboarding.
 
 Tech stack (use exactly this)
+
 - Next.js (App Router) with TypeScript
 - Tailwind CSS for styling
 - Prisma as ORM
@@ -28,59 +30,59 @@ Tech stack (use exactly this)
 
 Database schema (use Prisma)
 model User {
-  id             String    @id @default(cuid())
-  name           String?
-  email          String    @unique
-  emailVerified  DateTime?
-  image          String?
-  invoices       Invoice[]
-  reminderSchedules ReminderSchedule[]
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+id String @id @default(cuid())
+name String?
+email String @unique
+emailVerified DateTime?
+image String?
+invoices Invoice[]
+reminderSchedules ReminderSchedule[]
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
 }
 
 model Invoice {
-  id            String   @id @default(cuid())
-  invoiceNumber String?
-  clientName    String
-  clientEmail   String
-  amount        Float
-  currency      String   @default("USD")
-  dueDate       DateTime
-  status        String   @default("unpaid") // unpaid, paid, cancelled
-  notes         String?
-  userId        String
-  user          User     @relation(fields: [userId], references: [id])
-  reminders     ReminderLog[]
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+id String @id @default(cuid())
+invoiceNumber String?
+clientName String
+clientEmail String
+amount Float
+currency String @default("USD")
+dueDate DateTime
+status String @default("unpaid") // unpaid, paid, cancelled
+notes String?
+userId String
+user User @relation(fields: [userId], references: [id])
+reminders ReminderLog[]
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
 }
 
 model ReminderSchedule {
-  id            String   @id @default(cuid())
-  name          String   // e.g. "Default schedule"
-  isDefault     Boolean  @default(false)
-  userId        String
-  user          User     @relation(fields: [userId], references: [id])
-  steps         ReminderStep[]
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+id String @id @default(cuid())
+name String // e.g. "Default schedule"
+isDefault Boolean @default(false)
+userId String
+user User @relation(fields: [userId], references: [id])
+steps ReminderStep[]
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
 }
 
 model ReminderStep {
-  id                 String   @id @default(cuid())
-  daysOffset         Int      // negative = before due, positive = after due
-  emailTemplate      String   // reference to template name (e.g. "gentle_reminder", "firm", "final_notice")
-  reminderScheduleId String
-  schedule           ReminderSchedule @relation(fields: [reminderScheduleId], references: [id])
+id String @id @default(cuid())
+daysOffset Int // negative = before due, positive = after due
+emailTemplate String // reference to template name (e.g. "gentle_reminder", "firm", "final_notice")
+reminderScheduleId String
+schedule ReminderSchedule @relation(fields: [reminderScheduleId], references: [id])
 }
 
 model ReminderLog {
-  id        String   @id @default(cuid())
-  invoiceId String
-  invoice   Invoice  @relation(fields: [invoiceId], references: [id])
-  sentAt    DateTime @default(now())
-  stepName  String   // which step triggered this
+id String @id @default(cuid())
+invoiceId String
+invoice Invoice @relation(fields: [invoiceId], references: [id])
+sentAt DateTime @default(now())
+stepName String // which step triggered this
 }
 
 Environment variables you will need (store in .env.example and .env)
@@ -95,6 +97,7 @@ Build the app step by step. After each step, give the user instructions on how t
 ─────────────────────────────
 STEP 1: Project initialization & basic configuration
 ─────────────────────────────
+
 1. Create a new Next.js app with TypeScript and Tailwind.
 2. Install all required dependencies:
    - prisma, @prisma/client
@@ -113,6 +116,7 @@ STEP 1: Project initialization & basic configuration
 ─────────────────────────────
 STEP 2: Invoice CRUD & dashboard
 ─────────────────────────────
+
 1. Create an authenticated layout that protects all `/app/*` routes.
 2. Build an invoices page (`/invoices`) with a table showing all invoices for the logged-in user (client name, amount, due date, status).
 3. Add a “New Invoice” form (modal or separate page) with fields: clientName, clientEmail, amount, dueDate, notes.
@@ -124,6 +128,7 @@ STEP 2: Invoice CRUD & dashboard
 ─────────────────────────────
 STEP 3: CSV upload for bulk invoices
 ─────────────────────────────
+
 1. Add a button “Upload CSV” on the invoices page.
 2. Build a file upload component that accepts .csv files.
 3. In the API route, parse the CSV with PapaParse. Expected columns: Client Name, Client Email, Amount, Due Date (YYYY-MM-DD), Notes (optional).
@@ -134,13 +139,14 @@ STEP 3: CSV upload for bulk invoices
 ─────────────────────────────
 STEP 4: Reminder schedules (default & per-invoice)
 ─────────────────────────────
+
 1. Seed the database with a default ReminderSchedule named “Standard” that contains these steps:
    - 3 days before due → “gentle_reminder”
    - 0 days (on due) → “due_today”
    - 3 days after → “overdue_notice”
    - 7 days after → “firm_reminder”
    - 14 days after → “final_notice”
-   Assign this schedule as `isDefault: true` for every new user when they sign up.
+     Assign this schedule as `isDefault: true` for every new user when they sign up.
 2. Create a settings page (`/settings`) where the user can edit the default schedule (add/remove steps, change daysOffset, change email template name).
 3. On the invoice edit form, add an optional field “Reminder schedule” (dropdown). If not selected, the default schedule applies.
 4. Store the selected schedule on the invoice (add `reminderScheduleId` to Invoice model or keep it inferred via user default; simpler: just store `scheduleId` on Invoice).
@@ -150,13 +156,14 @@ STEP 4: Reminder schedules (default & per-invoice)
 ─────────────────────────────
 STEP 5: Email templates & sending logic
 ─────────────────────────────
+
 1. Inside `/lib/email-templates`, create five email template functions (or simple HTML strings) for the five tones:
    - gentle_reminder
    - due_today
    - overdue_notice
    - firm_reminder
    - final_notice
-   Each template receives `clientName`, `invoiceNumber`, `amount`, `dueDate`, and a payment link.
+     Each template receives `clientName`, `invoiceNumber`, `amount`, `dueDate`, and a payment link.
 2. Build a utility function `sendReminderEmail(invoice, step)` that:
    - Uses Resend to send an email from `EMAIL_FROM` to `invoice.clientEmail`.
    - Subject and body come from the template corresponding to `step.emailTemplate`.
@@ -167,6 +174,7 @@ STEP 5: Email templates & sending logic
 ─────────────────────────────
 STEP 6: Daily scheduler (Vercel Cron Job)
 ─────────────────────────────
+
 1. Create a cron job in `vercel.json` that hits `/api/cron/send-reminders` every day at a reasonable hour (e.g., 8am UTC). Use Vercel Cron format:
    `{ "crons": [ { "path": "/api/cron/send-reminders", "schedule": "0 8 * * *" } ] }`
 2. Build the API route `/api/cron/send-reminders` with a secret header check (to ensure only Vercel can call it).
@@ -181,6 +189,7 @@ STEP 6: Daily scheduler (Vercel Cron Job)
 ─────────────────────────────
 STEP 7: Manual payment status & paid tracking
 ─────────────────────────────
+
 1. Add a “Mark as Paid” button on each invoice row in the dashboard and invoice table.
 2. Clicking it calls an API that sets `status = “paid”` and records a `ReminderLog` with stepName “manual_payment”.
 3. Add a filter on the invoices page to show: All, Unpaid, Paid, Overdue.
@@ -190,6 +199,7 @@ STEP 7: Manual payment status & paid tracking
 ─────────────────────────────
 STEP 8: Polish, onboarding & landing page
 ─────────────────────────────
+
 1. Build a public landing page (`/`) that explains the product and includes a “Start Free Trial” button leading to sign-up.
 2. Improve the post-signup flow: after first login, show an onboarding modal that creates the default reminder schedule (if not already seeded) and suggests uploading a test CSV.
 3. Add a simple billing wall later (optional for MVP). For now, let the app be free during beta.
@@ -199,9 +209,11 @@ STEP 8: Polish, onboarding & landing page
 ─────────────────────────────
 WHAT TO DO NEXT (after MVP is live)
 ─────────────────────────────
+
 - Add Stripe payment links to invoices so clients can pay directly.
 - Add Stripe webhook to auto-mark invoices as paid.
 - Build subscription tiers (with Stripe Checkout) and limit invoices per month.
 - Create a public “Invoice reminder email templates” page for SEO and lead generation.
+- Add integration to Xero, Quickbooks, Stripe
 
 Build each step completely. Write clean, well-typed code. Use server actions where appropriate. After each step, give the user a short checklist of what to test and how to verify it works.
