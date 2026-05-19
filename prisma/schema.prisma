@@ -17,6 +17,8 @@ model User {
   sessions         Session[]
   invoices         Invoice[]
   reminderSchedules ReminderSchedule[]
+  integrations     IntegrationConnection[]
+  syncLogs         SyncLog[]
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
 }
@@ -70,6 +72,10 @@ model Invoice {
   reminderScheduleId   String?
   reminderSchedule     ReminderSchedule? @relation(fields: [reminderScheduleId], references: [id])
   reminders            ReminderLog[]
+  source               String?
+  externalId           String?
+  externalContactId    String?
+  lastSyncedAt         DateTime?
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 }
@@ -100,4 +106,32 @@ model ReminderLog {
   invoice   Invoice  @relation(fields: [invoiceId], references: [id])
   sentAt    DateTime @default(now())
   stepName  String
+}
+
+model IntegrationConnection {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  platform     String
+  tenantId     String?
+  accessToken  String
+  refreshToken String
+  expiresAt    DateTime
+  connectedAt  DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, platform])
+}
+
+model SyncLog {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  platform      String
+  direction     String
+  status        String
+  recordsSynced Int      @default(0)
+  errorMessage  String?
+  startedAt     DateTime @default(now())
+  completedAt   DateTime?
 }

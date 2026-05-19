@@ -19,12 +19,20 @@ export default async function Home() {
           <span className="text-xl font-bold text-foreground">
             Invoice Nudger
           </span>
-          <Link
-            href="/api/auth/signin"
-            className="rounded-full bg-foreground px-5 py-2 text-sm font-medium text-surface shadow-(--shadow) transition hover:brightness-110"
-          >
-            Sign in
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/email-templates"
+              className="text-sm font-medium text-muted transition hover:text-foreground"
+            >
+              Templates
+            </Link>
+            <Link
+              href="/api/auth/signin"
+              className="rounded-full bg-foreground px-5 py-2 text-sm font-medium text-surface shadow-(--shadow) transition hover:brightness-110"
+            >
+              Sign in
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -289,14 +297,22 @@ export default async function Home() {
             &copy; {new Date().getFullYear()} Invoice Nudger. All rights
             reserved.
           </p>
-          {isDev && (
+          <div className="flex items-center gap-6">
             <Link
-              href="/dev-signin"
-              className="text-sm text-accent underline hover:text-foreground"
+              href="/email-templates"
+              className="text-sm text-muted transition hover:text-foreground"
             >
-              Dev sign-in
+              Email Templates
             </Link>
-          )}
+            {isDev && (
+              <Link
+                href="/dev-signin"
+                className="text-sm text-accent underline hover:text-foreground"
+              >
+                Dev sign-in
+              </Link>
+            )}
+          </div>
         </div>
       </footer>
     </div>

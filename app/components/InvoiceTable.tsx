@@ -14,6 +14,7 @@ interface Invoice {
   dueDate: string;
   status: string;
   notes: string | null;
+  source: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -215,11 +216,18 @@ export default function InvoiceTable({
                 {formatDate(inv.dueDate)}
               </td>
               <td className="px-4 py-3">
-                <span
-                  className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${statusBadge(inv.status)}`}
-                >
-                  {inv.status}
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span
+                    className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${statusBadge(inv.status)}`}
+                  >
+                    {inv.status}
+                  </span>
+                  {inv.source && inv.source !== "manual" && inv.source !== "csv" && (
+                    <span className="inline-block rounded-full bg-surface-muted px-2 py-0.5 text-[10px] font-medium text-muted ring-1 ring-border">
+                      {inv.source === "xero" ? "Xero" : inv.source === "quickbooks" ? "QuickBooks" : inv.source}
+                    </span>
+                  )}
+                </div>
               </td>
               <td className="px-4 py-3">
                 <div className="flex items-center gap-1.5">

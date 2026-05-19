@@ -20,5 +20,10 @@ export default async function SettingsPage() {
     include: { steps: { orderBy: { daysOffset: "asc" } } },
   });
 
-  return <SettingsClient schedule={schedule} />;
+  const integrations = await prisma.integrationConnection.findMany({
+    where: { userId: user!.id },
+    orderBy: { platform: "asc" },
+  });
+
+  return <SettingsClient schedule={schedule} integrations={integrations} />;
 }

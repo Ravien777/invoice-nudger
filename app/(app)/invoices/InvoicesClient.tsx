@@ -15,6 +15,7 @@ interface Invoice {
   dueDate: string;
   status: string;
   notes: string | null;
+  source: string | null;
   createdAt: string;
   updatedAt: string;
 }
