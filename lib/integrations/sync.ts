@@ -9,6 +9,7 @@ import {
   pushQuickBooksPayment,
   ensureQuickBooksToken,
 } from "./quickbooks";
+import { createPaymentRecord } from "@/lib/reconciliation";
 
 interface SyncResult {
   pulled: number;
@@ -88,6 +89,7 @@ export async function syncXero(userId: string): Promise<SyncResult> {
         };
 
         if (existing) {
+          const oldStatus = existing.status;
           await prisma.invoice.update({
             where: { id: existing.id },
             data: {
@@ -96,8 +98,37 @@ export async function syncXero(userId: string): Promise<SyncResult> {
               lastSyncedAt: invoiceData.lastSyncedAt,
             },
           });
+
+          if (invoiceData.status === "paid" && oldStatus !== "paid") {
+            await createPaymentRecord({
+              invoiceId: existing.id,
+              source: "xero",
+              amount: invoiceData.amount,
+              currency: invoiceData.currency,
+              paidAt: new Date(),
+              referenceId: xeroInvoice.InvoiceID,
+              notes: `Payment synced from Xero`,
+            });
+          }
         } else {
           await prisma.invoice.create({ data: invoiceData });
+
+          if (invoiceData.status === "paid") {
+            const created = await prisma.invoice.findFirst({
+              where: { userId, externalId: xeroInvoice.InvoiceID, source: "xero" },
+            });
+            if (created) {
+              await createPaymentRecord({
+                invoiceId: created.id,
+                source: "xero",
+                amount: invoiceData.amount,
+                currency: invoiceData.currency,
+                paidAt: new Date(),
+                referenceId: xeroInvoice.InvoiceID,
+                notes: `Payment synced from Xero`,
+              });
+            }
+          }
         }
         pullCount++;
       } catch (err) {
@@ -201,6 +232,7 @@ export async function syncQuickBooks(userId: string): Promise<SyncResult> {
         };
 
         if (existing) {
+          const oldStatus = existing.status;
           await prisma.invoice.update({
             where: { id: existing.id },
             data: {
@@ -209,8 +241,37 @@ export async function syncQuickBooks(userId: string): Promise<SyncResult> {
               lastSyncedAt: invoiceData.lastSyncedAt,
             },
           });
+
+          if (invoiceData.status === "paid" && oldStatus !== "paid") {
+            await createPaymentRecord({
+              invoiceId: existing.id,
+              source: "quickbooks",
+              amount: invoiceData.amount,
+              currency: invoiceData.currency,
+              paidAt: new Date(),
+              referenceId: qbInvoice.Id,
+              notes: `Payment synced from QuickBooks`,
+            });
+          }
         } else {
           await prisma.invoice.create({ data: invoiceData });
+
+          if (invoiceData.status === "paid") {
+            const created = await prisma.invoice.findFirst({
+              where: { userId, externalId: qbInvoice.Id, source: "quickbooks" },
+            });
+            if (created) {
+              await createPaymentRecord({
+                invoiceId: created.id,
+                source: "quickbooks",
+                amount: invoiceData.amount,
+                currency: invoiceData.currency,
+                paidAt: new Date(),
+                referenceId: qbInvoice.Id,
+                notes: `Payment synced from QuickBooks`,
+              });
+            }
+          }
         }
         pullCount++;
       } catch (err) {

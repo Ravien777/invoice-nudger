@@ -36,6 +36,18 @@ export default async function AppLayout({
               Invoices
             </Link>
             <Link
+              href="/reconciliation"
+              className="text-sm text-muted transition hover:text-foreground"
+            >
+              Reconciliation
+            </Link>
+            <Link
+              href="/promises"
+              className="text-sm text-muted transition hover:text-foreground"
+            >
+              Promises
+            </Link>
+            <Link
               href="/settings"
               className="text-sm text-muted transition hover:text-foreground"
             >

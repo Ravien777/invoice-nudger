@@ -45,12 +45,16 @@ export default async function EditInvoicePage({
           id: invoice.id,
           clientName: invoice.clientName,
           clientEmail: invoice.clientEmail,
+          clientPhone: invoice.clientPhone,
+          projectName: invoice.projectName,
           amount: invoice.amount,
           currency: invoice.currency,
           dueDate: invoice.dueDate.toISOString(),
           invoiceNumber: invoice.invoiceNumber,
           notes: invoice.notes,
           reminderScheduleId: invoice.reminderScheduleId,
+          promisedDate: invoice.promisedDate?.toISOString() ?? null,
+          promiseStatus: invoice.promiseStatus,
         }}
       />
     </div>

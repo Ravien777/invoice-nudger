@@ -91,7 +91,7 @@ export async function PUT(
     );
   }
 
-  const { clientName, clientEmail, amount, currency, dueDate, invoiceNumber, notes, reminderScheduleId } =
+  const { clientName, clientEmail, clientPhone, projectName, amount, currency, dueDate, invoiceNumber, notes, reminderScheduleId } =
     validation.data;
 
   let scheduleId: string | null = null;
@@ -104,17 +104,43 @@ export async function PUT(
     }
   }
 
+  const promiseFields: Record<string, unknown> = {};
+  if (body.promisedDate !== undefined) {
+    promiseFields.promisedDate = body.promisedDate ? new Date(body.promisedDate) : null;
+  }
+  if (body.promiseStatus !== undefined) {
+    promiseFields.promiseStatus = body.promiseStatus;
+  }
+
+  const lateFeeFields: Record<string, unknown> = {};
+  if (body.lateFeeEnabled !== undefined) {
+    lateFeeFields.lateFeeEnabled = body.lateFeeEnabled;
+  }
+  if (body.lateFeeAmount !== undefined) {
+    lateFeeFields.lateFeeAmount = body.lateFeeAmount;
+  }
+  if (body.interestRate !== undefined) {
+    lateFeeFields.interestRate = body.interestRate;
+  }
+  if (body.feeCap !== undefined) {
+    lateFeeFields.feeCap = body.feeCap;
+  }
+
   const updated = await prisma.invoice.update({
     where: { id },
     data: {
       clientName,
       clientEmail,
+      clientPhone: clientPhone || null,
+      projectName: projectName || null,
       amount,
       currency: currency || "USD",
       dueDate: new Date(dueDate),
       invoiceNumber: invoiceNumber || null,
       notes: notes || null,
       reminderScheduleId: scheduleId,
+      ...promiseFields,
+      ...lateFeeFields,
     },
   });
 

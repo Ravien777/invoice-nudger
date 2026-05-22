@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { invoiceSchema } from "@/lib/validations";
+import { canCreateInvoice } from "@/lib/subscriptions";
 
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
@@ -60,8 +61,16 @@ export async function POST(request: Request) {
     );
   }
 
-  const { clientName, clientEmail, amount, currency, dueDate, invoiceNumber, notes, reminderScheduleId } =
+  const { clientName, clientEmail, clientPhone, projectName, amount, currency, dueDate, invoiceNumber, notes, reminderScheduleId } =
     validation.data;
+
+  const limitCheck = await canCreateInvoice(user.id, 1);
+  if (!limitCheck.allowed) {
+    return NextResponse.json(
+      { error: `Invoice limit reached. You've created ${limitCheck.current}/${limitCheck.limit} invoices this month. Upgrade your plan to create more.` },
+      { status: 402 }
+    );
+  }
 
   let scheduleId: string | null = null;
   if (reminderScheduleId) {
@@ -73,10 +82,17 @@ export async function POST(request: Request) {
     }
   }
 
+  const lateFeeAmount =
+    user.lateFeeType === "fixed"
+      ? user.lateFeeValue
+      : (user.lateFeeValue / 100) * amount;
+
   const invoice = await prisma.invoice.create({
     data: {
       clientName,
       clientEmail,
+      clientPhone: clientPhone || null,
+      projectName: projectName || null,
       amount,
       currency: currency || "USD",
       dueDate: new Date(dueDate),
@@ -84,6 +100,10 @@ export async function POST(request: Request) {
       notes: notes || null,
       userId: user.id,
       reminderScheduleId: scheduleId,
+      lateFeeEnabled: user.lateFeeEnabled,
+      lateFeeAmount,
+      interestRate: user.interestEnabled ? user.interestRate : 0,
+      feeCap: user.feeCap,
     },
   });
 

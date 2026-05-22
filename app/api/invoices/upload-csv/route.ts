@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { invoiceSchema } from "@/lib/validations";
+import { canCreateInvoice } from "@/lib/subscriptions";
 
 interface CSVRow {
   clientName: string;
@@ -49,6 +50,14 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: "Maximum 500 rows per upload" },
       { status: 400 }
+    );
+  }
+
+  const limitCheck = await canCreateInvoice(user.id, rows.length);
+  if (!limitCheck.allowed) {
+    return NextResponse.json(
+      { error: `Upload would exceed your invoice limit. You've created ${limitCheck.current}/${limitCheck.limit} invoices this month and this upload would add ${rows.length}. Upgrade your plan to upload more.` },
+      { status: 402 }
     );
   }
 

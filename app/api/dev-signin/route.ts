@@ -30,7 +30,7 @@ export async function POST(request: Request) {
 
   if (!user) {
     user = await prisma.user.create({
-      data: { email, name: email.split("@")[0] },
+      data: { email, name: email.split("@")[0], plan: "agency" },
     });
     await seedDefaultSchedule(user.id);
   }

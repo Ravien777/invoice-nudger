@@ -30,6 +30,8 @@ export default async function InvoicesPage() {
     dueDate: inv.dueDate.toISOString(),
     createdAt: inv.createdAt.toISOString(),
     updatedAt: inv.updatedAt.toISOString(),
+    paidAt: inv.paidAt?.toISOString() ?? null,
+    promisedDate: inv.promisedDate?.toISOString() ?? null,
   }));
 
   const scheduleSteps = defaultSchedule?.steps.map((s) => ({
@@ -37,5 +39,5 @@ export default async function InvoicesPage() {
     daysOffset: s.daysOffset,
   })) ?? [];
 
-  return <InvoicesClient initialInvoices={serialized} scheduleSteps={scheduleSteps} />;
+  return <InvoicesClient initialInvoices={serialized} scheduleSteps={scheduleSteps} userTone={user?.aiTone} />;
 }

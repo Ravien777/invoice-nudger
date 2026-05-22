@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { createPaymentRecord } from "@/lib/reconciliation";
 
 export async function POST(
   _request: Request,
@@ -41,7 +42,16 @@ export async function POST(
 
   const updated = await prisma.invoice.update({
     where: { id },
-    data: { status: "paid" },
+    data: { status: "paid", paidAt: new Date() },
+  });
+
+  await createPaymentRecord({
+    invoiceId: id,
+    source: "manual",
+    amount: invoice.amount,
+    currency: invoice.currency,
+    paidAt: new Date(),
+    notes: "Manually marked as paid",
   });
 
   await prisma.reminderLog.create({

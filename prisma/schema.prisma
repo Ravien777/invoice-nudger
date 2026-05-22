@@ -13,14 +13,38 @@ model User {
   email            String             @unique
   emailVerified    DateTime?
   image            String?
+  plan             String             @default("free")
+  stripeCustomerId String?
+  stripeSubscriptionId String?
+  stripePriceId    String?
+  subscriptionStatus String?
+  aiTone           String             @default("professional")
+  aiRemindersEnabled Boolean          @default(false)
+  portalBranding    String?
+  portalEnabled     Boolean          @default(false)
+  lateFeeEnabled    Boolean          @default(false)
+  lateFeeType       String           @default("fixed")
+  lateFeeValue      Float            @default(0)
+  lateFeeFrequency  String           @default("once")
+  interestEnabled   Boolean          @default(false)
+  interestRate      Float            @default(0)
+  lateFeeGraceDays  Int              @default(0)
+  feeCap            Float            @default(0)
   accounts         Account[]
   sessions         Session[]
   invoices         Invoice[]
   reminderSchedules ReminderSchedule[]
   integrations     IntegrationConnection[]
   syncLogs         SyncLog[]
+  aiUsage          AIReminderUsage[]
+  notificationUsage NotificationUsage[]
+  portalTokens     ClientPortalToken[]
+  industry         String?
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
+
+  dailySummaries   InvoiceDailySummary[]
+  clientProfiles   ClientPaymentProfile[]
 }
 
 model Account {
@@ -62,6 +86,8 @@ model Invoice {
   invoiceNumber        String?
   clientName           String
   clientEmail          String
+  clientPhone          String?
+  projectName          String?
   amount               Float
   currency             String   @default("USD")
   dueDate              DateTime
@@ -76,6 +102,22 @@ model Invoice {
   externalId           String?
   externalContactId    String?
   lastSyncedAt         DateTime?
+  paymentLink          String?
+  paidAt               DateTime?
+  reconciliationStatus String?
+  lastReconciledAt     DateTime?
+  payments             PaymentRecord[]
+  promiseEvents        PromiseEvent[]
+  promisedDate         DateTime?
+  promiseDetectedAt    DateTime?
+  promiseStatus        String   @default("none")
+  promiseConfidence    Float?
+  lateFeeEnabled       Boolean          @default(false)
+  lateFeeAmount        Float            @default(0)
+  interestRate         Float            @default(0)
+  accruedFees          Float            @default(0)
+  lastFeeCalculation   DateTime?
+  feeCap               Float            @default(0)
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 }
@@ -101,11 +143,20 @@ model ReminderStep {
 }
 
 model ReminderLog {
-  id        String   @id @default(cuid())
-  invoiceId String
-  invoice   Invoice  @relation(fields: [invoiceId], references: [id])
-  sentAt    DateTime @default(now())
-  stepName  String
+  id            String   @id @default(cuid())
+  invoiceId     String
+  invoice       Invoice  @relation(fields: [invoiceId], references: [id])
+  sentAt        DateTime @default(now())
+  stepName      String
+  channel       String   @default("email")
+  sentTo        String?
+  emailBody     String?
+  subjectLine   String?
+  approved      Boolean  @default(false)
+  aiGenerated   Boolean  @default(false)
+  messageId     String?
+  errorMessage  String?
+  promiseEventId String?
 }
 
 model IntegrationConnection {
@@ -134,4 +185,134 @@ model SyncLog {
   errorMessage  String?
   startedAt     DateTime @default(now())
   completedAt   DateTime?
+}
+
+model AIReminderUsage {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  month     Int
+  year      Int
+  count     Int      @default(0)
+
+  @@unique([userId, month, year])
+}
+
+model ClientPortalToken {
+  id             String   @id @default(cuid())
+  token          String   @unique
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clientEmail    String
+  clientName     String?
+  isActive       Boolean  @default(true)
+  expiresAt      DateTime?
+  lastAccessedAt DateTime?
+  createdAt      DateTime @default(now())
+
+  @@index([userId, clientEmail])
+}
+
+model PaymentRecord {
+  id            String   @id @default(cuid())
+  invoiceId     String
+  invoice       Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  source        String
+  amount        Float
+  currency      String
+  paidAt        DateTime
+  referenceId   String?
+  status        String   @default("unreconciled")
+  notes         String?
+  createdAt     DateTime @default(now())
+
+  @@index([invoiceId])
+  @@index([source])
+}
+
+model NotificationUsage {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channel   String
+  month     Int
+  year      Int
+  count     Int      @default(0)
+
+  @@unique([userId, channel, month, year])
+}
+
+model SMSOptOut {
+  id         String   @id @default(cuid())
+  phone      String
+  channel    String
+  optedOutAt DateTime @default(now())
+
+  @@unique([phone, channel])
+}
+
+model PromiseEvent {
+  id              String   @id @default(cuid())
+  invoiceId       String
+  invoice         Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  detectedAt      DateTime @default(now())
+  promisedDate    DateTime
+  emailSubject    String?
+  emailSnippet    String?
+  confidence      Float
+  status          String   @default("active")
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([invoiceId])
+  @@index([status])
+}
+
+model InvoiceDailySummary {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  date      DateTime @db.Date
+  totalInvoices     Int @default(0)
+  paidInvoices      Int @default(0)
+  overdueInvoices   Int @default(0)
+  totalAmount       Float @default(0)
+  collectedAmount   Float @default(0)
+  overdueAmount     Float @default(0)
+  avgDaysToPay      Float?
+  activeClientEmails Json?
+  createdAt DateTime @default(now())
+
+  @@unique([userId, date])
+}
+
+model ClientPaymentProfile {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  clientEmail     String
+  totalInvoices   Int      @default(0)
+  paidInvoices    Int      @default(0)
+  onTimePayments  Int      @default(0)
+  totalAmount     Float    @default(0)
+  avgDaysLate     Float?
+  lastPaymentDate DateTime?
+  riskScore       Float?
+  updatedAt       DateTime @updatedAt
+  createdAt       DateTime @default(now())
+
+  @@unique([userId, clientEmail])
+}
+
+model IndustryBenchmark {
+  id             String   @id @default(cuid())
+  industry       String
+  metric         String
+  value          Float
+  sampleSize     Int
+  computedAt     DateTime @default(now())
+
+  @@unique([industry, metric, computedAt])
 }

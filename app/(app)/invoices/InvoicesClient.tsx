@@ -4,18 +4,33 @@ import { useState, useCallback } from "react";
 import Link from "next/link";
 import InvoiceTable from "@/app/components/InvoiceTable";
 import CSVUploadModal from "@/app/components/CSVUploadModal";
+import AIReminderModal from "./components/AIReminderModal";
+import PortalTokenModal from "./components/PortalTokenModal";
 
 interface Invoice {
   id: string;
   invoiceNumber: string | null;
   clientName: string;
   clientEmail: string;
+  clientPhone: string | null;
+  projectName: string | null;
   amount: number;
   currency: string;
   dueDate: string;
   status: string;
   notes: string | null;
   source: string | null;
+  paymentLink: string | null;
+  paidAt: string | null;
+  reconciliationStatus: string | null;
+  promiseStatus: string | null;
+  promisedDate: string | null;
+  promiseConfidence: number | null;
+  lateFeeEnabled: boolean;
+  lateFeeAmount: number;
+  interestRate: number;
+  accruedFees: number;
+  feeCap: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -28,6 +43,7 @@ interface ScheduleStep {
 interface InvoicesClientProps {
   initialInvoices: Invoice[];
   scheduleSteps: ScheduleStep[];
+  userTone?: string;
 }
 
 const FILTERS = ["all", "unpaid", "overdue", "paid", "cancelled"] as const;
@@ -36,10 +52,17 @@ type Filter = (typeof FILTERS)[number];
 export default function InvoicesClient({
   initialInvoices,
   scheduleSteps,
+  userTone = "professional",
 }: InvoicesClientProps) {
   const [invoices, setInvoices] = useState<Invoice[]>(initialInvoices);
   const [csvModalOpen, setCsvModalOpen] = useState(false);
+  const [portalModalOpen, setPortalModalOpen] = useState(false);
   const [filter, setFilter] = useState<Filter>("all");
+  const [aiModal, setAiModal] = useState<{
+    open: boolean;
+    invoiceId: string;
+    stepName: string;
+  } | null>(null);
 
   const refetch = useCallback(async () => {
     try {
@@ -86,6 +109,11 @@ export default function InvoicesClient({
     }
   }, []);
 
+  const handleGenerateAI = useCallback((id: string) => {
+    const firstStep = scheduleSteps[0]?.emailTemplate ?? "gentle_reminder";
+    setAiModal({ open: true, invoiceId: id, stepName: firstStep });
+  }, [scheduleSteps]);
+
   const filtered =
     filter === "all"
       ? invoices
@@ -106,6 +134,18 @@ export default function InvoicesClient({
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Invoices</h1>
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => setPortalModalOpen(true)}
+            className="rounded-lg bg-surface px-4 py-2 text-sm font-medium text-foreground shadow-sm ring-1 ring-border transition hover:bg-surface-muted"
+          >
+            Client Portal
+          </button>
+          <Link
+            href="/invoices/ai-queue"
+            className="rounded-lg bg-surface px-4 py-2 text-sm font-medium text-purple-500 shadow-sm ring-1 ring-purple-500/20 transition hover:bg-purple-500/10"
+          >
+            AI Queue
+          </Link>
           <button
             onClick={() => setCsvModalOpen(true)}
             className="rounded-lg bg-surface px-4 py-2 text-sm font-medium text-foreground shadow-sm ring-1 ring-border transition hover:bg-surface-muted"
@@ -144,11 +184,26 @@ export default function InvoicesClient({
         scheduleSteps={scheduleSteps}
         onMarkPaid={handleMarkPaid}
         onDelete={handleDelete}
+        onGenerateAI={handleGenerateAI}
       />
       <CSVUploadModal
         open={csvModalOpen}
         onClose={() => setCsvModalOpen(false)}
         onUploadComplete={refetch}
+      />
+      {aiModal && (
+        <AIReminderModal
+          open={aiModal.open}
+          onClose={() => setAiModal(null)}
+          invoiceId={aiModal.invoiceId}
+          stepName={aiModal.stepName}
+          defaultTone={userTone as "professional" | "friendly" | "firm" | "casual"}
+          onGenerated={refetch}
+        />
+      )}
+      <PortalTokenModal
+        isOpen={portalModalOpen}
+        onClose={() => setPortalModalOpen(false)}
       />
     </div>
   );

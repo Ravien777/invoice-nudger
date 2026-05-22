@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { startOfMonth, endOfMonth } from "date-fns";
 import DashboardClient from "./DashboardClient";
+import { getTier } from "@/lib/subscriptions";
+import Link from "next/link";
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
@@ -28,7 +30,7 @@ export default async function DashboardPage() {
   const monthStart = startOfMonth(new Date());
   const monthEnd = endOfMonth(new Date());
 
-  const [unpaidCount, overdueCount, paidThisMonth, totalInvoices] =
+  const [unpaidCount, overdueCount, paidThisMonth, totalInvoices, monthlyInvoiceCount, reconciledCount, discrepancyCount] =
     await Promise.all([
       prisma.invoice.count({
         where: { userId: user!.id, status: "unpaid" },
@@ -46,7 +48,24 @@ export default async function DashboardPage() {
       prisma.invoice.count({
         where: { userId: user!.id },
       }),
+      prisma.invoice.count({
+        where: {
+          userId: user!.id,
+          createdAt: { gte: monthStart, lte: monthEnd },
+        },
+      }),
+      prisma.invoice.count({
+        where: { userId: user!.id, reconciliationStatus: "reconciled" },
+      }),
+      prisma.invoice.count({
+        where: { userId: user!.id, reconciliationStatus: "discrepancy" },
+      }),
     ]);
+
+  const tier = getTier(user!.plan);
+  const usagePercent = tier.invoiceLimit
+    ? Math.min((monthlyInvoiceCount / tier.invoiceLimit) * 100, 100)
+    : 0;
 
   if (totalInvoices === 0) {
     return (
@@ -84,12 +103,87 @@ export default async function DashboardPage() {
     <div>
       <h1 className="mb-6 text-2xl font-bold">Dashboard</h1>
 
-      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Total Invoices" value={totalInvoices} />
         <StatCard label="Unpaid" value={unpaidCount} />
         <StatCard label="Overdue" value={overdueCount} />
         <StatCard label="Paid This Month" value={paidThisMonth} />
       </div>
+
+      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="rounded-xl border border-border bg-surface p-6 shadow-sm transition hover:shadow-md">
+          <p className="text-sm font-medium text-muted">Reconciled</p>
+          <p className="mt-2 text-3xl font-bold text-[var(--success)]">{reconciledCount}</p>
+        </div>
+        <div className="rounded-xl border border-border bg-surface p-6 shadow-sm transition hover:shadow-md">
+          <p className="text-sm font-medium text-muted">Discrepancies</p>
+          <p className="mt-2 text-3xl font-bold text-[var(--warning)]">{discrepancyCount}</p>
+        </div>
+      </div>
+
+      {(reconciledCount > 0 || discrepancyCount > 0) && (
+        <div className="mb-8 rounded-xl border border-border bg-surface p-6 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-medium text-muted">Payment Reconciliation</h2>
+              <p className="mt-1 text-xs text-muted">
+                {reconciledCount} reconciled, {discrepancyCount} need{discrepancyCount === 1 ? "s" : ""} attention
+              </p>
+            </div>
+            <Link
+              href="/reconciliation"
+              className="rounded-lg bg-surface px-4 py-2 text-sm font-medium text-foreground ring-1 ring-border transition hover:bg-surface-muted"
+            >
+              View Details
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {tier.invoiceLimit !== null && (
+        <div className="mb-8 rounded-xl border border-border bg-surface p-6 shadow-sm">
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="text-sm font-medium text-muted">
+              Monthly Invoice Usage ({tier.name})
+            </h2>
+            <span className="text-sm font-medium text-foreground">
+              {monthlyInvoiceCount} / {tier.invoiceLimit}
+            </span>
+          </div>
+          <div className="h-2 w-full overflow-hidden rounded-full bg-surface-muted">
+            <div
+              className={`h-full rounded-full transition-all ${
+                usagePercent >= 100
+                  ? "bg-[var(--danger)]"
+                  : usagePercent > 80
+                  ? "bg-[var(--warning)]"
+                  : "bg-[var(--success)]"
+              }`}
+              style={{ width: `${usagePercent}%` }}
+            />
+          </div>
+          {usagePercent >= 100 && (
+            <p className="mt-2 text-sm text-[var(--danger)]">
+              Invoice limit reached.{" "}
+              <Link href="/settings/billing" className="font-medium underline hover:text-foreground">
+                Upgrade your plan
+              </Link>{" "}
+              to create more invoices.
+            </p>
+          )}
+        </div>
+      )}
+
+      {tier.invoiceLimit === null && (
+        <div className="mb-8 rounded-xl border border-border bg-surface p-6 shadow-sm">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-medium text-muted">
+              Monthly Invoice Usage ({tier.name})
+            </h2>
+            <span className="text-sm font-medium text-[var(--success)]">Unlimited</span>
+          </div>
+        </div>
+      )}
 
       <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
         <h2 className="mb-2 text-lg font-semibold text-foreground">
