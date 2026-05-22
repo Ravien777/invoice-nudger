@@ -20,7 +20,7 @@ export function dueToday({ clientName, invoiceNumber, amount, currency, dueDate,
         <p>This is a quick note to let you know that invoice${ref} for <strong>${formattedAmount}</strong> is due <strong>today</strong> (${formattedDate}).</p>
         <p>Please arrange payment at your earliest convenience.</p>
         <p style="margin-top: 24px;">
-          <a href="${paymentLink}" style="display: inline-block; padding: 12px 24px; background: #d97706; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 500;">View Invoice</a>
+          <a href="${paymentLink}" style="display: inline-block; padding: 12px 24px; background: #d97706; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 500;">Pay Now</a>
         </p>
         <p style="margin-top: 24px; color: #6b7280; font-size: 14px;">Thank you for your prompt attention to this matter.</p>
       </div>

@@ -3,6 +3,7 @@ import { dueToday } from "./due_today";
 import { overdueNotice } from "./overdue_notice";
 import { firmReminder } from "./firm_reminder";
 import { finalNotice } from "./final_notice";
+import { brokenPromiseNotice } from "./broken_promise_notice";
 
 interface TemplateParams {
   clientName: string;
@@ -11,6 +12,9 @@ interface TemplateParams {
   currency: string;
   dueDate: Date;
   paymentLink: string;
+  promisedDate?: Date;
+  accruedFees?: number;
+  feeNote?: string;
 }
 
 interface EmailContent {
@@ -24,6 +28,7 @@ const templates: Record<string, (params: TemplateParams) => EmailContent> = {
   overdue_notice: overdueNotice,
   firm_reminder: firmReminder,
   final_notice: finalNotice,
+  broken_promise_notice: brokenPromiseNotice as (params: TemplateParams) => EmailContent,
 };
 
 export function getTemplate(name: string): ((params: TemplateParams) => EmailContent) | null {

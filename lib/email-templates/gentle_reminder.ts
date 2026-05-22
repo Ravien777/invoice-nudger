@@ -20,7 +20,7 @@ export function gentleReminder({ clientName, invoiceNumber, amount, currency, du
         <p>This is just a friendly reminder that invoice${ref} for <strong>${formattedAmount}</strong> is due on <strong>${formattedDate}</strong>.</p>
         <p>If you've already sent the payment, thank you! You can disregard this email.</p>
         <p style="margin-top: 24px;">
-          <a href="${paymentLink}" style="display: inline-block; padding: 12px 24px; background: #2563eb; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 500;">View Invoice</a>
+          <a href="${paymentLink}" style="display: inline-block; padding: 12px 24px; background: #2563eb; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 500;">Pay Now</a>
         </p>
         <p style="margin-top: 24px; color: #6b7280; font-size: 14px;">If you have any questions, feel free to reach out.</p>
       </div>

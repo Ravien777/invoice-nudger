@@ -5,12 +5,26 @@ interface TemplateParams {
   currency: string;
   dueDate: Date;
   paymentLink: string;
+  accruedFees?: number;
+  feeNote?: string;
 }
 
-export function overdueNotice({ clientName, invoiceNumber, amount, currency, dueDate, paymentLink }: TemplateParams) {
+export function overdueNotice({ clientName, invoiceNumber, amount, currency, dueDate, paymentLink, accruedFees, feeNote }: TemplateParams) {
+  const totalAmount = accruedFees ? amount + accruedFees : amount;
   const formattedAmount = new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount);
+  const formattedTotal = accruedFees ? new Intl.NumberFormat("en-US", { style: "currency", currency }).format(totalAmount) : formattedAmount;
   const formattedDate = dueDate.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
   const ref = invoiceNumber ? ` #${invoiceNumber}` : "";
+
+  const feeSection = accruedFees && accruedFees > 0 ? `
+    <p style="margin-top: 16px; color: #dc2626; font-size: 14px;">
+      <strong>Total balance due: ${formattedTotal}</strong>
+      ${feeNote ? `<br><span style="color: #6b7280; font-size: 12px;">${feeNote}</span>` : ""}
+    </p>
+    <p style="color: #6b7280; font-size: 11px; font-style: italic; margin-top: 8px;">
+      This information is provided for informational purposes only and does not constitute legal advice. Late fees and interest are subject to applicable laws and your contract terms.
+    </p>
+  ` : "";
 
   return {
     subject: `Overdue: Invoice${ref} payment needed`,
@@ -19,8 +33,9 @@ export function overdueNotice({ clientName, invoiceNumber, amount, currency, due
         <p>Hi ${clientName},</p>
         <p>Our records show that invoice${ref} for <strong>${formattedAmount}</strong> was due on <strong>${formattedDate}</strong> and is now overdue.</p>
         <p>If payment has already been sent, please disregard this notice. Otherwise, we'd appreciate it if you could settle this invoice as soon as possible.</p>
+        ${feeSection}
         <p style="margin-top: 24px;">
-          <a href="${paymentLink}" style="display: inline-block; padding: 12px 24px; background: #dc2626; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 500;">View Invoice</a>
+          <a href="${paymentLink}" style="display: inline-block; padding: 12px 24px; background: #dc2626; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 500;">Pay Now</a>
         </p>
         <p style="margin-top: 24px; color: #6b7280; font-size: 14px;">Please let us know if there's any issue with the invoice.</p>
       </div>
