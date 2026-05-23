@@ -11,11 +11,17 @@ import {
 interface SidebarContextValue {
   collapsed: boolean;
   toggle: () => void;
+  mobileOpen: boolean;
+  toggleMobile: () => void;
+  closeMobile: () => void;
 }
 
 const SidebarContext = createContext<SidebarContextValue>({
   collapsed: false,
   toggle: () => {},
+  mobileOpen: false,
+  toggleMobile: () => {},
+  closeMobile: () => {},
 });
 
 export function useSidebar() {
@@ -24,6 +30,7 @@ export function useSidebar() {
 
 export function SidebarProvider({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -50,6 +57,7 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
       const isMobile = window.innerWidth < 768;
       if (isMobile) {
         root.style.setProperty("--sidebar-current-width", "0px");
+        setMobileOpen(false);
       } else {
         root.style.setProperty(
           "--sidebar-current-width",
@@ -62,9 +70,13 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
   }, [collapsed]);
 
   const toggle = () => setCollapsed((prev) => !prev);
+  const toggleMobile = () => setMobileOpen((prev) => !prev);
+  const closeMobile = () => setMobileOpen(false);
 
   return (
-    <SidebarContext.Provider value={{ collapsed, toggle }}>
+    <SidebarContext.Provider
+      value={{ collapsed, toggle, mobileOpen, toggleMobile, closeMobile }}
+    >
       {children}
     </SidebarContext.Provider>
   );

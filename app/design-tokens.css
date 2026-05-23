@@ -1,0 +1,52 @@
+:root {
+  /* Surfaces */
+  --surface-primary: #0a0a0a;
+  --surface-secondary: #141414;
+  --surface-tertiary: #1f1f1f;
+
+  /* Borders */
+  --border-default: #2e2e2e;
+  --border-muted: #1a1a1a;
+
+  /* Text */
+  --text-primary: #f5f5f5;
+  --text-secondary: #a1a1a1;
+  --text-tertiary: #6b6b6b;
+
+  /* Accent */
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+
+  /* Semantic */
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+
+  /* Spacing scale (4-based) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-7: 1.75rem;
+  --space-8: 2rem;
+  --space-9: 2.25rem;
+  --space-10: 2.5rem;
+  --space-11: 2.75rem;
+  --space-12: 3rem;
+  --space-14: 3.5rem;
+  --space-16: 4rem;
+
+  /* Typography */
+  --font-sans: 'Inter', 'Geist', sans-serif;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --text-5xl: 3rem;
+}

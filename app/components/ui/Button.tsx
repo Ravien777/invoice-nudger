@@ -30,19 +30,19 @@ type ButtonProps = ButtonAsButton | ButtonAsLink;
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    "bg-[--accent] hover:bg-[--accent-hover] text-white font-medium",
+    "bg-accent text-white hover:bg-accent-hover font-medium",
   secondary:
-    "bg-[--bg-subtle] hover:bg-[--border] text-[--text-primary] border border-[--border]",
+    "bg-surface-tertiary text-text-primary border border-border-default hover:bg-surface-secondary",
   ghost:
-    "bg-transparent hover:bg-[--bg-subtle] text-[--text-secondary] hover:text-[--text-primary]",
+    "bg-transparent text-text-secondary hover:bg-surface-tertiary",
   danger:
-    "bg-[--danger]/10 hover:bg-[--danger]/20 text-[--danger] border border-[--danger]/30",
+    "bg-danger/10 text-danger border border-danger/30 hover:bg-danger/20",
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
-  sm: "text-xs px-3 py-1.5 rounded-[--radius-sm]",
-  md: "text-sm px-4 py-2 rounded-[--radius-sm]",
-  lg: "text-sm px-5 py-2.5 rounded-[--radius-md]",
+  sm: "text-sm px-3 py-1.5 rounded-md",
+  md: "text-sm px-4 py-2 rounded-md",
+  lg: "text-base px-6 py-3 rounded-lg",
 };
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -58,7 +58,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       ...rest
     } = props as ButtonAsButton;
 
-    const base = `inline-flex items-center justify-center gap-2 transition-colors duration-150 disabled:opacity-50 disabled:pointer-events-none cursor-pointer ${variantStyles[variant]} ${sizeStyles[size]} ${className}`;
+    const base = `inline-flex items-center justify-center gap-2 transition-colors duration-150 disabled:opacity-50 disabled:pointer-events-none cursor-pointer focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface-primary ${variantStyles[variant]} ${sizeStyles[size]} ${className}`;
 
     const content = (
       <>

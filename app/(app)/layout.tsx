@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
-import Link from "next/link";
+import Sidebar from "@/app/components/layout/Sidebar";
 import HeaderActions from "./components/HeaderActions";
 
 export default async function AppLayout({
@@ -16,60 +16,19 @@ export default async function AppLayout({
   }
 
   return (
-    <div className="min-h-screen">
-      <header className="border-b border-border bg-surface">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <Link href="/dashboard" className="text-xl font-bold text-foreground">
-            Invoice Nudger
-          </Link>
-          <nav className="flex items-center gap-6">
-            <Link
-              href="/dashboard"
-              className="text-sm text-muted transition hover:text-foreground"
-            >
-              Dashboard
-            </Link>
-            <Link
-              href="/invoices"
-              className="text-sm text-muted transition hover:text-foreground"
-            >
-              Invoices
-            </Link>
-            <Link
-              href="/clients"
-              className="text-sm text-muted transition hover:text-foreground"
-            >
-              Clients
-            </Link>
-            <Link
-              href="/reconciliation"
-              className="text-sm text-muted transition hover:text-foreground"
-            >
-              Reconciliation
-            </Link>
-            <Link
-              href="/promises"
-              className="text-sm text-muted transition hover:text-foreground"
-            >
-              Promises
-            </Link>
-            <Link
-              href="/benchmarks"
-              className="text-sm text-muted transition hover:text-foreground"
-            >
-              Benchmarks
-            </Link>
-            <Link
-              href="/settings"
-              className="text-sm text-muted transition hover:text-foreground"
-            >
-              Settings
-            </Link>
-            <HeaderActions />
-          </nav>
-        </div>
-      </header>
-      <main className="mx-auto max-w-7xl px-6 py-8">{children}</main>
+    <div className="flex min-h-screen bg-surface-primary">
+      <Sidebar />
+      <div
+        className="flex-1 flex flex-col min-w-0 transition-all duration-300"
+        style={{ marginLeft: "var(--sidebar-current-width, 220px)" }}
+      >
+        <header className="h-14 flex items-center justify-end gap-2 px-6 border-b border-border-default bg-surface-primary shrink-0">
+          <HeaderActions />
+        </header>
+        <main className="flex-1 overflow-y-auto">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }
