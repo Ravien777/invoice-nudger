@@ -259,12 +259,13 @@ export default function InvoicesClient({
           >
             AI Queue
           </Link>
-          <button
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={() => setPortalModalOpen(true)}
-            className="rounded-lg bg-surface-tertiary px-3 py-1.5 text-sm font-medium text-text-secondary ring-1 ring-border-default transition hover:bg-surface-secondary"
           >
             Client Portal
-          </button>
+          </Button>
         </div>
         <span className="text-sm text-text-tertiary">
           {filtered.length} invoice{filtered.length !== 1 ? "s" : ""}
@@ -333,28 +334,34 @@ export default function InvoicesClient({
             {selectedIds.size} selected
           </span>
           <div className="h-4 w-px bg-border-default" />
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-success hover:text-success/80"
             onClick={handleBulkMarkPaid}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-success hover:text-success/80 transition-colors"
+            icon={Check}
           >
-            <Check className="h-4 w-4" />
             Mark as Paid
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-danger hover:text-danger/80"
             onClick={handleBulkDelete}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-danger hover:text-danger/80 transition-colors"
+            icon={Trash2}
           >
-            <Trash2 className="h-4 w-4" />
             Delete
-          </button>
+          </Button>
           <div className="flex-1" />
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-text-tertiary hover:text-text-secondary"
             onClick={() => setSelectedIds(new Set())}
-            className="inline-flex items-center gap-1 text-sm text-text-tertiary hover:text-text-secondary transition-colors"
+            icon={X}
           >
-            <X className="h-4 w-4" />
             Clear
-          </button>
+          </Button>
         </div>
       )}
 

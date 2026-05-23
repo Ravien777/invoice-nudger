@@ -154,19 +154,17 @@ export default function PromisesClient({
       {/* Filter tabs */}
       <div className="inline-flex gap-1 rounded-lg bg-surface-tertiary p-1">
         {filters.map((s) => (
-          <button
+          <Button
             key={s}
+            variant="ghost"
+            size="sm"
             onClick={() => setFilter(s)}
-            className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
-              filter === s
-                ? "bg-surface-primary text-text-primary shadow-sm"
-                : "text-text-secondary hover:text-text-primary"
-            }`}
+            className={filter === s ? "bg-surface-primary text-text-primary shadow-sm" : ""}
           >
             {s === "all"
               ? "All"
               : s.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase())}
-          </button>
+          </Button>
         ))}
       </div>
 

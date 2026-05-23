@@ -149,13 +149,11 @@ export default function ReconciliationClient({
 
       {/* Tab bar */}
       <div className="inline-flex gap-1 rounded-lg bg-surface-tertiary p-1">
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={() => setActiveTab("discrepancies")}
-          className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-            activeTab === "discrepancies"
-              ? "bg-surface-primary text-text-primary shadow-sm"
-              : "text-text-secondary hover:text-text-primary"
-          }`}
+          className={activeTab === "discrepancies" ? "bg-surface-primary text-text-primary shadow-sm" : ""}
         >
           Discrepancies
           {discrepancies.length > 0 && (
@@ -163,17 +161,15 @@ export default function ReconciliationClient({
               {discrepancies.length}
             </span>
           )}
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={() => setActiveTab("recent")}
-          className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-            activeTab === "recent"
-              ? "bg-surface-primary text-text-primary shadow-sm"
-              : "text-text-secondary hover:text-text-primary"
-          }`}
+          className={activeTab === "recent" ? "bg-surface-primary text-text-primary shadow-sm" : ""}
         >
           Recent
-        </button>
+        </Button>
       </div>
 
       {/* Discrepancies tab */}

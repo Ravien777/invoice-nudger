@@ -134,17 +134,15 @@ export default function NotificationsClient({
   function filterBtn(type: string | null, label: string) {
     const isActive = filter === type;
     return (
-      <button
+      <Button
         key={label}
+        variant="ghost"
+        size="sm"
         onClick={() => setFilter(type)}
-        className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
-          isActive
-            ? "bg-surface-primary text-text-primary shadow-sm"
-            : "text-text-secondary hover:text-text-primary"
-        }`}
+        className={isActive ? "bg-surface-primary text-text-primary shadow-sm" : ""}
       >
         {label}
-      </button>
+      </Button>
     );
   }
 

@@ -12,6 +12,7 @@ import {
   Legend,
 } from "recharts";
 import type { ForecastResult } from "@/lib/forecast";
+import { Button } from "@/app/components/ui/Button";
 
 interface ForecastWidgetProps {
   forecast: ForecastResult | null;
@@ -84,17 +85,15 @@ export default function ForecastWidget({ forecast, hasAccess }: ForecastWidgetPr
         <h2 className="text-sm font-medium text-text-secondary">Cash Flow Forecast</h2>
         <div className="flex gap-1 rounded-lg bg-surface-tertiary p-0.5">
           {HORIZONS.map((h) => (
-            <button
+            <Button
               key={h}
+              variant="ghost"
+              size="sm"
               onClick={() => setHorizon(h)}
-              className={`rounded-md px-3 py-1 text-xs font-medium transition ${
-                horizon === h
-                  ? "bg-accent text-white"
-                  : "text-text-secondary hover:text-text-primary"
-              }`}
+              className={horizon === h ? "bg-accent text-white" : ""}
             >
               {h}d
-            </button>
+            </Button>
           ))}
         </div>
       </div>
