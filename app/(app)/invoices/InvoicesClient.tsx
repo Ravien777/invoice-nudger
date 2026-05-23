@@ -1,11 +1,16 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import Link from "next/link";
+import { Search, Upload, Plus, X, Check, Trash2 } from "lucide-react";
+import toast from "react-hot-toast";
 import InvoiceTable from "@/app/components/InvoiceTable";
 import CSVUploadModal from "@/app/components/CSVUploadModal";
 import AIReminderModal from "./components/AIReminderModal";
 import PortalTokenModal from "./components/PortalTokenModal";
+import { PageShell } from "@/app/components/layout/PageShell";
+import { Button } from "@/app/components/ui/Button";
+import { Select } from "@/app/components/ui/Select";
 
 interface Invoice {
   id: string;
@@ -50,8 +55,7 @@ interface InvoicesClientProps {
   userPlan?: string;
 }
 
-const FILTERS = ["all", "unpaid", "overdue", "paid", "cancelled"] as const;
-type Filter = (typeof FILTERS)[number];
+const PAGE_SIZES = [10, 20, 50] as const;
 
 export default function InvoicesClient({
   initialInvoices,
@@ -64,7 +68,13 @@ export default function InvoicesClient({
   const [invoices, setInvoices] = useState<Invoice[]>(initialInvoices);
   const [csvModalOpen, setCsvModalOpen] = useState(false);
   const [portalModalOpen, setPortalModalOpen] = useState(false);
-  const [filter, setFilter] = useState<Filter>("all");
+  const [filter, setFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState<number>(20);
   const [aiModal, setAiModal] = useState<{
     open: boolean;
     invoiceId: string;
@@ -77,6 +87,7 @@ export default function InvoicesClient({
       if (res.ok) {
         const data = await res.json();
         setInvoices(data);
+        setSelectedIds(new Set());
       }
     } catch {
       // Silent fail
@@ -97,6 +108,11 @@ export default function InvoicesClient({
       setInvoices((prev) =>
         prev.map((inv) => (inv.id === id ? { ...inv, status: "paid" } : inv)),
       );
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
       return { success: true };
     } catch {
       return { success: false, error: "Network error" };
@@ -110,6 +126,11 @@ export default function InvoicesClient({
         return { success: false };
       }
       setInvoices((prev) => prev.filter((inv) => inv.id !== id));
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
       return { success: true };
     } catch {
       return { success: false };
@@ -121,72 +142,227 @@ export default function InvoicesClient({
     setAiModal({ open: true, invoiceId: id, stepName: firstStep });
   }, [scheduleSteps]);
 
-  const filtered =
-    filter === "all"
-      ? invoices
-      : invoices.filter((inv) => inv.status === filter);
-  const counts = FILTERS.reduce(
-    (acc, f) => {
-      acc[f] =
-        f === "all"
-          ? invoices.length
-          : invoices.filter((inv) => inv.status === f).length;
-      return acc;
-    },
-    {} as Record<Filter, number>,
+  const handleBulkMarkPaid = useCallback(async () => {
+    const ids = Array.from(selectedIds);
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const id of ids) {
+      const res = await handleMarkPaid(id);
+      if (res.success) {
+        successCount++;
+      } else {
+        failCount++;
+      }
+    }
+
+    if (successCount > 0) {
+      toast.success(`${successCount} invoice${successCount > 1 ? "s" : ""} marked as paid`);
+    }
+    if (failCount > 0) {
+      toast.error(`${failCount} invoice${failCount > 1 ? "s" : ""} failed`);
+    }
+  }, [selectedIds, handleMarkPaid]);
+
+  const handleBulkDelete = useCallback(async () => {
+    const ids = Array.from(selectedIds);
+    if (!confirm(`Delete ${ids.length} invoice${ids.length > 1 ? "s" : ""}?`)) return;
+
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const id of ids) {
+      const res = await handleDelete(id);
+      if (res.success) {
+        successCount++;
+      } else {
+        failCount++;
+      }
+    }
+
+    if (successCount > 0) {
+      toast.success(`${successCount} invoice${successCount > 1 ? "s" : ""} deleted`);
+    }
+    if (failCount > 0) {
+      toast.error(`${failCount} invoice${failCount > 1 ? "s" : ""} failed`);
+    }
+  }, [selectedIds, handleDelete]);
+
+  const filtered = useMemo(() => {
+    let result = invoices;
+
+    if (filter !== "all") {
+      result = result.filter((inv) => inv.status === filter);
+    }
+
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (inv) =>
+          inv.clientName.toLowerCase().includes(q) ||
+          inv.clientEmail.toLowerCase().includes(q) ||
+          (inv.invoiceNumber && inv.invoiceNumber.toLowerCase().includes(q)),
+      );
+    }
+
+    if (dateFrom) {
+      const from = new Date(dateFrom);
+      result = result.filter((inv) => new Date(inv.dueDate) >= from);
+    }
+
+    if (dateTo) {
+      const to = new Date(dateTo);
+      to.setHours(23, 59, 59, 999);
+      result = result.filter((inv) => new Date(inv.dueDate) <= to);
+    }
+
+    return result;
+  }, [invoices, filter, searchQuery, dateFrom, dateTo]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginated = filtered.slice(
+    (safePage - 1) * pageSize,
+    safePage * pageSize,
   );
+  const startItem = filtered.length === 0 ? 0 : (safePage - 1) * pageSize + 1;
+  const endItem = Math.min(safePage * pageSize, filtered.length);
 
   return (
-    <div>
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Invoices</h1>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setPortalModalOpen(true)}
-            className="rounded-lg bg-surface px-4 py-2 text-sm font-medium text-foreground shadow-sm ring-1 ring-border transition hover:bg-surface-muted"
+    <PageShell
+      title="Invoices"
+      subtitle="Manage your invoices"
+      actions={
+        <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setCsvModalOpen(true)}
           >
-            Client Portal
-          </button>
+            <Upload className="h-4 w-4" />
+            Import CSV
+          </Button>
+          <Button href="/invoices/new" size="sm">
+            <Plus className="h-4 w-4" />
+            New Invoice
+          </Button>
+        </div>
+      }
+    >
+      {/* Secondary nav */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
           <Link
             href="/invoices/ai-queue"
-            className="rounded-lg bg-surface px-4 py-2 text-sm font-medium text-purple-500 shadow-sm ring-1 ring-purple-500/20 transition hover:bg-purple-500/10"
+            className="rounded-lg bg-surface-tertiary px-3 py-1.5 text-sm font-medium text-purple-500 ring-1 ring-purple-500/20 transition hover:bg-purple-500/10"
           >
             AI Queue
           </Link>
           <button
-            onClick={() => setCsvModalOpen(true)}
-            className="rounded-lg bg-surface px-4 py-2 text-sm font-medium text-foreground shadow-sm ring-1 ring-border transition hover:bg-surface-muted"
+            onClick={() => setPortalModalOpen(true)}
+            className="rounded-lg bg-surface-tertiary px-3 py-1.5 text-sm font-medium text-text-secondary ring-1 ring-border-default transition hover:bg-surface-secondary"
           >
-            Upload CSV
+            Client Portal
           </button>
-          <Link
-            href="/invoices/new"
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-surface shadow-sm transition hover:brightness-110"
-          >
-            New Invoice
-          </Link>
+        </div>
+        <span className="text-sm text-text-tertiary">
+          {filtered.length} invoice{filtered.length !== 1 ? "s" : ""}
+        </span>
+      </div>
+
+      {/* Filter bar */}
+      <div className="flex items-center gap-3 mb-4 flex-wrap">
+        <Select
+          value={filter}
+          onChange={(e) => {
+            setFilter(e.target.value);
+            setCurrentPage(1);
+            setSelectedIds(new Set());
+          }}
+          className="w-36"
+        >
+          <option value="all">All</option>
+          <option value="unpaid">Unpaid</option>
+          <option value="overdue">Overdue</option>
+          <option value="paid">Paid</option>
+          <option value="cancelled">Cancelled</option>
+        </Select>
+
+        <div className="flex items-center gap-2">
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => {
+              setDateFrom(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="w-36 bg-surface-tertiary border border-border-default rounded-md px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors [color-scheme:dark]"
+            placeholder="From"
+          />
+          <span className="text-text-tertiary text-sm">—</span>
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(e) => {
+              setDateTo(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="w-36 bg-surface-tertiary border border-border-default rounded-md px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors [color-scheme:dark]"
+            placeholder="To"
+          />
+        </div>
+
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary pointer-events-none" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+              setSelectedIds(new Set());
+            }}
+            placeholder="Search client or invoice..."
+            className="w-full bg-surface-tertiary border border-border-default rounded-md pl-9 pr-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
+          />
         </div>
       </div>
 
-      <div className="mb-4 flex gap-2">
-        {FILTERS.map((f) => (
+      {/* Bulk actions toolbar */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-3 px-4 py-2.5 bg-accent/5 border border-accent/20 rounded-lg mb-4">
+          <span className="text-sm font-medium text-accent">
+            {selectedIds.size} selected
+          </span>
+          <div className="h-4 w-px bg-border-default" />
           <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-              filter === f
-                ? "bg-accent text-surface"
-                : "bg-surface text-foreground ring-1 ring-border hover:bg-surface-muted"
-            }`}
+            onClick={handleBulkMarkPaid}
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-success hover:text-success/80 transition-colors"
           >
-            {f.charAt(0).toUpperCase() + f.slice(1)}
-            <span className="ml-1.5 text-xs opacity-70">{counts[f]}</span>
+            <Check className="h-4 w-4" />
+            Mark as Paid
           </button>
-        ))}
-      </div>
+          <button
+            onClick={handleBulkDelete}
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-danger hover:text-danger/80 transition-colors"
+          >
+            <Trash2 className="h-4 w-4" />
+            Delete
+          </button>
+          <div className="flex-1" />
+          <button
+            onClick={() => setSelectedIds(new Set())}
+            className="inline-flex items-center gap-1 text-sm text-text-tertiary hover:text-text-secondary transition-colors"
+          >
+            <X className="h-4 w-4" />
+            Clear
+          </button>
+        </div>
+      )}
 
+      {/* Table */}
       <InvoiceTable
-        invoices={filtered}
+        invoices={paginated}
         onUploadCsv={() => setCsvModalOpen(true)}
         scheduleSteps={scheduleSteps}
         onMarkPaid={handleMarkPaid}
@@ -195,7 +371,56 @@ export default function InvoicesClient({
         riskScores={riskScores}
         probabilities={probabilities}
         userPlan={userPlan}
+        selectedIds={selectedIds}
+        onSelectionChange={setSelectedIds}
       />
+
+      {/* Pagination */}
+      {filtered.length > 0 && (
+        <div className="flex items-center justify-between mt-4 pb-4">
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-text-secondary">
+              Showing {startItem}–{endItem} of {filtered.length}
+            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-text-tertiary">Rows:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="bg-surface-tertiary border border-border-default rounded-md px-2 py-1 text-xs text-text-primary focus:outline-none focus:ring-2 focus:ring-accent"
+              >
+                {PAGE_SIZES.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={safePage <= 1}
+              className="rounded-md px-3 py-1.5 text-sm font-medium text-text-secondary border border-border-default bg-surface-tertiary hover:bg-surface-secondary transition-colors disabled:opacity-40 disabled:pointer-events-none"
+            >
+              Previous
+            </button>
+            <span className="text-sm text-text-secondary px-2">
+              {safePage} / {totalPages}
+            </span>
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={safePage >= totalPages}
+              className="rounded-md px-3 py-1.5 text-sm font-medium text-text-secondary border border-border-default bg-surface-tertiary hover:bg-surface-secondary transition-colors disabled:opacity-40 disabled:pointer-events-none"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modals */}
       <CSVUploadModal
         open={csvModalOpen}
         onClose={() => setCsvModalOpen(false)}
@@ -215,6 +440,6 @@ export default function InvoicesClient({
         isOpen={portalModalOpen}
         onClose={() => setPortalModalOpen(false)}
       />
-    </div>
+    </PageShell>
   );
 }

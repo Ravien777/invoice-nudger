@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { Table, TableHead, TableBody, TableRow, TableCell } from "@/app/components/ui/Table";
+import { Badge, type BadgeVariant } from "@/app/components/ui/Badge";
 
 interface Invoice {
   id: string;
@@ -48,6 +50,8 @@ interface InvoiceTableProps {
   riskScores?: Record<string, number>;
   probabilities?: Record<string, number>;
   userPlan?: string;
+  selectedIds?: Set<string>;
+  onSelectionChange?: (ids: Set<string>) => void;
 }
 
 function formatCurrency(amount: number, currency: string): string {
@@ -65,19 +69,6 @@ function formatDate(dateStr: string): string {
   });
 }
 
-function statusBadge(status: string): string {
-  switch (status) {
-    case "paid":
-      return "bg-[var(--success-muted)] text-[var(--success)]";
-    case "cancelled":
-      return "bg-surface-muted text-muted";
-    case "overdue":
-      return "bg-[var(--danger-muted)] text-[var(--danger)]";
-    default:
-      return "bg-[var(--warning-muted)] text-[var(--warning)]";
-  }
-}
-
 function stepLabel(step: ScheduleStep): string {
   if (step.daysOffset < 0)
     return `${Math.abs(step.daysOffset)}d before — ${step.emailTemplate}`;
@@ -89,9 +80,9 @@ function riskBadge(score: number | undefined): React.ReactNode {
   if (score === undefined) return null;
   let color: string;
   let label: string;
-  if (score <= 0.3) { color = "bg-[var(--success-muted)] text-[var(--success)]"; label = "Low"; }
-  else if (score <= 0.7) { color = "bg-[var(--warning-muted)] text-[var(--warning)]"; label = "Med"; }
-  else { color = "bg-[var(--danger-muted)] text-[var(--danger)]"; label = "High"; }
+  if (score <= 0.3) { color = "bg-success/10 text-success"; label = "Low"; }
+  else if (score <= 0.7) { color = "bg-warning/10 text-warning"; label = "Med"; }
+  else { color = "bg-danger/10 text-danger"; label = "High"; }
   return (
     <span className={`ml-1.5 inline-block rounded-full px-1.5 py-0.5 text-[10px] font-medium ${color}`}>
       {label}
@@ -104,10 +95,9 @@ const PROBABILITY_PLAN = ["pro", "agency"];
 function probabilityBadge(score: number | undefined, plan: string): React.ReactNode {
   if (score === undefined || !PROBABILITY_PLAN.includes(plan)) return null;
   let color: string;
-  let label: string;
-  if (score >= 0.8) { color = "bg-[var(--success-muted)] text-[var(--success)]"; label = "High"; }
-  else if (score >= 0.5) { color = "bg-[var(--warning-muted)] text-[var(--warning)]"; label = "Med"; }
-  else { color = "bg-[var(--danger-muted)] text-[var(--danger)]"; label = "Low"; }
+  if (score >= 0.8) { color = "bg-success/10 text-success"; }
+  else if (score >= 0.5) { color = "bg-warning/10 text-warning"; }
+  else { color = "bg-danger/10 text-danger"; }
   const pct = (score * 100).toFixed(0);
   return (
     <span
@@ -129,6 +119,8 @@ export default function InvoiceTable({
   riskScores = {},
   probabilities = {},
   userPlan = "free",
+  selectedIds = new Set(),
+  onSelectionChange,
 }: InvoiceTableProps) {
   const [sending, setSending] = useState<string | null>(null);
   const [markingPaid, setMarkingPaid] = useState<string | null>(null);
@@ -150,6 +142,26 @@ export default function InvoiceTable({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const toggleSelection = (id: string) => {
+    if (!onSelectionChange) return;
+    const next = new Set(selectedIds);
+    if (next.has(id)) {
+      next.delete(id);
+    } else {
+      next.add(id);
+    }
+    onSelectionChange(next);
+  };
+
+  const toggleAll = () => {
+    if (!onSelectionChange) return;
+    if (selectedIds.size === invoices.length) {
+      onSelectionChange(new Set());
+    } else {
+      onSelectionChange(new Set(invoices.map((inv) => inv.id)));
+    }
+  };
 
   async function handleDelete(id: string) {
     if (!confirm("Are you sure you want to delete this invoice?")) return;
@@ -245,21 +257,31 @@ export default function InvoiceTable({
     }
   }
 
+  const allSelected = invoices.length > 0 && selectedIds.size === invoices.length;
+
   if (invoices.length === 0) {
     return (
-      <div className="rounded-xl border border-border bg-surface p-12 text-center shadow-sm">
-        <p className="text-muted">No invoices found.</p>
-        <div className="mt-4 flex items-center justify-center gap-3">
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="flex flex-col items-center gap-2 mb-4">
+          <div className="h-12 w-12 rounded-full bg-surface-tertiary flex items-center justify-center">
+            <svg className="h-6 w-6 text-text-tertiary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+        </div>
+        <h3 className="text-base font-medium text-text-secondary">No invoices found</h3>
+        <p className="text-sm text-text-secondary mt-1 max-w-xs">Get started by creating your first invoice.</p>
+        <div className="mt-4 flex items-center gap-3">
           <Link
             href="/invoices/new"
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-surface transition hover:brightness-110"
+            className="inline-flex items-center justify-center gap-2 rounded-md bg-accent text-white hover:bg-accent-hover font-medium text-sm px-4 py-2 transition-colors"
           >
             Create your first invoice
           </Link>
           {onUploadCsv && (
             <button
               onClick={onUploadCsv}
-              className="rounded-lg bg-surface px-4 py-2 text-sm font-medium text-foreground ring-1 ring-border transition hover:bg-surface-muted"
+              className="inline-flex items-center justify-center gap-2 rounded-md bg-surface-tertiary text-text-primary border border-border-default hover:bg-surface-secondary font-medium text-sm px-4 py-2 transition-colors"
             >
               Upload CSV
             </button>
@@ -270,27 +292,62 @@ export default function InvoiceTable({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
-      <table className="w-full text-left text-sm">
-        <thead className="border-b border-border bg-surface-muted">
-          <tr>
-            <th className="px-4 py-3 font-medium text-muted">Invoice #</th>
-            <th className="px-4 py-3 font-medium text-muted">Client</th>
-            <th className="px-4 py-3 font-medium text-muted">Amount</th>
-            <th className="px-4 py-3 font-medium text-muted">Due Date</th>
-            <th className="px-4 py-3 font-medium text-muted">Status</th>
-            {PROBABILITY_PLAN.includes(userPlan) && <th className="px-4 py-3 font-medium text-muted">Prob.</th>}
-            <th className="px-4 py-3 font-medium text-muted">Actions</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border">
-          {invoices.map((inv) => (
-            <tr key={inv.id} className="transition hover:bg-surface-muted">
-              <td className="px-4 py-3 text-muted">
-                {inv.invoiceNumber || "-"}
-              </td>
-              <td className="px-4 py-3">
-                <div className="font-medium text-foreground">
+    <Table>
+      <TableHead>
+        <TableRow>
+          <TableCell className="w-10">
+            <button
+              onClick={toggleAll}
+              className={`h-4 w-4 rounded border transition-colors flex items-center justify-center ${
+                allSelected
+                  ? "bg-accent border-accent"
+                  : "border-border-default hover:border-text-secondary"
+              }`}
+              aria-label={allSelected ? "Deselect all" : "Select all"}
+            >
+              {allSelected && (
+                <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </button>
+          </TableCell>
+          <TableCell>Invoice #</TableCell>
+          <TableCell>Client</TableCell>
+          <TableCell>Amount</TableCell>
+          <TableCell>Due Date</TableCell>
+          <TableCell>Status</TableCell>
+          {PROBABILITY_PLAN.includes(userPlan) && <TableCell>Prob.</TableCell>}
+          <TableCell>Actions</TableCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {invoices.map((inv) => {
+          const isSelected = selectedIds.has(inv.id);
+          return (
+            <TableRow key={inv.id} className={isSelected ? "bg-accent/5" : ""}>
+              <TableCell className="w-10">
+                <button
+                  onClick={() => toggleSelection(inv.id)}
+                  className={`h-4 w-4 rounded border transition-colors flex items-center justify-center ${
+                    isSelected
+                      ? "bg-accent border-accent"
+                      : "border-border-default hover:border-text-secondary"
+                  }`}
+                  aria-label={isSelected ? "Deselect" : "Select"}
+                >
+                  {isSelected && (
+                    <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </button>
+              </TableCell>
+              <TableCell className="font-medium text-text-primary">
+                {inv.invoiceNumber || inv.id.slice(0, 8)}
+              </TableCell>
+              <TableCell>
+                <div className="font-medium text-text-primary">
                   <Link
                     href={`/clients/${encodeURIComponent(inv.clientEmail)}`}
                     className="hover:text-accent transition-colors"
@@ -299,52 +356,48 @@ export default function InvoiceTable({
                   </Link>
                   {riskBadge(riskScores[inv.clientEmail])}
                 </div>
-                <div className="text-xs text-muted">
+                <div className="text-xs text-text-secondary">
                   {inv.clientEmail}
                   {inv.clientPhone && (
-                    <span className="ml-1 text-[var(--success)]" title={`Phone: ${inv.clientPhone}`}>
+                    <span className="ml-1 text-success" title={`Phone: ${inv.clientPhone}`}>
                       📞
                     </span>
                   )}
                 </div>
-              </td>
-              <td className="px-4 py-3 font-medium text-foreground">
+              </TableCell>
+              <TableCell className="font-medium text-text-primary">
                 <div>
                   {formatCurrency(inv.amount, inv.currency)}
                   {inv.accruedFees > 0 && (
-                    <span className="ml-1.5 text-xs text-[var(--danger)]">
+                    <span className="ml-1.5 text-xs text-danger">
                       +{formatCurrency(inv.accruedFees, inv.currency)} fees
                     </span>
                   )}
                 </div>
                 {inv.accruedFees > 0 && (
-                  <div className="text-xs text-muted">
+                  <div className="text-xs text-text-secondary">
                     Total: {formatCurrency(inv.amount + inv.accruedFees, inv.currency)}
                   </div>
                 )}
-              </td>
-              <td className="px-4 py-3 text-muted">
+              </TableCell>
+              <TableCell className="text-text-secondary">
                 {formatDate(inv.dueDate)}
-              </td>
-              <td className="px-4 py-3">
-                <div className="flex items-center gap-1.5">
-                  <span
-                    className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${statusBadge(inv.status)}`}
-                  >
-                    {inv.status}
-                  </span>
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <Badge variant={inv.status as BadgeVariant}>{inv.status}</Badge>
                   {inv.status === "paid" && inv.paymentLink && (
-                    <span className="inline-block rounded-full bg-[var(--success-muted)] px-2 py-0.5 text-[10px] font-medium text-[var(--success)] ring-1 ring-[var(--success)]/20">
+                    <span className="inline-block rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-medium text-success ring-1 ring-success/20">
                       Paid via Stripe
                     </span>
                   )}
                   {inv.source && inv.source !== "manual" && inv.source !== "csv" && (
-                    <span className="inline-block rounded-full bg-surface-muted px-2 py-0.5 text-[10px] font-medium text-muted ring-1 ring-border">
+                    <span className="inline-block rounded-full bg-surface-tertiary px-2 py-0.5 text-[10px] font-medium text-text-secondary ring-1 ring-border-default">
                       {inv.source === "xero" ? "Xero" : inv.source === "quickbooks" ? "QuickBooks" : inv.source}
                     </span>
                   )}
                   {inv.reconciliationStatus === "reconciled" && (
-                    <span className="inline-flex items-center gap-0.5 rounded-full bg-[var(--success-muted)] px-2 py-0.5 text-[10px] font-medium text-[var(--success)] ring-1 ring-[var(--success)]/20" title="Reconciled">
+                    <span className="inline-flex items-center gap-0.5 rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-medium text-success ring-1 ring-success/20" title="Reconciled">
                       <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
@@ -353,7 +406,7 @@ export default function InvoiceTable({
                   {inv.reconciliationStatus === "discrepancy" && (
                     <Link
                       href="/reconciliation"
-                      className="inline-flex items-center gap-0.5 rounded-full bg-[var(--warning-muted)] px-2 py-0.5 text-[10px] font-medium text-[var(--warning)] ring-1 ring-[var(--warning)]/20 hover:brightness-110"
+                      className="inline-flex items-center gap-0.5 rounded-full bg-warning/10 px-2 py-0.5 text-[10px] font-medium text-warning ring-1 ring-warning/20 hover:brightness-110"
                       title="Payment discrepancy - click to review"
                     >
                       <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -363,7 +416,7 @@ export default function InvoiceTable({
                     </Link>
                   )}
                   {inv.promiseStatus === "active" && inv.promisedDate && (
-                    <span className="inline-flex items-center gap-0.5 rounded-full bg-[var(--success-muted)] px-2 py-0.5 text-[10px] font-medium text-[var(--success)] ring-1 ring-[var(--success)]/20" title={`Promise active until ${new Date(inv.promisedDate).toLocaleDateString()}`}>
+                    <span className="inline-flex items-center gap-0.5 rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-medium text-success ring-1 ring-success/20" title={`Promise active until ${new Date(inv.promisedDate).toLocaleDateString()}`}>
                       <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
@@ -373,7 +426,7 @@ export default function InvoiceTable({
                   {inv.promiseStatus === "pending_review" && (
                     <Link
                       href="/promises"
-                      className="inline-flex items-center gap-0.5 rounded-full bg-[var(--warning-muted)] px-2 py-0.5 text-[10px] font-medium text-[var(--warning)] ring-1 ring-[var(--warning)]/20 hover:brightness-110"
+                      className="inline-flex items-center gap-0.5 rounded-full bg-warning/10 px-2 py-0.5 text-[10px] font-medium text-warning ring-1 ring-warning/20 hover:brightness-110"
                       title="Promise pending review - click to review"
                     >
                       <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -383,22 +436,22 @@ export default function InvoiceTable({
                     </Link>
                   )}
                 </div>
-              </td>
+              </TableCell>
               {PROBABILITY_PLAN.includes(userPlan) && (
-                <td className="px-4 py-3">
+                <TableCell>
                   {inv.status !== "paid" && inv.status !== "cancelled"
                     ? probabilityBadge(probabilities[inv.id], userPlan)
-                    : <span className="text-xs text-muted">—</span>}
-                </td>
+                    : <span className="text-xs text-text-secondary">—</span>}
+                </TableCell>
               )}
-              <td className="px-4 py-3">
-                <div className="flex items-center gap-1.5">
+              <TableCell>
+                <div className="flex items-center gap-1.5 flex-wrap">
                   {inv.paymentLink ? (
                     <a
                       href={inv.paymentLink}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="rounded-md px-2 py-1 text-xs font-medium text-[var(--success)] transition hover:bg-[var(--success-muted)]"
+                      className="rounded-md px-2 py-1 text-xs font-medium text-success transition hover:bg-success/10"
                     >
                       Pay Now
                     </a>
@@ -406,14 +459,14 @@ export default function InvoiceTable({
                     <button
                       onClick={() => handleCreatePaymentLink(inv.id)}
                       disabled={creatingLink === inv.id}
-                      className="rounded-md px-2 py-1 text-xs font-medium text-accent transition hover:bg-surface-muted disabled:opacity-50"
+                      className="rounded-md px-2 py-1 text-xs font-medium text-accent transition hover:bg-surface-tertiary disabled:opacity-50"
                     >
                       {creatingLink === inv.id ? "Creating..." : "Payment Link"}
                     </button>
                   ) : null}
                   <Link
                     href={`/invoices/${inv.id}/edit`}
-                    className="rounded-md px-2 py-1 text-xs font-medium text-accent transition hover:bg-surface-muted"
+                    className="rounded-md px-2 py-1 text-xs font-medium text-accent transition hover:bg-surface-tertiary"
                   >
                     Edit
                   </Link>
@@ -421,7 +474,7 @@ export default function InvoiceTable({
                     <button
                       onClick={() => handleMarkPaid(inv.id)}
                       disabled={markingPaid === inv.id}
-                      className="rounded-md px-2 py-1 text-xs font-medium text-[var(--success)] transition hover:bg-[var(--success-muted)] disabled:opacity-50"
+                      className="rounded-md px-2 py-1 text-xs font-medium text-success transition hover:bg-success/10 disabled:opacity-50"
                     >
                       {markingPaid === inv.id ? "Marking..." : "Mark Paid"}
                     </button>
@@ -450,14 +503,14 @@ export default function InvoiceTable({
                             )
                           }
                           disabled={sending === inv.id}
-                          className="rounded-md px-2 py-1 text-xs font-medium text-accent transition hover:bg-surface-muted disabled:opacity-50"
+                          className="rounded-md px-2 py-1 text-xs font-medium text-accent transition hover:bg-surface-tertiary disabled:opacity-50"
                         >
                           {sending === inv.id ? "Sending..." : "Send Reminder"}
                         </button>
                         {openDropdown === inv.id && (
-                          <div className="absolute right-0 z-10 mt-1 w-64 rounded-lg border border-border bg-surface shadow-lg">
+                          <div className="absolute right-0 z-10 mt-1 w-64 rounded-lg border border-border-default bg-surface-secondary shadow-lg">
                             <div className="py-1">
-                              <div className="px-4 py-1.5 text-[10px] font-medium uppercase text-muted">Email</div>
+                              <div className="px-4 py-1.5 text-[10px] font-medium uppercase text-text-tertiary">Email</div>
                               {scheduleSteps.map((step) => (
                                 <button
                                   key={step.emailTemplate}
@@ -468,14 +521,14 @@ export default function InvoiceTable({
                                       "email",
                                     )
                                   }
-                                  className="block w-full px-4 py-2 text-left text-xs text-foreground transition hover:bg-surface-muted"
+                                  className="block w-full px-4 py-2 text-left text-xs text-text-primary transition hover:bg-surface-tertiary"
                                 >
                                   {stepLabel(step)}
                                 </button>
                               ))}
                               {inv.clientPhone && (
                                 <>
-                                  <div className="mt-1 border-t border-border px-4 py-1.5 text-[10px] font-medium uppercase text-muted">Phone</div>
+                                  <div className="mt-1 border-t border-border-default px-4 py-1.5 text-[10px] font-medium uppercase text-text-tertiary">Phone</div>
                                   {scheduleSteps.map((step) => (
                                     <button
                                       key={`sms-${step.emailTemplate}`}
@@ -486,7 +539,7 @@ export default function InvoiceTable({
                                           "sms",
                                         )
                                       }
-                                      className="block w-full px-4 py-2 text-left text-xs text-foreground transition hover:bg-surface-muted"
+                                      className="block w-full px-4 py-2 text-left text-xs text-text-primary transition hover:bg-surface-tertiary"
                                     >
                                       SMS — {stepLabel(step)}
                                     </button>
@@ -501,7 +554,7 @@ export default function InvoiceTable({
                                           "whatsapp",
                                         )
                                       }
-                                      className="block w-full px-4 py-2 text-left text-xs text-foreground transition hover:bg-surface-muted"
+                                      className="block w-full px-4 py-2 text-left text-xs text-text-primary transition hover:bg-surface-tertiary"
                                     >
                                       WhatsApp — {stepLabel(step)}
                                     </button>
@@ -517,16 +570,16 @@ export default function InvoiceTable({
                   <button
                     onClick={() => handleDelete(inv.id)}
                     disabled={deleting === inv.id}
-                    className="rounded-md px-2 py-1 text-xs font-medium text-[var(--danger)] transition hover:bg-[var(--danger-muted)] disabled:opacity-50"
+                    className="rounded-md px-2 py-1 text-xs font-medium text-danger transition hover:bg-danger/10 disabled:opacity-50"
                   >
                     {deleting === inv.id ? "Deleting..." : "Delete"}
                   </button>
                 </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+              </TableCell>
+            </TableRow>
+          );
+        })}
+      </TableBody>
+    </Table>
   );
 }
