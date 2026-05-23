@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-type BadgeVariant =
+export type BadgeVariant =
   | "unpaid"
   | "paid"
   | "cancelled"

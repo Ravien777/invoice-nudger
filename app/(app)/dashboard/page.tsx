@@ -2,24 +2,22 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
-import { startOfMonth, endOfMonth, differenceInCalendarDays, subDays } from "date-fns";
+import { startOfMonth, endOfMonth, subMonths, differenceInCalendarDays, subDays, format } from "date-fns";
+import Link from "next/link";
+import { Plus, FileText, AlertCircle, CheckCircle } from "lucide-react";
 import DashboardClient from "./DashboardClient";
 import { getTier } from "@/lib/subscriptions";
-import Link from "next/link";
 import BenchmarkWidget from "./BenchmarkWidget";
 import { computeForecast } from "@/lib/forecast";
 import ForecastWidget from "./ForecastWidget";
 import EfficiencyWidget from "./EfficiencyWidget";
 import { computeCollectionEfficiencyForUser } from "@/lib/analytics";
-
-function StatCard({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-xl border border-border bg-surface p-6 shadow-sm transition hover:shadow-md">
-      <p className="text-sm font-medium text-muted">{label}</p>
-      <p className="mt-2 text-3xl font-bold text-foreground">{value}</p>
-    </div>
-  );
-}
+import { PageShell } from "@/app/components/layout/PageShell";
+import { Button } from "@/app/components/ui/Button";
+import { StatCard } from "@/app/components/ui/StatCard";
+import { Badge, type BadgeVariant } from "@/app/components/ui/Badge";
+import { Table, TableHead, TableBody, TableRow, TableCell } from "@/app/components/ui/Table";
+import { EmptyState } from "@/app/components/ui/EmptyState";
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
@@ -34,8 +32,10 @@ export default async function DashboardPage() {
 
   const monthStart = startOfMonth(new Date());
   const monthEnd = endOfMonth(new Date());
+  const lastMonthStart = startOfMonth(subMonths(new Date(), 1));
+  const lastMonthEnd = endOfMonth(subMonths(new Date(), 1));
 
-  const [unpaidCount, overdueCount, paidThisMonth, totalInvoices, monthlyInvoiceCount, reconciledCount, discrepancyCount] =
+  const [unpaidCount, overdueCount, paidThisMonth, totalInvoices, monthlyInvoiceCount, reconciledCount, discrepancyCount, totalOutstanding, recentInvoices, paidLastMonth] =
     await Promise.all([
       prisma.invoice.count({
         where: { userId: user!.id, status: "unpaid" },
@@ -64,6 +64,23 @@ export default async function DashboardPage() {
       }),
       prisma.invoice.count({
         where: { userId: user!.id, reconciliationStatus: "discrepancy" },
+      }),
+      prisma.invoice.aggregate({
+        where: { userId: user!.id, status: { in: ["unpaid", "overdue"] } },
+        _sum: { amount: true },
+      }).then(r => r._sum.amount ?? 0),
+      prisma.invoice.findMany({
+        where: { userId: user!.id },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+        select: { id: true, invoiceNumber: true, clientName: true, amount: true, status: true, dueDate: true },
+      }),
+      prisma.invoice.count({
+        where: {
+          userId: user!.id,
+          status: "paid",
+          updatedAt: { gte: lastMonthStart, lte: lastMonthEnd },
+        },
       }),
     ]);
 
@@ -143,162 +160,235 @@ export default async function DashboardPage() {
     ? Math.min((monthlyInvoiceCount / tier.invoiceLimit) * 100, 100)
     : 0;
 
+  const paidTrend =
+    paidThisMonth !== paidLastMonth
+      ? {
+          value: `${Math.abs(paidThisMonth - paidLastMonth)}`,
+          positive: paidThisMonth > paidLastMonth,
+        }
+      : undefined;
+
+  const outstandingFormatted = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(Number(totalOutstanding));
+
   if (totalInvoices === 0) {
     return (
-      <div>
-        <h1 className="mb-6 text-2xl font-bold">Dashboard</h1>
+      <PageShell
+        title="Dashboard"
+        subtitle="Overview of your invoices"
+        actions={
+          <Button href="/invoices/new" size="sm">
+            <Plus className="h-4 w-4" />
+            New Invoice
+          </Button>
+        }
+      >
         <DashboardClient>
-          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-            <h2 className="mb-2 text-lg font-semibold text-foreground">
-              Quick Actions
-            </h2>
-            <p className="mb-4 text-sm text-muted">
-              Get started by creating your first invoice.
-            </p>
-            <div className="flex gap-3">
-              <a
-                href="/invoices/new"
-                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-surface shadow-sm transition hover:brightness-110"
-              >
-                New Invoice
-              </a>
-              <a
-                href="/invoices"
-                className="rounded-lg bg-surface px-4 py-2 text-sm font-medium text-foreground shadow-sm ring-1 ring-border transition hover:bg-surface-muted"
-              >
-                View All Invoices
-              </a>
-            </div>
-          </div>
+          <EmptyState
+            title="No invoices yet"
+            description="Get started by creating your first invoice."
+            action={{ label: "New Invoice", href: "/invoices/new" }}
+          >
+            <FileText className="h-12 w-12 text-text-tertiary" />
+          </EmptyState>
         </DashboardClient>
-      </div>
+      </PageShell>
     );
   }
 
   return (
-    <div>
-      <h1 className="mb-6 text-2xl font-bold">Dashboard</h1>
-
-      <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Total Invoices" value={totalInvoices} />
-        <StatCard label="Unpaid" value={unpaidCount} />
-        <StatCard label="Overdue" value={overdueCount} />
-        <StatCard label="Paid This Month" value={paidThisMonth} />
-      </div>
-
-      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="rounded-xl border border-border bg-surface p-6 shadow-sm transition hover:shadow-md">
-          <p className="text-sm font-medium text-muted">Reconciled</p>
-          <p className="mt-2 text-3xl font-bold text-[var(--success)]">{reconciledCount}</p>
+    <PageShell
+      title="Dashboard"
+      subtitle="Overview of your invoices"
+      actions={
+        <Button href="/invoices/new" size="sm">
+          <Plus className="h-4 w-4" />
+          New Invoice
+        </Button>
+      }
+    >
+      <DashboardClient>
+        {/* Hero — total outstanding */}
+        <div className="mb-8">
+          <p className="text-sm text-text-secondary mb-1">Total Outstanding</p>
+          <p className="text-5xl font-bold text-text-primary tracking-tight">
+            {outstandingFormatted}
+          </p>
         </div>
-        <div className="rounded-xl border border-border bg-surface p-6 shadow-sm transition hover:shadow-md">
-          <p className="text-sm font-medium text-muted">Discrepancies</p>
-          <p className="mt-2 text-3xl font-bold text-[var(--warning)]">{discrepancyCount}</p>
-        </div>
-      </div>
 
-      {(reconciledCount > 0 || discrepancyCount > 0) && (
-        <div className="mb-8 rounded-xl border border-border bg-surface p-6 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-medium text-muted">Payment Reconciliation</h2>
-              <p className="mt-1 text-xs text-muted">
-                {reconciledCount} reconciled, {discrepancyCount} need{discrepancyCount === 1 ? "s" : ""} attention
-              </p>
+        {/* Three StatCards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+          <StatCard
+            label="Unpaid"
+            value={unpaidCount.toString()}
+            variant="default"
+          >
+            <FileText className="h-5 w-5 text-text-tertiary" />
+          </StatCard>
+          <StatCard
+            label="Overdue"
+            value={overdueCount.toString()}
+            variant="warning"
+          >
+            <AlertCircle className="h-5 w-5 text-text-tertiary" />
+          </StatCard>
+          <StatCard
+            label="Paid This Month"
+            value={paidThisMonth.toString()}
+            trend={paidTrend}
+          >
+            <CheckCircle className="h-5 w-5 text-text-tertiary" />
+          </StatCard>
+        </div>
+
+        {/* Reconciliation summary */}
+        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm transition hover:shadow-md">
+            <p className="text-sm font-medium text-muted">Reconciled</p>
+            <p className="mt-2 text-3xl font-bold text-[var(--success)]">{reconciledCount}</p>
+          </div>
+          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm transition hover:shadow-md">
+            <p className="text-sm font-medium text-muted">Discrepancies</p>
+            <p className="mt-2 text-3xl font-bold text-[var(--warning)]">{discrepancyCount}</p>
+          </div>
+        </div>
+
+        {(reconciledCount > 0 || discrepancyCount > 0) && (
+          <div className="mb-8 rounded-xl border border-border bg-surface p-6 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-medium text-muted">Payment Reconciliation</h2>
+                <p className="mt-1 text-xs text-muted">
+                  {reconciledCount} reconciled, {discrepancyCount} need{discrepancyCount === 1 ? "s" : ""} attention
+                </p>
+              </div>
+              <Link
+                href="/reconciliation"
+                className="rounded-lg bg-surface px-4 py-2 text-sm font-medium text-foreground ring-1 ring-border transition hover:bg-surface-muted"
+              >
+                View Details
+              </Link>
             </div>
-            <Link
-              href="/reconciliation"
-              className="rounded-lg bg-surface px-4 py-2 text-sm font-medium text-foreground ring-1 ring-border transition hover:bg-surface-muted"
-            >
-              View Details
-            </Link>
+          </div>
+        )}
+
+        {/* Monthly invoice usage */}
+        {tier.invoiceLimit !== null && (
+          <div className="mb-8 rounded-xl border border-border bg-surface p-6 shadow-sm">
+            <div className="mb-2 flex items-center justify-between">
+              <h2 className="text-sm font-medium text-muted">
+                Monthly Invoice Usage ({tier.name})
+              </h2>
+              <span className="text-sm font-medium text-foreground">
+                {monthlyInvoiceCount} / {tier.invoiceLimit}
+              </span>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-surface-muted">
+              <div
+                className={`h-full rounded-full transition-all ${
+                  usagePercent >= 100
+                    ? "bg-[var(--danger)]"
+                    : usagePercent > 80
+                    ? "bg-[var(--warning)]"
+                    : "bg-[var(--success)]"
+                }`}
+                style={{ width: `${usagePercent}%` }}
+              />
+            </div>
+            {usagePercent >= 100 && (
+              <p className="mt-2 text-sm text-[var(--danger)]">
+                Invoice limit reached.{" "}
+                <Link href="/settings/billing" className="font-medium underline hover:text-foreground">
+                  Upgrade your plan
+                </Link>{" "}
+                to create more invoices.
+              </p>
+            )}
+          </div>
+        )}
+
+        {tier.invoiceLimit === null && (
+          <div className="mb-8 rounded-xl border border-border bg-surface p-6 shadow-sm">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-medium text-muted">
+                Monthly Invoice Usage ({tier.name})
+              </h2>
+              <span className="text-sm font-medium text-[var(--success)]">Unlimited</span>
+            </div>
+          </div>
+        )}
+
+        {/* Analytics widgets */}
+        <div className="mb-8">
+          <BenchmarkWidget
+            benchmarks={benchmarkData}
+            industry={user!.industry}
+            hasEnoughData={hasEnoughBenchmarks}
+          />
+        </div>
+
+        <div className="mb-8">
+          <EfficiencyWidget metrics={efficiencyMetrics} plan={user!.plan} />
+        </div>
+
+        <div className="mb-8">
+          <ForecastWidget forecast={forecast} hasAccess={hasForecastAccess} />
+        </div>
+
+        {/* Recent invoices table */}
+        {recentInvoices.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-sm font-medium text-text-primary mb-3">Recent Invoices</h2>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Invoice</TableCell>
+                  <TableCell>Client</TableCell>
+                  <TableCell>Amount</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell>Due Date</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {recentInvoices.map((inv) => (
+                  <TableRow key={inv.id}>
+                    <TableCell className="font-medium text-text-primary">
+                      {inv.invoiceNumber || inv.id.slice(0, 8)}
+                    </TableCell>
+                    <TableCell>{inv.clientName}</TableCell>
+                    <TableCell>${inv.amount.toFixed(2)}</TableCell>
+                    <TableCell>
+                      <Badge variant={inv.status as BadgeVariant}>{inv.status}</Badge>
+                    </TableCell>
+                    <TableCell>{format(inv.dueDate, "MMM d, yyyy")}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+
+        {/* Quick Actions */}
+        <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+          <h2 className="mb-2 text-lg font-semibold text-foreground">
+            Quick Actions
+          </h2>
+          <p className="mb-4 text-sm text-muted">
+            Manage your invoices and keep track of payments.
+          </p>
+          <div className="flex gap-3">
+            <Button href="/invoices/new" size="sm">
+              <Plus className="h-4 w-4" />
+              New Invoice
+            </Button>
+            <Button href="/invoices" variant="secondary" size="sm">
+              View All Invoices
+            </Button>
           </div>
         </div>
-      )}
-
-      {tier.invoiceLimit !== null && (
-        <div className="mb-8 rounded-xl border border-border bg-surface p-6 shadow-sm">
-          <div className="mb-2 flex items-center justify-between">
-            <h2 className="text-sm font-medium text-muted">
-              Monthly Invoice Usage ({tier.name})
-            </h2>
-            <span className="text-sm font-medium text-foreground">
-              {monthlyInvoiceCount} / {tier.invoiceLimit}
-            </span>
-          </div>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-surface-muted">
-            <div
-              className={`h-full rounded-full transition-all ${
-                usagePercent >= 100
-                  ? "bg-[var(--danger)]"
-                  : usagePercent > 80
-                  ? "bg-[var(--warning)]"
-                  : "bg-[var(--success)]"
-              }`}
-              style={{ width: `${usagePercent}%` }}
-            />
-          </div>
-          {usagePercent >= 100 && (
-            <p className="mt-2 text-sm text-[var(--danger)]">
-              Invoice limit reached.{" "}
-              <Link href="/settings/billing" className="font-medium underline hover:text-foreground">
-                Upgrade your plan
-              </Link>{" "}
-              to create more invoices.
-            </p>
-          )}
-        </div>
-      )}
-
-      {tier.invoiceLimit === null && (
-        <div className="mb-8 rounded-xl border border-border bg-surface p-6 shadow-sm">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-medium text-muted">
-              Monthly Invoice Usage ({tier.name})
-            </h2>
-            <span className="text-sm font-medium text-[var(--success)]">Unlimited</span>
-          </div>
-        </div>
-      )}
-
-      <div className="mb-8">
-        <BenchmarkWidget
-          benchmarks={benchmarkData}
-          industry={user!.industry}
-          hasEnoughData={hasEnoughBenchmarks}
-        />
-      </div>
-
-      <div className="mb-8">
-        <EfficiencyWidget metrics={efficiencyMetrics} plan={user!.plan} />
-      </div>
-
-      <div className="mb-8">
-        <ForecastWidget forecast={forecast} hasAccess={hasForecastAccess} />
-      </div>
-
-      <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-        <h2 className="mb-2 text-lg font-semibold text-foreground">
-          Quick Actions
-        </h2>
-        <p className="mb-4 text-sm text-muted">
-          Manage your invoices and keep track of payments.
-        </p>
-        <div className="flex gap-3">
-          <a
-            href="/invoices/new"
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-surface shadow-sm transition hover:brightness-110"
-          >
-            New Invoice
-          </a>
-          <a
-            href="/invoices"
-            className="rounded-lg bg-surface px-4 py-2 text-sm font-medium text-foreground shadow-sm ring-1 ring-border transition hover:bg-surface-muted"
-          >
-            View All Invoices
-          </a>
-        </div>
-      </div>
-    </div>
+      </DashboardClient>
+    </PageShell>
   );
 }

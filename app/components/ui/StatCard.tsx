@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { type LucideIcon, TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingUp, TrendingDown } from "lucide-react";
+import type { ReactNode } from "react";
 
 interface StatCardProps {
   label: string;
   value: string;
   subLabel?: string;
-  icon?: LucideIcon;
+  children?: ReactNode;
   trend?: { value: string; positive: boolean };
   href?: string;
   variant?: "default" | "highlight" | "warning";
@@ -24,7 +25,7 @@ export function StatCard({
   label,
   value,
   subLabel,
-  icon: Icon,
+  children,
   trend,
   href,
   variant = "default",
@@ -36,7 +37,7 @@ export function StatCard({
   const content = loading ? (
     <div className={`${base} ${hover} animate-pulse`}>
       <div className="flex items-center justify-between mb-3">
-        {Icon && <div className="h-5 w-5 rounded bg-surface-tertiary" />}
+        {children ? <div className="h-5 w-5 rounded bg-surface-tertiary" /> : null}
       </div>
       <div className="h-8 w-24 rounded bg-surface-tertiary mb-2" />
       <div className="h-4 w-32 rounded bg-surface-tertiary" />
@@ -44,7 +45,7 @@ export function StatCard({
   ) : (
     <div className={`${base} ${hover}`}>
       <div className="flex items-center justify-between mb-3">
-        {Icon && <Icon className="h-5 w-5 text-text-tertiary" />}
+        {children && <div className="flex">{children}</div>}
         {trend && (
           <span
             className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ${
