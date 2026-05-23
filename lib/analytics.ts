@@ -418,3 +418,144 @@ export async function recomputePaymentProbabilitiesForAll() {
     await recomputePaymentProbabilitiesForUser(user.id);
   }
 }
+
+export interface CollectionEfficiencyMetrics {
+  overall: {
+    totalPaidWithReminders: number;
+    avgDaysReminderToPayment: number | null;
+    paidWithin3Days: number;
+    paidWithin24h: number;
+    paidWithin7Days: number;
+    within3DaysRate: number | null;
+    within24hRate: number | null;
+    within7DaysRate: number | null;
+  };
+  byTemplate: Array<{
+    template: string;
+    timesSent: number;
+    paymentsWithin3Days: number;
+    conversionRate: number | null;
+  }>;
+  byChannel: Array<{
+    channel: string;
+    timesSent: number;
+    paymentsWithin3Days: number;
+    conversionRate: number | null;
+  }>;
+}
+
+export async function computeCollectionEfficiencyForUser(userId: string): Promise<CollectionEfficiencyMetrics> {
+  const reminders = await prisma.reminderLog.findMany({
+    where: { invoice: { userId } },
+    orderBy: { sentAt: "asc" },
+    select: {
+      id: true,
+      invoiceId: true,
+      sentAt: true,
+      stepName: true,
+      channel: true,
+      invoice: {
+        select: {
+          id: true,
+          status: true,
+          paidAt: true,
+        },
+      },
+    },
+  });
+
+  const paidInvoices = await prisma.invoice.findMany({
+    where: { userId, status: "paid", paidAt: { not: null } },
+    select: { id: true, paidAt: true },
+  });
+
+  const paidIds = new Set(paidInvoices.map((i) => i.id));
+
+  const reminderByInvoice = new Map<string, typeof reminders>();
+  for (const r of reminders) {
+    const list = reminderByInvoice.get(r.invoiceId) || [];
+    list.push(r);
+    reminderByInvoice.set(r.invoiceId, list);
+  }
+
+  let totalPaidWithReminders = 0;
+  let totalDaysReminderToPayment = 0;
+  let paidWithin3Days = 0;
+  let paidWithin24h = 0;
+  let paidWithin7Days = 0;
+
+  for (const [invId, invReminders] of reminderByInvoice) {
+    if (!paidIds.has(invId)) continue;
+    const lastReminder = invReminders[invReminders.length - 1];
+    const paidAt = paidInvoices.find((i) => i.id === invId)?.paidAt;
+    if (!paidAt || !lastReminder) continue;
+
+    totalPaidWithReminders++;
+    const diffMs = paidAt.getTime() - lastReminder.sentAt.getTime();
+    const diffDays = diffMs / (1000 * 60 * 60 * 24);
+    totalDaysReminderToPayment += diffDays;
+
+    if (diffDays <= 1) paidWithin24h++;
+    if (diffDays <= 3) paidWithin3Days++;
+    if (diffDays <= 7) paidWithin7Days++;
+  }
+
+  const avgDaysReminderToPayment = totalPaidWithReminders > 0
+    ? totalDaysReminderToPayment / totalPaidWithReminders
+    : null;
+
+  const within3DaysRate = totalPaidWithReminders > 0 ? paidWithin3Days / totalPaidWithReminders : null;
+  const within24hRate = totalPaidWithReminders > 0 ? paidWithin24h / totalPaidWithReminders : null;
+  const within7DaysRate = totalPaidWithReminders > 0 ? paidWithin7Days / totalPaidWithReminders : null;
+
+  const templateMap = new Map<string, { timesSent: number; paymentsWithin3Days: number }>();
+  const channelMap = new Map<string, { timesSent: number; paymentsWithin3Days: number }>();
+
+  for (const r of reminders) {
+    const tmpl = templateMap.get(r.stepName) || { timesSent: 0, paymentsWithin3Days: 0 };
+    tmpl.timesSent++;
+    templateMap.set(r.stepName, tmpl);
+
+    const ch = channelMap.get(r.channel) || { timesSent: 0, paymentsWithin3Days: 0 };
+    ch.timesSent++;
+    channelMap.set(r.channel, ch);
+
+    if (paidIds.has(r.invoiceId) && r.invoice.paidAt) {
+      const diffMs = r.invoice.paidAt.getTime() - r.sentAt.getTime();
+      const diffDays = diffMs / (1000 * 60 * 60 * 24);
+      if (diffDays <= 3) {
+        tmpl.paymentsWithin3Days++;
+        ch.paymentsWithin3Days++;
+      }
+    }
+  }
+
+  const byTemplate = Array.from(templateMap.entries()).map(([template, data]) => ({
+    template,
+    timesSent: data.timesSent,
+    paymentsWithin3Days: data.paymentsWithin3Days,
+    conversionRate: data.timesSent > 0 ? data.paymentsWithin3Days / data.timesSent : null,
+  }));
+
+  const byChannel = Array.from(channelMap.entries()).map(([channel, data]) => ({
+    channel,
+    timesSent: data.timesSent,
+    paymentsWithin3Days: data.paymentsWithin3Days,
+    conversionRate: data.timesSent > 0 ? data.paymentsWithin3Days / data.timesSent : null,
+  }));
+
+  return {
+    overall: {
+      totalPaidWithReminders,
+      avgDaysReminderToPayment,
+      paidWithin3Days,
+      paidWithin24h,
+      paidWithin7Days,
+      within3DaysRate,
+      within24hRate,
+      within7DaysRate,
+    },
+    byTemplate,
+    byChannel,
+  };
+}

@@ -9,6 +9,8 @@ import Link from "next/link";
 import BenchmarkWidget from "./BenchmarkWidget";
 import { computeForecast } from "@/lib/forecast";
 import ForecastWidget from "./ForecastWidget";
+import EfficiencyWidget from "./EfficiencyWidget";
+import { computeCollectionEfficiencyForUser } from "@/lib/analytics";
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
@@ -133,6 +135,8 @@ export default async function DashboardPage() {
 
   const forecast = await computeForecast(user!.id);
   const hasForecastAccess = getTier(user!.plan).features.includes("cash_flow_forecast");
+
+  const efficiencyMetrics = await computeCollectionEfficiencyForUser(user!.id);
 
   const tier = getTier(user!.plan);
   const usagePercent = tier.invoiceLimit
@@ -263,6 +267,10 @@ export default async function DashboardPage() {
           industry={user!.industry}
           hasEnoughData={hasEnoughBenchmarks}
         />
+      </div>
+
+      <div className="mb-8">
+        <EfficiencyWidget metrics={efficiencyMetrics} plan={user!.plan} />
       </div>
 
       <div className="mb-8">
