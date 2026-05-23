@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { type LucideIcon } from "lucide-react";
+import { type LucideIcon, TrendingUp, TrendingDown } from "lucide-react";
 
 interface StatCardProps {
   label: string;
@@ -11,12 +11,13 @@ interface StatCardProps {
   trend?: { value: string; positive: boolean };
   href?: string;
   variant?: "default" | "highlight" | "warning";
+  loading?: boolean;
 }
 
 const variantStyles = {
-  default: "bg-[--bg-surface] border-[--border]",
-  highlight: "border-[--accent] bg-[--accent-subtle]",
-  warning: "border-[--warning]/30 bg-[--warning]/5",
+  default: "border-l-2 border-l-accent bg-surface-primary border border-border-default",
+  highlight: "bg-accent/10 border-accent",
+  warning: "border-l-2 border-l-warning bg-surface-primary border border-border-default",
 };
 
 export function StatCard({
@@ -27,30 +28,44 @@ export function StatCard({
   trend,
   href,
   variant = "default",
+  loading = false,
 }: StatCardProps) {
-  const base = `bg-[--bg-surface] border rounded-[--radius-md] p-5 ${variantStyles[variant]}`;
-  const hover = href ? "hover:border-[--border-strong] transition-colors" : "";
+  const base = `rounded-xl p-5 ${variantStyles[variant]}`;
+  const hover = href ? "hover:border-border-default transition-colors" : "";
 
-  const content = (
+  const content = loading ? (
+    <div className={`${base} ${hover} animate-pulse`}>
+      <div className="flex items-center justify-between mb-3">
+        {Icon && <div className="h-5 w-5 rounded bg-surface-tertiary" />}
+      </div>
+      <div className="h-8 w-24 rounded bg-surface-tertiary mb-2" />
+      <div className="h-4 w-32 rounded bg-surface-tertiary" />
+    </div>
+  ) : (
     <div className={`${base} ${hover}`}>
       <div className="flex items-center justify-between mb-3">
-        {Icon && <Icon className="h-5 w-5 text-[--text-muted]" />}
+        {Icon && <Icon className="h-5 w-5 text-text-tertiary" />}
         {trend && (
           <span
-            className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+            className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ${
               trend.positive
-                ? "bg-[--success]/10 text-[--success]"
-                : "bg-[--danger]/10 text-[--danger]"
+                ? "bg-success/10 text-success"
+                : "bg-danger/10 text-danger"
             }`}
           >
+            {trend.positive ? (
+              <TrendingUp className="h-3 w-3" />
+            ) : (
+              <TrendingDown className="h-3 w-3" />
+            )}
             {trend.value}
           </span>
         )}
       </div>
-      <p className="text-2xl font-semibold text-[--text-primary]">{value}</p>
-      <p className="text-sm text-[--text-muted] mt-1">{label}</p>
+      <p className="text-2xl font-semibold text-text-primary">{value}</p>
+      <p className="text-sm text-text-secondary mt-1">{label}</p>
       {subLabel && (
-        <p className="text-xs text-[--text-disabled] mt-0.5">{subLabel}</p>
+        <p className="text-xs text-text-tertiary mt-0.5">{subLabel}</p>
       )}
     </div>
   );

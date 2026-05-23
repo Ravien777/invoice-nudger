@@ -56,26 +56,26 @@ export function Modal({
       }}
     >
       <div
-        className={`bg-[--bg-elevated] border border-[--border] rounded-[--radius-lg] shadow-xl w-full ${sizeMap[size]}`}
+        className={`bg-surface-secondary border border-border-default rounded-xl shadow-xl w-full animate-modal-in ${sizeMap[size]}`}
       >
-        <div className="flex items-start justify-between px-6 pt-6 pb-4">
+        <div className="flex items-start justify-between p-6 pb-0">
           <div>
-            <h2 className="text-base font-semibold text-[--text-primary]">
+            <h2 className="text-base font-semibold text-text-primary">
               {title}
             </h2>
             {description && (
-              <p className="text-sm text-[--text-muted] mt-1">{description}</p>
+              <p className="text-sm text-text-tertiary mt-1">{description}</p>
             )}
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-[--radius-sm] text-[--text-muted] hover:text-[--text-primary] hover:bg-[--bg-subtle] transition-colors"
+            className="p-1 rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-tertiary transition-colors"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="px-6 pb-4">{children}</div>
+        <div className="p-6">{children}</div>
 
         {footer && (
           <div className="px-6 pb-6 flex justify-end gap-2">{footer}</div>

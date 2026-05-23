@@ -1,7 +1,9 @@
 "use client";
 
-import { type ReactNode } from "react";
+import { createContext, useContext, type ReactNode } from "react";
 import { type LucideIcon } from "lucide-react";
+
+const TableHeadContext = createContext(false);
 
 interface TableProps {
   children?: ReactNode;
@@ -15,12 +17,12 @@ interface TableProps {
 
 export function Table({ children, emptyState, className = "" }: TableProps) {
   return (
-    <div className={`overflow-x-auto rounded-[--radius-md] border border-[--border] bg-[--bg-surface] ${className}`}>
+    <div className={`bg-surface-secondary rounded-lg border border-border-default overflow-hidden ${className}`}>
       {emptyState ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <emptyState.icon className="h-10 w-10 text-[--text-disabled] mb-3" />
-          <h3 className="text-sm font-medium text-[--text-secondary]">{emptyState.title}</h3>
-          <p className="text-xs text-[--text-muted] mt-1">{emptyState.description}</p>
+          <emptyState.icon className="h-10 w-10 text-text-tertiary mb-3" />
+          <h3 className="text-sm font-medium text-text-secondary">{emptyState.title}</h3>
+          <p className="text-xs text-text-tertiary mt-1">{emptyState.description}</p>
         </div>
       ) : (
         <table className="w-full text-sm border-collapse">{children}</table>
@@ -31,36 +33,42 @@ export function Table({ children, emptyState, className = "" }: TableProps) {
 
 export function TableHead({ children }: { children?: ReactNode }) {
   return (
-    <thead className="border-b border-[--border]">
-      {children}
+    <thead className="bg-surface-tertiary">
+      <TableHeadContext.Provider value={true}>
+        {children}
+      </TableHeadContext.Provider>
     </thead>
   );
 }
 
 export function TableBody({ children }: { children?: ReactNode }) {
-  return <tbody className="divide-y divide-[--border]/50">{children}</tbody>;
+  return <tbody className="divide-y divide-border-default/50">{children}</tbody>;
 }
 
 export function TableRow({ children, className = "", onClick }: { children?: ReactNode; className?: string; onClick?: () => void }) {
   return (
-    <tr className={`hover:bg-[--bg-subtle]/50 transition-colors ${className}`} onClick={onClick}>
+    <tr className={`border-b border-border-default last:border-0 hover:bg-surface-tertiary/50 transition-colors ${className}`} onClick={onClick}>
       {children}
     </tr>
   );
 }
 
-export function TableHeaderCell({ children, className = "" }: { children?: ReactNode; className?: string }) {
-  return (
-    <th className={`px-4 py-3 text-left text-xs font-medium text-[--text-muted] uppercase tracking-wider ${className}`}>
-      {children}
-    </th>
-  );
+interface TableCellProps {
+  children?: ReactNode;
+  className?: string;
+  colSpan?: number;
+  onClick?: (e: React.MouseEvent) => void;
 }
 
-export function TableCell({ children, className = "", onClick }: { children?: ReactNode; className?: string; onClick?: (e: React.MouseEvent) => void }) {
+export function TableCell({ children, className = "", colSpan, onClick }: TableCellProps) {
+  const isHeader = useContext(TableHeadContext);
+  const Tag = isHeader ? "th" : "td";
+  const base = isHeader
+    ? "px-4 py-3 text-xs font-medium text-text-secondary uppercase tracking-wider text-left"
+    : "px-4 py-3 text-sm text-text-secondary";
   return (
-    <td className={`px-4 py-3 text-[--text-secondary] ${className}`} onClick={onClick}>
+    <Tag className={`${base} ${className}`} colSpan={colSpan} onClick={onClick}>
       {children}
-    </td>
+    </Tag>
   );
 }
