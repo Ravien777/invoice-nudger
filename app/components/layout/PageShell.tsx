@@ -1,32 +1,49 @@
+"use client";
+
+import { useSidebar } from "./SidebarProvider";
+import { Menu } from "lucide-react";
 import type { ReactNode } from "react";
 
 interface PageShellProps {
   title: string;
-  description?: string;
-  action?: ReactNode;
+  subtitle?: string;
+  actions?: ReactNode;
   children: ReactNode;
 }
 
 export function PageShell({
   title,
-  description,
-  action,
+  subtitle,
+  actions,
   children,
 }: PageShellProps) {
+  const { toggleMobile } = useSidebar();
+
   return (
-    <div className="flex flex-col min-h-screen px-6 py-6 md:px-8 md:py-8 max-w-[1200px] mx-auto">
-      <div className="flex items-start justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-semibold text-[--text-primary] tracking-tight">
-            {title}
-          </h1>
-          {description && (
-            <p className="text-sm text-[--text-muted] mt-1">{description}</p>
-          )}
+    <div className="flex flex-col h-full">
+      <header className="px-6 py-4 border-b border-border-default flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={toggleMobile}
+            className="md:hidden p-2 -ml-2 rounded-md text-text-secondary hover:text-text-primary hover:bg-surface-tertiary transition-colors"
+            aria-label="Toggle sidebar"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          <div>
+            <h1 className="text-lg font-semibold text-text-primary tracking-tight">
+              {title}
+            </h1>
+            {subtitle && (
+              <p className="text-sm text-text-secondary">{subtitle}</p>
+            )}
+          </div>
         </div>
-        {action && <div className="flex-shrink-0">{action}</div>}
-      </div>
-      <div className="flex-1">{children}</div>
+        {actions && (
+          <div className="flex items-center gap-2">{actions}</div>
+        )}
+      </header>
+      <main className="flex-1 overflow-y-auto px-6 py-8">{children}</main>
     </div>
   );
 }

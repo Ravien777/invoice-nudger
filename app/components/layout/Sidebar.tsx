@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
@@ -14,7 +15,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Settings,
-  Menu,
+  LogOut,
   X,
 } from "lucide-react";
 
@@ -42,8 +43,9 @@ const ZONE_INDICES = NAV_ITEMS.reduce<number[]>((acc, item, i) => {
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { collapsed, toggle, mobileOpen, toggleMobile, closeMobile } = useSidebar();
+  const { collapsed, toggle, mobileOpen, closeMobile } = useSidebar();
   const { data: session } = useSession();
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const isActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard";
@@ -115,37 +117,71 @@ export default function Sidebar() {
       </nav>
 
       {/* Bottom section - user menu */}
-      <div className="mt-auto border-t border-border-default py-2 px-2">
-        <button
-          onClick={() => signOut({ callbackUrl: "/" })}
-          className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm w-full transition-colors text-text-secondary hover:text-text-primary hover:bg-surface-tertiary ${
-            collapsed ? "justify-center" : ""
-          }`}
-          title="Sign out"
-        >
-          <div className="h-6 w-6 rounded-full bg-accent flex items-center justify-center text-white text-xs font-semibold shrink-0">
-            {(session?.user?.name || session?.user?.email || "?").charAt(0).toUpperCase()}
+      {collapsed ? (
+        <div className="border-t border-border-default mt-auto pt-4 px-2 pb-2">
+          <div className="relative flex justify-center">
+            <button
+              onClick={() => setUserMenuOpen(!userMenuOpen)}
+              className="mx-auto flex h-7 w-7 items-center justify-center rounded-full bg-accent text-white text-xs font-semibold hover:ring-2 hover:ring-accent/50 transition-all"
+              title={session?.user?.name || "User"}
+            >
+              {(session?.user?.name || session?.user?.email || "?").charAt(0).toUpperCase()}
+            </button>
+            {userMenuOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 w-48 bg-surface-secondary border border-border-default rounded-lg shadow-xl py-1">
+                  <div className="px-3 py-2 border-b border-border-default">
+                    <p className="text-sm font-medium text-text-primary truncate">
+                      {session?.user?.name || "User"}
+                    </p>
+                    <p className="text-xs text-text-tertiary truncate">
+                      {session?.user?.email || ""}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => signOut({ callbackUrl: "/" })}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-surface-tertiary transition-colors"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Sign out
+                  </button>
+                </div>
+              </>
+            )}
           </div>
-          {!collapsed && (
-            <span className="text-sm truncate">
-              {session?.user?.name || session?.user?.email || "User"}
-            </span>
-          )}
-        </button>
-      </div>
+        </div>
+      ) : (
+        <div className="border-t border-border-default mt-auto pt-4 px-2 pb-2">
+          <div className="flex items-center justify-between px-3 py-2">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="h-7 w-7 rounded-full bg-accent flex items-center justify-center text-white text-xs font-semibold shrink-0">
+                {(session?.user?.name || session?.user?.email || "?").charAt(0).toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-text-primary truncate">
+                  {session?.user?.name || "User"}
+                </p>
+                <p className="text-xs text-text-tertiary truncate">
+                  {session?.user?.email || ""}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => signOut({ callbackUrl: "/" })}
+              className="p-1.5 rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-tertiary transition-colors"
+              title="Sign out"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 
   return (
     <>
-      {/* Mobile hamburger */}
-      <button
-        onClick={toggleMobile}
-        className="fixed top-4 left-4 z-40 md:hidden p-2 rounded-md bg-surface-primary border border-border-default text-text-primary"
-      >
-        <Menu className="h-5 w-5" />
-      </button>
-
       {/* Mobile sidebar overlay */}
       {mobileOpen && (
         <div

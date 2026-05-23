@@ -100,12 +100,12 @@ export function NotificationPanel({ onClose }: NotificationPanelProps) {
         className="fixed inset-0 bg-black/20 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="fixed top-0 right-0 h-full w-80 bg-[--bg-elevated] border-l border-[--border] shadow-xl z-50 overflow-y-auto">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[--border]">
-          <h3 className="text-sm font-semibold text-[--text-primary]">
+      <div className="fixed top-0 right-0 h-full w-80 bg-surface-secondary border-l border-border-default shadow-xl z-50 overflow-y-auto">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border-default">
+          <h3 className="text-sm font-semibold text-text-primary">
             Notifications
             {unreadCount > 0 && (
-              <span className="ml-2 text-xs font-normal text-[--text-muted]">
+              <span className="ml-2 text-xs font-normal text-text-secondary">
                 ({unreadCount} new)
               </span>
             )}
@@ -114,14 +114,14 @@ export function NotificationPanel({ onClose }: NotificationPanelProps) {
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllRead}
-                className="text-xs font-medium text-[--accent] hover:underline"
+                className="text-xs font-medium text-accent hover:underline"
               >
                 Mark all read
               </button>
             )}
             <button
               onClick={onClose}
-              className="p-1 rounded-[--radius-sm] text-[--text-muted] hover:text-[--text-primary] hover:bg-[--bg-subtle] transition-colors"
+              className="p-1 rounded-md text-text-secondary hover:text-text-primary hover:bg-surface-tertiary transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
@@ -131,8 +131,8 @@ export function NotificationPanel({ onClose }: NotificationPanelProps) {
         <div className="max-h-[calc(100vh-56px)] overflow-y-auto">
           {notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center px-4">
-              <Check className="h-8 w-8 text-[--success] mb-2" />
-              <p className="text-sm text-[--text-muted]">
+              <Check className="h-8 w-8 text-success mb-2" />
+              <p className="text-sm text-text-secondary">
                 You&apos;re all caught up.
               </p>
             </div>
@@ -142,36 +142,36 @@ export function NotificationPanel({ onClose }: NotificationPanelProps) {
               return (
                 <div
                   key={n.id}
-                  className={`flex items-start gap-3 px-4 py-3 border-b border-[--border]/50 transition ${
-                    !n.read ? "border-l-2 border-l-[--accent]" : ""
+                  className={`flex items-start gap-3 px-4 py-3 border-b border-border-default/50 transition ${
+                    !n.read ? "border-l-2 border-l-accent" : ""
                   }`}
                 >
                   <Icon
                     className={`mt-0.5 h-4 w-4 shrink-0 ${
-                      !n.read ? "text-[--accent]" : "text-[--text-muted]"
+                      !n.read ? "text-accent" : "text-text-secondary"
                     }`}
                   />
                   <div className="min-w-0 flex-1">
                     <p
                       className={`text-sm truncate ${
                         !n.read
-                          ? "font-medium text-[--text-primary]"
-                          : "text-[--text-secondary]"
+                          ? "font-medium text-text-primary"
+                          : "text-text-secondary"
                       }`}
                     >
                       {n.title}
                     </p>
-                    <p className="mt-0.5 text-xs text-[--text-muted] line-clamp-2">
+                    <p className="mt-0.5 text-xs text-text-secondary line-clamp-2">
                       {n.message}
                     </p>
                     <div className="mt-1 flex items-center gap-2">
-                      <span className="text-[10px] text-[--text-disabled]">
+                      <span className="text-[10px] text-text-tertiary">
                         {timeAgo(n.createdAt)}
                       </span>
                       {!n.read && (
                         <button
                           onClick={() => handleMarkRead(n.id)}
-                          className="text-[10px] font-medium text-[--accent] hover:underline"
+                          className="text-[10px] font-medium text-accent hover:underline"
                         >
                           Mark read
                         </button>
@@ -184,11 +184,11 @@ export function NotificationPanel({ onClose }: NotificationPanelProps) {
           )}
         </div>
 
-        <div className="border-t border-[--border] px-4 py-2.5 text-center">
+        <div className="border-t border-border-default px-4 py-2.5 text-center">
           <Link
             href="/notifications"
             onClick={onClose}
-            className="text-xs font-medium text-[--accent] hover:underline"
+            className="text-xs font-medium text-accent hover:underline"
           >
             View all notifications
           </Link>

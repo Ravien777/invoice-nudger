@@ -30,12 +30,12 @@ export function NotificationBell() {
     <>
       <button
         onClick={() => setOpen(!open)}
-        className="relative p-2 rounded-[--radius-sm] text-[--text-muted] hover:text-[--text-primary] hover:bg-[--bg-subtle] transition-colors"
+        className="relative p-2 rounded-md text-text-secondary hover:text-text-primary hover:bg-surface-tertiary transition-colors"
         title="Notifications"
       >
         <Bell className="h-5 w-5" />
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[--danger] text-[10px] font-bold text-white px-1">
+          <span className="absolute -top-0.5 -right-0.5 bg-danger text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
             {displayCount}
           </span>
         )}
