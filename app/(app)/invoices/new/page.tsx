@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import InvoiceForm from "@/app/components/InvoiceForm";
+import { PageShell } from "@/app/components/layout/PageShell";
 
 export default async function NewInvoicePage() {
   const session = await getServerSession(authOptions);
@@ -17,9 +18,11 @@ export default async function NewInvoicePage() {
   });
 
   return (
-    <div>
-      <h1 className="mb-6 text-2xl font-bold">New Invoice</h1>
+    <PageShell
+      title="New Invoice"
+      subtitle="Create a new invoice for your client"
+    >
       <InvoiceForm mode="create" schedules={schedules} />
-    </div>
+    </PageShell>
   );
 }

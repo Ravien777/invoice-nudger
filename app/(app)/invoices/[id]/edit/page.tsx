@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import InvoiceForm from "@/app/components/InvoiceForm";
+import { PageShell } from "@/app/components/layout/PageShell";
 
 export default async function EditInvoicePage({
   params,
@@ -36,8 +37,10 @@ export default async function EditInvoicePage({
   });
 
   return (
-    <div>
-      <h1 className="mb-6 text-2xl font-bold">Edit Invoice</h1>
+    <PageShell
+      title="Edit Invoice"
+      subtitle="Update invoice details"
+    >
       <InvoiceForm
         mode="edit"
         schedules={schedules}
@@ -57,6 +60,6 @@ export default async function EditInvoicePage({
           promiseStatus: invoice.promiseStatus,
         }}
       />
-    </div>
+    </PageShell>
   );
 }

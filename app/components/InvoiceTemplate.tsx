@@ -69,9 +69,19 @@ export function InvoiceTemplate({
   const totalTax = invoice.totalTax ?? 0;
 
   return (
-    <div className="bg-white text-[#1a1a1a] font-sans p-10 max-w-[800px] mx-auto print:p-0">
+    <div className="bg-white text-[#1a1a1a] font-sans p-10 max-w-[800px] mx-auto print:p-0 print:shadow-none print:max-w-none">
+      {/* Print-specific styles */}
+      <style>{`
+        @media print {
+          table { page-break-inside: auto; }
+          thead { display: table-header-group; }
+          tr { page-break-inside: avoid; }
+          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+      `}</style>
+
       {/* Accent line */}
-      <div className="border-t-2 border-[#4f46e5] mb-8" />
+      <div className="border-t-2 border-[#4f46e5] mb-8 print:border-t print:border-[#4f46e5]" />
 
       {/* Header */}
       <div className="flex justify-between items-start mb-10">
@@ -80,7 +90,7 @@ export function InvoiceTemplate({
             <img
               src={businessProfile.logoUrl}
               alt="Logo"
-              className="h-12 mb-3 object-contain"
+              className="h-12 mb-3 object-contain print:h-10"
             />
           )}
           <p className="text-sm font-medium text-[#1a1a1a]">
@@ -174,11 +184,11 @@ export function InvoiceTemplate({
               <tr key={i} className="border-b border-[#e5e7eb]">
                 <td className="py-3 text-sm text-[#1a1a1a]">
                   {item.description}
-                  {item.taxRate && (
+                  {item.taxRate ? (
                     <span className="text-[11px] text-[#6b7280] ml-1">
                       ({item.taxRate}% GST)
                     </span>
-                  )}
+                  ) : null}
                 </td>
                 <td className="py-3 text-right text-sm text-[#6b7280]">
                   {item.quantity}
@@ -241,7 +251,7 @@ export function InvoiceTemplate({
             href={invoice.paymentLink}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-block bg-[#4f46e5] text-white text-sm font-medium px-5 py-2.5 rounded-md hover:bg-[#4338ca] transition-colors no-underline"
+            className="inline-block bg-[#4f46e5] text-white text-sm font-medium px-5 py-2.5 rounded-md hover:bg-[#4338ca] transition-colors no-underline print:no-underline print:text-[#4f46e5] print:bg-white print:border print:border-[#4f46e5]"
           >
             Pay Now
           </a>
