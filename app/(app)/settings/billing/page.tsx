@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { getMonthlyInvoiceCount, getTier } from "@/lib/subscriptions";
 import BillingClient from "./BillingClient";
+import { PageShell } from "@/app/components/layout/PageShell";
 
 export default async function BillingPage() {
   const session = await getServerSession(authOptions);
@@ -24,15 +25,17 @@ export default async function BillingPage() {
   const tier = getTier(user.plan);
 
   return (
-    <BillingClient
-      user={{
-        id: user.id,
-        plan: user.plan,
-        subscriptionStatus: user.subscriptionStatus,
-        stripePriceId: user.stripePriceId,
-      }}
-      tier={tier}
-      monthlyInvoiceCount={monthlyCount}
-    />
+    <PageShell title="Billing" subtitle="Manage your subscription and plan">
+      <BillingClient
+        user={{
+          id: user.id,
+          plan: user.plan,
+          subscriptionStatus: user.subscriptionStatus,
+          stripePriceId: user.stripePriceId,
+        }}
+        tier={tier}
+        monthlyInvoiceCount={monthlyCount}
+      />
+    </PageShell>
   );
 }

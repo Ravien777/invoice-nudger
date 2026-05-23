@@ -192,6 +192,8 @@ export default function SettingsClient({
   const [activeTab, setActiveTab] = useState<Tab>("profile");
 
   // Profile tab
+  const [name, setName] = useState(userProfile.name ?? "");
+  const [savingName, setSavingName] = useState(false);
   const [industry, setIndustry] = useState(industrySettings.industry ?? "");
   const [benchmarksOptOut, setBenchmarksOptOut] = useState(industrySettings.benchmarksOptOut);
   const [aiTone, setAiTone] = useState(aiSettings.tone);
@@ -264,6 +266,27 @@ export default function SettingsClient({
   // -----------------------------------------------------------------------
   // Profile tab handlers
   // -----------------------------------------------------------------------
+
+  async function handleSaveName() {
+    setSavingName(true);
+    try {
+      const res = await fetch("/api/settings/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Failed to save name");
+        return;
+      }
+      toast.success("Name saved");
+    } catch {
+      toast.error("Network error");
+    } finally {
+      setSavingName(false);
+    }
+  }
 
   async function handleSaveIndustry() {
     setSavingIndustry(true);
@@ -503,7 +526,12 @@ export default function SettingsClient({
             <h2 className="mb-4 text-lg font-semibold text-foreground">Personal Info</h2>
             <div className="space-y-4 max-w-md">
               <FormField label="Name">
-                <Input value={userProfile.name ?? ""} readOnly />
+                <div className="flex gap-2">
+                  <Input value={name} onChange={(e) => setName(e.target.value)} className="flex-1" />
+                  <Button onClick={handleSaveName} loading={savingName} size="sm">
+                    Save
+                  </Button>
+                </div>
               </FormField>
               <FormField label="Email">
                 <Input value={userProfile.email} readOnly />

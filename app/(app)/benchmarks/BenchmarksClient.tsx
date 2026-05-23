@@ -11,6 +11,8 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
+import { Button } from "@/app/components/ui/Button";
+import { EmptyState } from "@/app/components/ui/EmptyState";
 
 interface BenchmarkRow {
   id: string;
@@ -82,23 +84,20 @@ export default function BenchmarksClient({ industry, benchmarks, allBenchmarks }
 
   if (!industry) {
     return (
-      <div className="rounded-xl border border-border bg-surface p-12 text-center shadow-sm">
-        <p className="text-muted">
-          Set your industry in{" "}
-          <a href="/settings" className="text-accent hover:underline">Settings</a>{" "}
-          to view benchmark trends.
-        </p>
-      </div>
+      <EmptyState
+        title="No industry set"
+        description="Set your industry in Settings to view benchmark trends."
+        action={{ label: "Go to Settings", href: "/settings" }}
+      />
     );
   }
 
   if (benchmarks.length === 0) {
     return (
-      <div className="rounded-xl border border-border bg-surface p-12 text-center shadow-sm">
-        <p className="text-muted">
-          Not enough data in {industryLabels[industry] || industry} yet. Benchmarks are computed daily once enough users are in your industry.
-        </p>
-      </div>
+      <EmptyState
+        title="Not enough data yet"
+        description={`Not enough data in ${industryLabels[industry] || industry} yet. Benchmarks are computed daily once enough users are in your industry.`}
+      />
     );
   }
 
@@ -120,17 +119,14 @@ export default function BenchmarksClient({ industry, benchmarks, allBenchmarks }
 
       <div className="flex gap-2">
         {METRICS.map((m) => (
-          <button
+          <Button
             key={m.key}
+            variant={activeMetric === m.key ? "primary" : "secondary"}
+            size="sm"
             onClick={() => setActiveMetric(m.key)}
-            className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
-              activeMetric === m.key
-                ? "bg-accent text-surface"
-                : "bg-surface text-foreground ring-1 ring-border hover:bg-surface-muted"
-            }`}
           >
             {m.label}
-          </button>
+          </Button>
         ))}
       </div>
 

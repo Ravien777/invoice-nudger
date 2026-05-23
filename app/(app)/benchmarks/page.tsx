@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import BenchmarksClient from "./BenchmarksClient";
+import { PageShell } from "@/app/components/layout/PageShell";
 
 export default async function BenchmarksPage() {
   const session = await getServerSession(authOptions);
@@ -38,13 +39,12 @@ export default async function BenchmarksPage() {
   const allBenchmarks = rawAllBenchmarks.map((b) => ({ ...b, computedAt: b.computedAt.toISOString() }));
 
   return (
-    <div>
-      <h1 className="mb-6 text-2xl font-bold">Benchmark Trends</h1>
+    <PageShell title="Benchmarks" subtitle="Compare your payment metrics against industry peers">
       <BenchmarksClient
         industry={industry}
         benchmarks={benchmarks}
         allBenchmarks={allBenchmarks}
       />
-    </div>
+    </PageShell>
   );
 }
