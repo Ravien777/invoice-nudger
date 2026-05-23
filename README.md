@@ -123,6 +123,18 @@ Make small-business finance so simple that a 15-year-old starting their first la
 
 [✅] **Subscription tiers** — Free (5 invoices/month), Pro ($12/mo, 50 invoices), Agency ($29/mo, unlimited). All features available on paid plans.
 
+[✅] **Client risk profiles** — Every client gets a payment behaviour profile with risk score (Low/Medium/High), on-time rate, average days late, and total paid. Dedicated page with search, sort, and a detailed view including payment history chart and actionable insights.
+
+[✅] **Payment probability scores** — Every unpaid invoice shows a predicted payment likelihood (percentage) with color-coded badge (green ≥80%, yellow 50-80%, red <50%). Based on client history and days overdue. Gated under Pro/Agency plans.
+
+[✅] **Industry benchmarks** — Compare your collection metrics (avg days to pay, collection rate, late payment %) against peers in your industry. Trend chart over time. Dashboard widget shows how you stack up.
+
+[✅] **Cash flow forecasting** — 30/60/90 day projected cash inflows with best/expected/worst scenarios. Area chart with tooltips showing top expected invoices. Recalculated on page load for freshness.
+
+[✅] **Collection efficiency insights** — Track how your reminders perform: conversion rate per template and per channel (email/SMS/WhatsApp), average days from reminder to payment, and payment timing breakdown. Pro/Agency users can download a full PDF report.
+
+[✅] **Predictive alerts & notifications** — Automatic in-app alerts for high-risk invoices (probability <30% and due within 7 days), client payment deterioration (20%+ drop in on-time rate), and cash flow gaps. Notification bell in header with badge count. Filterable notification history page.
+
 ---
 
 ## Planned Features
