@@ -2,10 +2,13 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
-import { startOfMonth, endOfMonth } from "date-fns";
+import { startOfMonth, endOfMonth, differenceInCalendarDays, subDays } from "date-fns";
 import DashboardClient from "./DashboardClient";
 import { getTier } from "@/lib/subscriptions";
 import Link from "next/link";
+import BenchmarkWidget from "./BenchmarkWidget";
+import { computeForecast } from "@/lib/forecast";
+import ForecastWidget from "./ForecastWidget";
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
@@ -61,6 +64,75 @@ export default async function DashboardPage() {
         where: { userId: user!.id, reconciliationStatus: "discrepancy" },
       }),
     ]);
+
+  const userPaidInvoices = await prisma.invoice.findMany({
+    where: { userId: user!.id, status: "paid", paidAt: { not: null } },
+    select: { dueDate: true, paidAt: true, amount: true },
+  });
+
+  const userDaysToPay = userPaidInvoices
+    .map((inv) => differenceInCalendarDays(inv.paidAt!, inv.dueDate))
+    .filter((d) => d !== null);
+  const userAvgDaysToPay = userDaysToPay.length > 0
+    ? userDaysToPay.reduce((a, b) => a + b, 0) / userDaysToPay.length
+    : 0;
+  const userLatePct = userDaysToPay.length > 0
+    ? (userDaysToPay.filter((d) => d > 0).length / userDaysToPay.length) * 100
+    : 0;
+
+  const userOldInvoices = await prisma.invoice.count({
+    where: { userId: user!.id, createdAt: { lte: subDays(new Date(), 90) } },
+  });
+  const userOldPaid = await prisma.invoice.count({
+    where: { userId: user!.id, status: "paid", createdAt: { lte: subDays(new Date(), 90) } },
+  });
+  const userCollectionRate = userOldInvoices > 0 ? (userOldPaid / userOldInvoices) * 100 : 0;
+
+  let benchmarkData: Array<{ userValue: number; industryValue: number; metric: string; label: string; higherIsBetter: boolean; format: "days" | "percentage" }> = [];
+  let hasEnoughBenchmarks = false;
+
+  const targetIndustry = user!.industry;
+  if (targetIndustry) {
+    const benchmarks = await prisma.industryBenchmark.findMany({
+      where: { industry: targetIndustry },
+      orderBy: { computedAt: "desc" },
+      take: 4,
+    });
+
+    if (benchmarks.length >= 4) {
+      hasEnoughBenchmarks = true;
+      const bm = new Map(benchmarks.map((b) => [b.metric, b]));
+      benchmarkData = [
+        {
+          metric: "avg_days_to_pay",
+          label: "Avg Days to Pay",
+          userValue: userAvgDaysToPay,
+          industryValue: bm.get("avg_days_to_pay")?.value ?? 0,
+          higherIsBetter: false,
+          format: "days",
+        },
+        {
+          metric: "collection_rate",
+          label: "Collection Rate (90d)",
+          userValue: userCollectionRate,
+          industryValue: bm.get("collection_rate")?.value ?? 0,
+          higherIsBetter: true,
+          format: "percentage",
+        },
+        {
+          metric: "late_payment_percentage",
+          label: "Late Payment %",
+          userValue: userLatePct,
+          industryValue: bm.get("late_payment_percentage")?.value ?? 0,
+          higherIsBetter: false,
+          format: "percentage",
+        },
+      ];
+    }
+  }
+
+  const forecast = await computeForecast(user!.id);
+  const hasForecastAccess = getTier(user!.plan).features.includes("cash_flow_forecast");
 
   const tier = getTier(user!.plan);
   const usagePercent = tier.invoiceLimit
@@ -184,6 +256,18 @@ export default async function DashboardPage() {
           </div>
         </div>
       )}
+
+      <div className="mb-8">
+        <BenchmarkWidget
+          benchmarks={benchmarkData}
+          industry={user!.industry}
+          hasEnoughData={hasEnoughBenchmarks}
+        />
+      </div>
+
+      <div className="mb-8">
+        <ForecastWidget forecast={forecast} hasAccess={hasForecastAccess} />
+      </div>
 
       <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
         <h2 className="mb-2 text-lg font-semibold text-foreground">

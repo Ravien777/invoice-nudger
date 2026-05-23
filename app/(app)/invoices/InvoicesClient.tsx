@@ -31,6 +31,7 @@ interface Invoice {
   interestRate: number;
   accruedFees: number;
   feeCap: number;
+  paymentProbability: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -44,6 +45,9 @@ interface InvoicesClientProps {
   initialInvoices: Invoice[];
   scheduleSteps: ScheduleStep[];
   userTone?: string;
+  riskScores?: Record<string, number>;
+  probabilities?: Record<string, number>;
+  userPlan?: string;
 }
 
 const FILTERS = ["all", "unpaid", "overdue", "paid", "cancelled"] as const;
@@ -53,6 +57,9 @@ export default function InvoicesClient({
   initialInvoices,
   scheduleSteps,
   userTone = "professional",
+  riskScores = {},
+  probabilities = {},
+  userPlan = "free",
 }: InvoicesClientProps) {
   const [invoices, setInvoices] = useState<Invoice[]>(initialInvoices);
   const [csvModalOpen, setCsvModalOpen] = useState(false);
@@ -185,6 +192,9 @@ export default function InvoicesClient({
         onMarkPaid={handleMarkPaid}
         onDelete={handleDelete}
         onGenerateAI={handleGenerateAI}
+        riskScores={riskScores}
+        probabilities={probabilities}
+        userPlan={userPlan}
       />
       <CSVUploadModal
         open={csvModalOpen}

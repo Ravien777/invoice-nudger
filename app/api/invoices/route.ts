@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { invoiceSchema } from "@/lib/validations";
 import { canCreateInvoice } from "@/lib/subscriptions";
+import { computePaymentProbabilityForInvoice } from "@/lib/analytics";
 
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
@@ -106,6 +107,8 @@ export async function POST(request: Request) {
       feeCap: user.feeCap,
     },
   });
+
+  await computePaymentProbabilityForInvoice(invoice.id);
 
   return NextResponse.json(invoice, { status: 201 });
 }

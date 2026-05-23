@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { computeAllAnalytics } from "@/lib/analytics";
+import { computeAllAnalytics, recomputePaymentProbabilitiesForAll } from "@/lib/analytics";
 
 const CRON_SECRET = process.env.CRON_SECRET;
 
@@ -18,10 +18,11 @@ export async function GET(request: Request) {
 
   try {
     await computeAllAnalytics();
+    await recomputePaymentProbabilitiesForAll();
 
     return NextResponse.json({
       success: true,
-      message: "Analytics computed for all users",
+      message: "Analytics and payment probabilities computed for all users",
       computedAt: new Date().toISOString(),
     });
   } catch (error) {

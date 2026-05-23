@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createPaymentRecord } from "@/lib/reconciliation";
+import { computeClientProfilesForUser, recomputePaymentProbabilitiesForClient } from "@/lib/analytics";
 
 export async function POST(
   _request: Request,
@@ -60,6 +61,9 @@ export async function POST(
       stepName: "manual_payment",
     },
   });
+
+  await computeClientProfilesForUser(user.id);
+  await recomputePaymentProbabilitiesForClient(user.id, invoice.clientEmail);
 
   return NextResponse.json(updated);
 }
