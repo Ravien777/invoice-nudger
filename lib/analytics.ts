@@ -190,14 +190,94 @@ export function computeRiskScore(onTimeRatio: number, avgDaysLate: number | null
   return Math.min(Math.max(score, 0), 1);
 }
 
+async function computeMetricsForUserIds(userIds: string[]): Promise<{
+  avgDaysToPay: number;
+  collectionRate: number;
+  latePaymentPercentage: number;
+  averageInvoiceAmount: number;
+  paidCount: number;
+}> {
+  const paidInvoices = await prisma.invoice.findMany({
+    where: { userId: { in: userIds }, status: "paid", paidAt: { not: null } },
+    select: { dueDate: true, paidAt: true },
+  });
+
+  const paidCount = paidInvoices.length;
+
+  const daysToPay = paidInvoices
+    .map((inv) => differenceInCalendarDays(inv.paidAt!, inv.dueDate))
+    .filter((d) => d !== null);
+
+  const avgDaysToPay = daysToPay.length > 0
+    ? daysToPay.reduce((a, b) => a + b, 0) / daysToPay.length
+    : 0;
+
+  const lateCount = daysToPay.filter((d) => d > 0).length;
+  const latePaymentPercentage = paidCount > 0 ? (lateCount / paidCount) * 100 : 0;
+
+  const oldInvoices = await prisma.invoice.count({
+    where: {
+      userId: { in: userIds },
+      createdAt: { lte: subDays(new Date(), 90) },
+    },
+  });
+
+  const oldPaidInvoices = await prisma.invoice.count({
+    where: {
+      userId: { in: userIds },
+      status: "paid",
+      createdAt: { lte: subDays(new Date(), 90) },
+    },
+  });
+
+  const collectionRate = oldInvoices > 0 ? (oldPaidInvoices / oldInvoices) * 100 : 0;
+
+  const amountResult = await prisma.invoice.aggregate({
+    where: { userId: { in: userIds } },
+    _avg: { amount: true },
+  });
+
+  return {
+    avgDaysToPay,
+    collectionRate,
+    latePaymentPercentage,
+    averageInvoiceAmount: amountResult._avg.amount || 0,
+    paidCount,
+  };
+}
+
+async function storeBenchmarks(industry: string, sampleSize: number, metrics: {
+  avgDaysToPay: number;
+  collectionRate: number;
+  latePaymentPercentage: number;
+  averageInvoiceAmount: number;
+}) {
+  const entries: Array<{ metric: string; value: number }> = [
+    { metric: "avg_days_to_pay", value: metrics.avgDaysToPay },
+    { metric: "collection_rate", value: metrics.collectionRate },
+    { metric: "late_payment_percentage", value: metrics.latePaymentPercentage },
+    { metric: "average_invoice_amount", value: metrics.averageInvoiceAmount },
+  ];
+
+  for (const { metric, value } of entries) {
+    await prisma.industryBenchmark.upsert({
+      where: { industry_metric_computedAt: { industry, metric, computedAt: new Date() } },
+      create: { industry, metric, value, sampleSize, computedAt: new Date() },
+      update: { value, sampleSize, computedAt: new Date() },
+    });
+  }
+}
+
 export async function computeIndustryBenchmarks() {
-  const usersWithIndustry = await prisma.user.findMany({
-    where: { industry: { not: null } },
+  const optedInUsers = await prisma.user.findMany({
+    where: { benchmarksOptOut: false },
     select: { id: true, industry: true },
   });
 
+  const optedInWithIndustry = optedInUsers.filter((u) => u.industry !== null);
+
   const industryCount = new Map<string, number>();
-  for (const u of usersWithIndustry) {
+  for (const u of optedInWithIndustry) {
     const ind = u.industry as string;
     industryCount.set(ind, (industryCount.get(ind) || 0) + 1);
   }
@@ -205,69 +285,19 @@ export async function computeIndustryBenchmarks() {
   for (const [industry, count] of industryCount) {
     if (count < 10) continue;
 
-    const userIds = usersWithIndustry
+    const userIds = optedInWithIndustry
       .filter((u) => u.industry === industry)
       .map((u) => u.id);
 
-    const paidInvoices = await prisma.invoice.findMany({
-      where: { userId: { in: userIds }, status: "paid", paidAt: { not: null } },
-      select: { dueDate: true, paidAt: true },
-    });
+    const metrics = await computeMetricsForUserIds(userIds);
+    await storeBenchmarks(industry, count, metrics);
+  }
 
-    const allInvoicesCount = await prisma.invoice.count({
-      where: { userId: { in: userIds } },
-    });
-
-    const paidCount = paidInvoices.length;
-
-    const daysToPay = paidInvoices
-      .map((inv) => differenceInCalendarDays(inv.paidAt!, inv.dueDate))
-      .filter((d) => d !== null);
-
-    const avgDaysToPay = daysToPay.length > 0
-      ? daysToPay.reduce((a, b) => a + b, 0) / daysToPay.length
-      : 0;
-
-    const lateCount = daysToPay.filter((d) => d > 0).length;
-    const latePaymentPercentage = paidCount > 0 ? (lateCount / paidCount) * 100 : 0;
-
-    const oldInvoices = await prisma.invoice.count({
-      where: {
-        userId: { in: userIds },
-        createdAt: { lte: subDays(new Date(), 90) },
-      },
-    });
-
-    const oldPaidInvoices = await prisma.invoice.count({
-      where: {
-        userId: { in: userIds },
-        status: "paid",
-        createdAt: { lte: subDays(new Date(), 90) },
-      },
-    });
-
-    const collectionRate = oldInvoices > 0 ? (oldPaidInvoices / oldInvoices) * 100 : 0;
-
-    const amountResult = await prisma.invoice.aggregate({
-      where: { userId: { in: userIds } },
-      _avg: { amount: true },
-    });
-    const averageInvoiceAmount = amountResult._avg.amount || 0;
-
-    const metrics: Array<{ metric: string; value: number }> = [
-      { metric: "avg_days_to_pay", value: avgDaysToPay },
-      { metric: "collection_rate", value: collectionRate },
-      { metric: "late_payment_percentage", value: latePaymentPercentage },
-      { metric: "average_invoice_amount", value: averageInvoiceAmount },
-    ];
-
-    for (const { metric, value } of metrics) {
-      await prisma.industryBenchmark.upsert({
-        where: { industry_metric_computedAt: { industry, metric, computedAt: new Date() } },
-        create: { industry, metric, value, sampleSize: count, computedAt: new Date() },
-        update: { value, sampleSize: count, computedAt: new Date() },
-      });
-    }
+  const allCount = optedInUsers.length;
+  if (allCount >= 10) {
+    const allIds = optedInUsers.map((u) => u.id);
+    const allMetrics = await computeMetricsForUserIds(allIds);
+    await storeBenchmarks("all", allCount, allMetrics);
   }
 }
 
@@ -287,4 +317,104 @@ export async function computeAllAnalytics() {
   }
 
   await computeIndustryBenchmarks();
+}
+
+export function calculatePaymentProbability(
+  clientProfile: {
+    paidInvoices: number;
+    onTimePayments: number;
+    avgDaysLate: number | null;
+  } | null,
+  invoice: { dueDate: Date; amount: number }
+): number {
+  if (!clientProfile || clientProfile.paidInvoices === 0) {
+    return 0.7;
+  }
+
+  const onTimeRatio = clientProfile.paidInvoices > 0
+    ? clientProfile.onTimePayments / clientProfile.paidInvoices
+    : 0.5;
+
+  const avgDaysLate = clientProfile.avgDaysLate ?? 0;
+  const cappedDaysLate = Math.min(avgDaysLate, 30);
+
+  let probability = 1 - ((1 - onTimeRatio) * 0.6 + (cappedDaysLate / 30) * 0.4);
+
+  const daysUntilDue = differenceInCalendarDays(invoice.dueDate, new Date());
+  if (daysUntilDue < 0) {
+    const overduePenalty = Math.min(Math.abs(daysUntilDue) / 30, 1) * 0.2;
+    probability = probability * (1 - overduePenalty);
+  }
+
+  return Math.max(0, Math.min(1, probability));
+}
+
+export async function computePaymentProbabilityForInvoice(invoiceId: string) {
+  const invoice = await prisma.invoice.findUnique({
+    where: { id: invoiceId },
+    select: { id: true, userId: true, clientEmail: true, dueDate: true, amount: true, status: true },
+  });
+
+  if (!invoice || invoice.status === "paid" || invoice.status === "cancelled") return;
+
+  const profile = await prisma.clientPaymentProfile.findUnique({
+    where: { userId_clientEmail: { userId: invoice.userId, clientEmail: invoice.clientEmail } },
+  });
+
+  const probability = calculatePaymentProbability(profile, invoice);
+
+  await prisma.invoice.update({
+    where: { id: invoiceId },
+    data: { paymentProbability: probability },
+  });
+}
+
+export async function recomputePaymentProbabilitiesForClient(userId: string, clientEmail: string) {
+  const profile = await prisma.clientPaymentProfile.findUnique({
+    where: { userId_clientEmail: { userId, clientEmail } },
+  });
+
+  const openInvoices = await prisma.invoice.findMany({
+    where: { userId, clientEmail, status: { notIn: ["paid", "cancelled"] } },
+    select: { id: true, dueDate: true, amount: true },
+  });
+
+  for (const inv of openInvoices) {
+    const probability = calculatePaymentProbability(profile, inv);
+    await prisma.invoice.update({
+      where: { id: inv.id },
+      data: { paymentProbability: probability },
+    });
+  }
+}
+
+export async function recomputePaymentProbabilitiesForUser(userId: string) {
+  const openInvoices = await prisma.invoice.findMany({
+    where: { userId, status: { notIn: ["paid", "cancelled"] } },
+    select: { id: true, clientEmail: true, dueDate: true, amount: true },
+  });
+
+  const profileCache = new Map<string, Awaited<ReturnType<typeof prisma.clientPaymentProfile.findUnique>>>();
+
+  for (const inv of openInvoices) {
+    if (!profileCache.has(inv.clientEmail)) {
+      const profile = await prisma.clientPaymentProfile.findUnique({
+        where: { userId_clientEmail: { userId, clientEmail: inv.clientEmail } },
+      });
+      profileCache.set(inv.clientEmail, profile);
+    }
+    const profile = profileCache.get(inv.clientEmail)!;
+    const probability = calculatePaymentProbability(profile, inv);
+    await prisma.invoice.update({
+      where: { id: inv.id },
+      data: { paymentProbability: probability },
+    });
+  }
+}
+
+export async function recomputePaymentProbabilitiesForAll() {
+  const users = await prisma.user.findMany({ select: { id: true } });
+  for (const user of users) {
+    await recomputePaymentProbabilitiesForUser(user.id);
+  }
 }

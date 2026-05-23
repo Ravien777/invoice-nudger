@@ -75,6 +75,11 @@ interface NotificationSettings {
   whatsapp: NotificationChannelInfo;
 }
 
+interface IndustrySettings {
+  industry: string | null;
+  benchmarksOptOut: boolean;
+}
+
 interface LateFeeSettings {
   enabled: boolean;
   type: string;
@@ -96,9 +101,10 @@ interface SettingsClientProps {
   promiseSettings: PromiseSettings;
   notificationSettings: NotificationSettings;
   lateFeeSettings: LateFeeSettings;
+  industrySettings: IndustrySettings;
 }
 
-type Tab = "reminders" | "integrations" | "billing" | "ai" | "portal" | "promises" | "notifications" | "late-fees";
+type Tab = "reminders" | "integrations" | "billing" | "ai" | "portal" | "promises" | "notifications" | "late-fees" | "benchmarks";
 
 function offsetLabel(daysOffset: number): string {
   if (daysOffset < 0) return `${Math.abs(daysOffset)} days before due`;
@@ -111,7 +117,7 @@ const platformConfig: Record<string, { label: string; color: string; icon: strin
   quickbooks: { label: "QuickBooks", color: "#2CA01C", icon: "QB" },
 };
 
-export default function SettingsClient({ schedule, integrations: initialIntegrations, billing, aiSettings, portalSettings, promiseSettings, notificationSettings, lateFeeSettings }: SettingsClientProps) {
+export default function SettingsClient({ schedule, integrations: initialIntegrations, billing, aiSettings, portalSettings, promiseSettings, notificationSettings, lateFeeSettings, industrySettings }: SettingsClientProps) {
   const [activeTab, setActiveTab] = useState<Tab>("reminders");
   const [steps, setSteps] = useState<Step[]>(schedule?.steps ?? []);
   const [name, setName] = useState(schedule?.name ?? "Standard");
@@ -133,6 +139,9 @@ export default function SettingsClient({ schedule, integrations: initialIntegrat
   const [graceDays, setGraceDays] = useState(lateFeeSettings.graceDays);
   const [feeCap, setFeeCap] = useState(lateFeeSettings.feeCap);
   const [savingLateFees, setSavingLateFees] = useState(false);
+  const [industry, setIndustry] = useState(industrySettings.industry ?? "");
+  const [benchmarksOptOut, setBenchmarksOptOut] = useState(industrySettings.benchmarksOptOut);
+  const [savingIndustry, setSavingIndustry] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -457,6 +466,16 @@ export default function SettingsClient({ schedule, integrations: initialIntegrat
           }`}
         >
           Late Fees
+        </button>
+        <button
+          onClick={() => setActiveTab("benchmarks")}
+          className={`rounded-md px-4 py-2 text-sm font-medium transition ${
+            activeTab === "benchmarks"
+              ? "bg-surface text-foreground shadow-sm"
+              : "text-muted hover:text-foreground"
+          }`}
+        >
+          Benchmarks
         </button>
       </div>
 
@@ -1172,6 +1191,90 @@ TWILIO_WHATSAPP_NUMBER=+14155238886`}
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {activeTab === "benchmarks" && (
+        <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+          <h2 className="mb-2 text-lg font-semibold text-foreground">
+            Industry Benchmarks
+          </h2>
+          <p className="mb-6 text-sm text-muted">
+            Set your industry to compare your payment collection performance against peers. Your data is anonymized and aggregated — benchmarks only show when enough users are in an industry.
+          </p>
+
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-muted mb-1">
+              Your Industry
+            </label>
+            <select
+              value={industry}
+              onChange={(e) => setIndustry(e.target.value)}
+              className="block w-full max-w-xs rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground shadow-sm transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
+            >
+              <option value="">-- Select industry --</option>
+              <option value="freelance_design">Freelance Design</option>
+              <option value="software_dev">Software Development</option>
+              <option value="consulting">Consulting</option>
+              <option value="marketing_agency">Marketing Agency</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <label className="text-sm font-medium text-muted">
+                Include in anonymous benchmarks
+              </label>
+              <p className="text-xs text-muted mt-0.5">
+                Your data will be aggregated anonymously with other users in your industry. You'll still see benchmarks either way.
+              </p>
+            </div>
+            <button
+              onClick={() => setBenchmarksOptOut(!benchmarksOptOut)}
+              className={`relative h-6 w-11 rounded-full transition flex-shrink-0 ${
+                !benchmarksOptOut ? "bg-accent" : "bg-surface-muted"
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition ${
+                  !benchmarksOptOut ? "translate-x-5" : "translate-x-0"
+                }`}
+              />
+            </button>
+          </div>
+
+          <div className="flex items-center gap-3 border-t border-border pt-4">
+            <button
+              onClick={async () => {
+                setSavingIndustry(true);
+                try {
+                  const res = await fetch("/api/settings/industry", {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      industry: industry || null,
+                      benchmarksOptOut,
+                    }),
+                  });
+                  if (res.ok) {
+                    toast.success("Benchmark settings saved");
+                  } else {
+                    const data = await res.json();
+                    toast.error(data.error || "Failed to save settings");
+                  }
+                } catch {
+                  toast.error("Network error");
+                } finally {
+                  setSavingIndustry(false);
+                }
+              }}
+              disabled={savingIndustry}
+              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-surface shadow-sm transition hover:brightness-110 disabled:opacity-50"
+            >
+              {savingIndustry ? "Saving..." : "Save"}
+            </button>
           </div>
         </div>
       )}

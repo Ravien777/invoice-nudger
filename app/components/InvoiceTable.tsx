@@ -28,6 +28,7 @@ interface Invoice {
   interestRate: number;
   accruedFees: number;
   feeCap: number;
+  paymentProbability: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -44,6 +45,9 @@ interface InvoiceTableProps {
   onMarkPaid?: (id: string) => Promise<{ success: boolean; error?: string }>;
   onDelete?: (id: string) => Promise<{ success: boolean }>;
   onGenerateAI?: (id: string) => void;
+  riskScores?: Record<string, number>;
+  probabilities?: Record<string, number>;
+  userPlan?: string;
 }
 
 function formatCurrency(amount: number, currency: string): string {
@@ -81,6 +85,40 @@ function stepLabel(step: ScheduleStep): string {
   return `${step.daysOffset}d after — ${step.emailTemplate}`;
 }
 
+function riskBadge(score: number | undefined): React.ReactNode {
+  if (score === undefined) return null;
+  let color: string;
+  let label: string;
+  if (score <= 0.3) { color = "bg-[var(--success-muted)] text-[var(--success)]"; label = "Low"; }
+  else if (score <= 0.7) { color = "bg-[var(--warning-muted)] text-[var(--warning)]"; label = "Med"; }
+  else { color = "bg-[var(--danger-muted)] text-[var(--danger)]"; label = "High"; }
+  return (
+    <span className={`ml-1.5 inline-block rounded-full px-1.5 py-0.5 text-[10px] font-medium ${color}`}>
+      {label}
+    </span>
+  );
+}
+
+const PROBABILITY_PLAN = ["pro", "agency"];
+
+function probabilityBadge(score: number | undefined, plan: string): React.ReactNode {
+  if (score === undefined || !PROBABILITY_PLAN.includes(plan)) return null;
+  let color: string;
+  let label: string;
+  if (score >= 0.8) { color = "bg-[var(--success-muted)] text-[var(--success)]"; label = "High"; }
+  else if (score >= 0.5) { color = "bg-[var(--warning-muted)] text-[var(--warning)]"; label = "Med"; }
+  else { color = "bg-[var(--danger-muted)] text-[var(--danger)]"; label = "Low"; }
+  const pct = (score * 100).toFixed(0);
+  return (
+    <span
+      className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${color}`}
+      title={`${pct}% payment probability`}
+    >
+      {pct}%
+    </span>
+  );
+}
+
 export default function InvoiceTable({
   invoices,
   onUploadCsv,
@@ -88,6 +126,9 @@ export default function InvoiceTable({
   onMarkPaid,
   onDelete,
   onGenerateAI,
+  riskScores = {},
+  probabilities = {},
+  userPlan = "free",
 }: InvoiceTableProps) {
   const [sending, setSending] = useState<string | null>(null);
   const [markingPaid, setMarkingPaid] = useState<string | null>(null);
@@ -238,6 +279,7 @@ export default function InvoiceTable({
             <th className="px-4 py-3 font-medium text-muted">Amount</th>
             <th className="px-4 py-3 font-medium text-muted">Due Date</th>
             <th className="px-4 py-3 font-medium text-muted">Status</th>
+            {PROBABILITY_PLAN.includes(userPlan) && <th className="px-4 py-3 font-medium text-muted">Prob.</th>}
             <th className="px-4 py-3 font-medium text-muted">Actions</th>
           </tr>
         </thead>
@@ -249,7 +291,13 @@ export default function InvoiceTable({
               </td>
               <td className="px-4 py-3">
                 <div className="font-medium text-foreground">
-                  {inv.clientName}
+                  <Link
+                    href={`/clients/${encodeURIComponent(inv.clientEmail)}`}
+                    className="hover:text-accent transition-colors"
+                  >
+                    {inv.clientName}
+                  </Link>
+                  {riskBadge(riskScores[inv.clientEmail])}
                 </div>
                 <div className="text-xs text-muted">
                   {inv.clientEmail}
@@ -336,6 +384,13 @@ export default function InvoiceTable({
                   )}
                 </div>
               </td>
+              {PROBABILITY_PLAN.includes(userPlan) && (
+                <td className="px-4 py-3">
+                  {inv.status !== "paid" && inv.status !== "cancelled"
+                    ? probabilityBadge(probabilities[inv.id], userPlan)
+                    : <span className="text-xs text-muted">—</span>}
+                </td>
+              )}
               <td className="px-4 py-3">
                 <div className="flex items-center gap-1.5">
                   {inv.paymentLink ? (

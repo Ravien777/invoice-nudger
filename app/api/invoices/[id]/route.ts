@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { invoiceSchema } from "@/lib/validations";
+import { computePaymentProbabilityForInvoice } from "@/lib/analytics";
 
 async function getInvoiceAndVerify(id: string, userId: string) {
   const invoice = await prisma.invoice.findUnique({
@@ -143,6 +144,8 @@ export async function PUT(
       ...lateFeeFields,
     },
   });
+
+  await computePaymentProbabilityForInvoice(id);
 
   return NextResponse.json(updated);
 }

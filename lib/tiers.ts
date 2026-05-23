@@ -31,7 +31,7 @@ export const TIERS: Record<string, TierConfig> = {
     lateFees: true,
     smsLimit: 50,
     whatsappLimit: 50,
-    features: ["50 invoices per month", "Automated reminders", "CSV upload", "Xero integration", "AI-generated reminders (100/mo)", "SMS & WhatsApp reminders (50/mo)", "White-labeled client portal", "Late fees & interest", "Priority support"],
+    features: ["50 invoices per month", "Automated reminders", "CSV upload", "Xero integration", "AI-generated reminders (100/mo)", "SMS & WhatsApp reminders (50/mo)", "White-labeled client portal", "Late fees & interest", "Payment probability scores", "Cash flow forecasting", "Priority support", "payment_probability", "cash_flow_forecast"],
   },
   agency: {
     name: "Agency",
@@ -42,7 +42,7 @@ export const TIERS: Record<string, TierConfig> = {
     lateFees: true,
     smsLimit: 500,
     whatsappLimit: 500,
-    features: ["Unlimited invoices", "Automated reminders", "CSV upload", "All integrations", "AI-generated reminders (1000/mo)", "SMS & WhatsApp reminders (500/mo)", "White-labeled client portal", "Late fees & interest", "Dedicated support"],
+    features: ["Unlimited invoices", "Automated reminders", "CSV upload", "All integrations", "AI-generated reminders (1000/mo)", "SMS & WhatsApp reminders (500/mo)", "White-labeled client portal", "Late fees & interest", "Payment probability scores", "Cash flow forecasting", "Dedicated support", "payment_probability", "cash_flow_forecast"],
   },
 };
 

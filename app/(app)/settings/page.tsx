@@ -95,6 +95,10 @@ export default async function SettingsPage() {
         feeCap: user!.feeCap,
         hasAccess: tier.lateFees,
       }}
+      industrySettings={{
+        industry: user!.industry,
+        benchmarksOptOut: user!.benchmarksOptOut,
+      }}
     />
   );
 }

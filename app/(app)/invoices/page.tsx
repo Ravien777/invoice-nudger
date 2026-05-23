@@ -25,6 +25,25 @@ export default async function InvoicesPage() {
     include: { steps: { orderBy: { daysOffset: "asc" } } },
   });
 
+  const clientProfiles = await prisma.clientPaymentProfile.findMany({
+    where: { userId: user!.id },
+    select: { clientEmail: true, riskScore: true },
+  });
+
+  const riskScores: Record<string, number> = {};
+  for (const cp of clientProfiles) {
+    if (cp.riskScore !== null) {
+      riskScores[cp.clientEmail] = cp.riskScore;
+    }
+  }
+
+  const probabilities: Record<string, number> = {};
+  for (const inv of invoices) {
+    if (inv.paymentProbability !== null) {
+      probabilities[inv.id] = inv.paymentProbability;
+    }
+  }
+
   const serialized = invoices.map((inv) => ({
     ...inv,
     dueDate: inv.dueDate.toISOString(),
@@ -39,5 +58,5 @@ export default async function InvoicesPage() {
     daysOffset: s.daysOffset,
   })) ?? [];
 
-  return <InvoicesClient initialInvoices={serialized} scheduleSteps={scheduleSteps} userTone={user?.aiTone} />;
+  return <InvoicesClient initialInvoices={serialized} scheduleSteps={scheduleSteps} userTone={user?.aiTone} riskScores={riskScores} probabilities={probabilities} userPlan={user?.plan ?? "free"} />;
 }
