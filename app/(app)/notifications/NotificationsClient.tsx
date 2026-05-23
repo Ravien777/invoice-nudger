@@ -2,6 +2,8 @@
 
 import { useState, useCallback } from "react";
 import toast from "react-hot-toast";
+import { Button } from "@/app/components/ui/Button";
+import { EmptyState } from "@/app/components/ui/EmptyState";
 
 interface NotificationItem {
   id: string;
@@ -26,17 +28,21 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const TYPE_ICONS: Record<string, string> = {
-  high_risk_invoice: "🔴",
-  client_deterioration: "📉",
-  cash_flow_gap: "💰",
+  high_risk_invoice: "\uD83D\uDD34",
+  client_deterioration: "\uD83D\uDCC9",
+  cash_flow_gap: "\uD83D\uDCB0",
 };
 
 function typeColor(type: string): string {
   switch (type) {
-    case "high_risk_invoice": return "bg-[var(--danger-muted)] text-[var(--danger)]";
-    case "client_deterioration": return "bg-[var(--warning-muted)] text-[var(--warning)]";
-    case "cash_flow_gap": return "bg-blue-100 text-blue-700";
-    default: return "bg-surface-muted text-muted";
+    case "high_risk_invoice":
+      return "bg-danger/10 text-danger";
+    case "client_deterioration":
+      return "bg-warning/10 text-warning";
+    case "cash_flow_gap":
+      return "bg-blue-500/10 text-blue-500";
+    default:
+      return "bg-surface-tertiary text-text-tertiary";
   }
 }
 
@@ -63,7 +69,8 @@ export default function NotificationsClient({
   initialTotal,
   initialUnreadCount,
 }: NotificationsClientProps) {
-  const [notifications, setNotifications] = useState<NotificationItem[]>(initialNotifications);
+  const [notifications, setNotifications] =
+    useState<NotificationItem[]>(initialNotifications);
   const [total, setTotal] = useState(initialTotal);
   const [unreadCount, setUnreadCount] = useState(initialUnreadCount);
   const [loading, setLoading] = useState(false);
@@ -124,82 +131,66 @@ export default function NotificationsClient({
     }
   }
 
-  function selectFilter(type: string | null) {
-    setFilter(type);
+  function filterBtn(type: string | null, label: string) {
+    const isActive = filter === type;
+    return (
+      <button
+        key={label}
+        onClick={() => setFilter(type)}
+        className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
+          isActive
+            ? "bg-surface-primary text-text-primary shadow-sm"
+            : "text-text-secondary hover:text-text-primary"
+        }`}
+      >
+        {label}
+      </button>
+    );
   }
 
   return (
-    <div>
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted">
-            {unreadCount > 0
-              ? `${unreadCount} unread`
-              : "All caught up"}
-          </span>
-          {unreadCount > 0 && (
-            <button
-              onClick={handleMarkAllRead}
-              className="text-xs font-medium text-accent hover:underline"
-            >
-              Mark all read
-            </button>
-          )}
-        </div>
+    <div className="space-y-4">
+      {/* Header bar */}
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-text-secondary">
+          {unreadCount > 0
+            ? `${unreadCount} unread`
+            : "All caught up"}
+        </span>
+        {unreadCount > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleMarkAllRead}
+          >
+            Mark all read
+          </Button>
+        )}
       </div>
 
-      <div className="mb-4 flex gap-1 rounded-lg bg-surface-muted p-1 w-fit">
-        <button
-          onClick={() => selectFilter(null)}
-          className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
-            filter === null
-              ? "bg-surface text-foreground shadow-sm"
-              : "text-muted hover:text-foreground"
-          }`}
-        >
-          All ({total})
-        </button>
-        <button
-          onClick={() => selectFilter("high_risk_invoice")}
-          className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
-            filter === "high_risk_invoice"
-              ? "bg-surface text-foreground shadow-sm"
-              : "text-muted hover:text-foreground"
-          }`}
-        >
-          High Risk
-        </button>
-        <button
-          onClick={() => selectFilter("client_deterioration")}
-          className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
-            filter === "client_deterioration"
-              ? "bg-surface text-foreground shadow-sm"
-              : "text-muted hover:text-foreground"
-          }`}
-        >
-          Clients
-        </button>
-        <button
-          onClick={() => selectFilter("cash_flow_gap")}
-          className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
-            filter === "cash_flow_gap"
-              ? "bg-surface text-foreground shadow-sm"
-              : "text-muted hover:text-foreground"
-          }`}
-        >
-          Cash Flow
-        </button>
+      {/* Filter tabs */}
+      <div className="inline-flex gap-1 rounded-lg bg-surface-tertiary p-1">
+        {filterBtn(null, `All (${total})`)}
+        {filterBtn("high_risk_invoice", "High Risk")}
+        {filterBtn("client_deterioration", "Clients")}
+        {filterBtn("cash_flow_gap", "Cash Flow")}
       </div>
 
+      {/* List */}
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-border bg-surface p-12 text-center shadow-sm">
-          <p className="text-lg text-muted">No notifications</p>
-          <p className="mt-1 text-sm text-muted">
-            {filter
-              ? "No notifications of this type yet."
-              : "You're all caught up! Predictive alerts will appear here."}
-          </p>
-        </div>
+        <EmptyState
+          variant="no-results"
+          title={
+            filter
+              ? "No notifications of this type yet"
+              : "No notifications"
+          }
+          description={
+            filter
+              ? undefined
+              : "You're all caught up! Predictive alerts will appear here."
+          }
+        />
       ) : (
         <div className="space-y-2">
           {filtered.map((n) => (
@@ -207,41 +198,46 @@ export default function NotificationsClient({
               key={n.id}
               className={`rounded-xl border px-5 py-4 shadow-sm transition ${
                 n.read
-                  ? "border-border bg-surface"
-                  : "border-[var(--accent-muted)]/30 bg-[var(--accent-muted)]/5"
+                  ? "border-border-default bg-surface-secondary"
+                  : "border-accent/20 bg-accent/[0.03]"
               }`}
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3 min-w-0 flex-1">
-                  <span className="mt-0.5 text-lg">{TYPE_ICONS[n.type] || "🔔"}</span>
+                  <span className="mt-0.5 text-lg">
+                    {TYPE_ICONS[n.type] || "\uD83D\uDD14"}
+                  </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <h3 className="text-sm font-semibold text-foreground">
+                      <h3 className="text-sm font-semibold text-text-primary">
                         {n.title}
                       </h3>
                       {!n.read && (
                         <span className="inline-block h-2 w-2 rounded-full bg-accent" />
                       )}
                       <span
-                        className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-medium ${typeColor(n.type)}`}
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${typeColor(n.type)}`}
                       >
                         {TYPE_LABELS[n.type] || n.type}
                       </span>
                     </div>
-                    <p className="mt-1 text-sm text-muted">{n.message}</p>
-                    <p className="mt-1.5 text-xs text-muted">
+                    <p className="mt-1 text-sm text-text-secondary">
+                      {n.message}
+                    </p>
+                    <p className="mt-1.5 text-xs text-text-tertiary">
                       {timeAgo(n.createdAt)}
                     </p>
                   </div>
                 </div>
 
                 {!n.read && (
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => handleMarkRead(n.id)}
-                    className="flex-shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium text-accent transition hover:bg-surface-muted"
                   >
                     Mark read
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
@@ -249,20 +245,22 @@ export default function NotificationsClient({
 
           {hasMore && (
             <div className="pt-2 text-center">
-              <button
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={loadMore}
                 disabled={loading}
-                className="rounded-lg bg-surface px-6 py-2 text-sm font-medium text-foreground ring-1 ring-border transition hover:bg-surface-muted disabled:opacity-50"
               >
                 {loading ? "Loading..." : "Load more"}
-              </button>
+              </Button>
             </div>
           )}
         </div>
       )}
 
-      <p className="mt-6 text-xs text-muted">
-        Showing {filtered.length} of {total} notification{total === 1 ? "" : "s"}
+      <p className="text-xs text-text-tertiary">
+        Showing {filtered.length} of {total} notification
+        {total === 1 ? "" : "s"}
       </p>
     </div>
   );

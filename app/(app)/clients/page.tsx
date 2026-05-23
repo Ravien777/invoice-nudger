@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import ClientsClient from "./ClientsClient";
+import { PageShell } from "@/app/components/layout/PageShell";
 
 export default async function ClientsPage() {
   const session = await getServerSession(authOptions);
@@ -28,9 +29,11 @@ export default async function ClientsPage() {
   }));
 
   return (
-    <div>
-      <h1 className="mb-6 text-2xl font-bold">Client Payment Profiles</h1>
+    <PageShell
+      title="Clients"
+      subtitle="View and manage client payment profiles"
+    >
       <ClientsClient initialProfiles={serialized} />
-    </div>
+    </PageShell>
   );
 }

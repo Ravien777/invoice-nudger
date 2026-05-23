@@ -10,6 +10,7 @@ import AIReminderModal from "./components/AIReminderModal";
 import PortalTokenModal from "./components/PortalTokenModal";
 import { PageShell } from "@/app/components/layout/PageShell";
 import { Button } from "@/app/components/ui/Button";
+import { Input } from "@/app/components/ui/Input";
 import { Select } from "@/app/components/ui/Select";
 
 interface Invoice {
@@ -289,32 +290,30 @@ export default function InvoicesClient({
         </Select>
 
         <div className="flex items-center gap-2">
-          <input
+          <Input
             type="date"
             value={dateFrom}
             onChange={(e) => {
               setDateFrom(e.target.value);
               setCurrentPage(1);
             }}
-            className="w-36 bg-surface-tertiary border border-border-default rounded-md px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors [color-scheme:dark]"
-            placeholder="From"
+            className="w-36"
           />
           <span className="text-text-tertiary text-sm">—</span>
-          <input
+          <Input
             type="date"
             value={dateTo}
             onChange={(e) => {
               setDateTo(e.target.value);
               setCurrentPage(1);
             }}
-            className="w-36 bg-surface-tertiary border border-border-default rounded-md px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors [color-scheme:dark]"
-            placeholder="To"
+            className="w-36"
           />
         </div>
 
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary pointer-events-none" />
-          <input
+        <div className="flex-1 min-w-[200px]">
+          <Input
+            icon={Search}
             type="text"
             value={searchQuery}
             onChange={(e) => {
@@ -323,7 +322,6 @@ export default function InvoicesClient({
               setSelectedIds(new Set());
             }}
             placeholder="Search client or invoice..."
-            className="w-full bg-surface-tertiary border border-border-default rounded-md pl-9 pr-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
           />
         </div>
       </div>
@@ -384,38 +382,40 @@ export default function InvoicesClient({
             </span>
             <div className="flex items-center gap-1.5">
               <span className="text-xs text-text-tertiary">Rows:</span>
-              <select
-                value={pageSize}
+              <Select
+                value={String(pageSize)}
                 onChange={(e) => {
                   setPageSize(Number(e.target.value));
                   setCurrentPage(1);
                 }}
-                className="bg-surface-tertiary border border-border-default rounded-md px-2 py-1 text-xs text-text-primary focus:outline-none focus:ring-2 focus:ring-accent"
+                className="text-xs py-1 px-2"
               >
                 {PAGE_SIZES.map((s) => (
                   <option key={s} value={s}>{s}</option>
                 ))}
-              </select>
+              </Select>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={safePage <= 1}
-              className="rounded-md px-3 py-1.5 text-sm font-medium text-text-secondary border border-border-default bg-surface-tertiary hover:bg-surface-secondary transition-colors disabled:opacity-40 disabled:pointer-events-none"
             >
               Previous
-            </button>
+            </Button>
             <span className="text-sm text-text-secondary px-2">
               {safePage} / {totalPages}
             </span>
-            <button
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={safePage >= totalPages}
-              className="rounded-md px-3 py-1.5 text-sm font-medium text-text-secondary border border-border-default bg-surface-tertiary hover:bg-surface-secondary transition-colors disabled:opacity-40 disabled:pointer-events-none"
             >
               Next
-            </button>
+            </Button>
           </div>
         </div>
       )}

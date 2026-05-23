@@ -3,6 +3,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import ClientDetailClient from "./ClientDetailClient";
+import { PageShell } from "@/app/components/layout/PageShell";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 export default async function ClientDetailPage({
   params,
@@ -19,11 +22,15 @@ export default async function ClientDetailPage({
     where: { email: session.user.email },
   });
 
+  if (!user) {
+    redirect("/");
+  }
+
   const { email } = await params;
   const clientEmail = decodeURIComponent(email);
 
   const profile = await prisma.clientPaymentProfile.findUnique({
-    where: { userId_clientEmail: { userId: user!.id, clientEmail } },
+    where: { userId_clientEmail: { userId: user.id, clientEmail } },
   });
 
   if (!profile) {
@@ -31,7 +38,7 @@ export default async function ClientDetailPage({
   }
 
   const invoices = await prisma.invoice.findMany({
-    where: { userId: user!.id, clientEmail },
+    where: { userId: user.id, clientEmail },
     orderBy: { dueDate: "desc" },
   });
 
@@ -53,17 +60,20 @@ export default async function ClientDetailPage({
   }));
 
   return (
-    <div>
-      <a
-        href="/clients"
-        className="mb-4 inline-block text-sm text-accent hover:underline"
-      >
-        &larr; Back to all clients
-      </a>
+    <PageShell title={clientEmail} subtitle="Client payment profile">
+      <div className="mb-4">
+        <Link
+          href="/clients"
+          className="inline-flex items-center gap-1.5 text-sm text-accent hover:underline"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to all clients
+        </Link>
+      </div>
       <ClientDetailClient
         profile={serializedProfile}
         invoices={serializedInvoices}
       />
-    </div>
+    </PageShell>
   );
 }

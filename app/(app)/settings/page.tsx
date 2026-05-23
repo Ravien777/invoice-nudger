@@ -47,6 +47,10 @@ export default async function SettingsPage() {
     }),
   };
 
+  const parsedAlertPrefs = user!.alertPreferences
+    ? JSON.parse(JSON.stringify(user!.alertPreferences))
+    : {};
+
   return (
     <SettingsClient
       schedule={schedule}
@@ -98,6 +102,11 @@ export default async function SettingsPage() {
       industrySettings={{
         industry: user!.industry,
         benchmarksOptOut: user!.benchmarksOptOut,
+      }}
+      userProfile={{
+        name: user!.name,
+        email: user!.email,
+        alertPreferences: parsedAlertPrefs,
       }}
     />
   );

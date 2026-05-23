@@ -3,6 +3,18 @@
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
+import { Trash2 } from "lucide-react";
+
+import { PageShell } from "@/app/components/layout/PageShell";
+import { Button } from "@/app/components/ui/Button";
+import { Input } from "@/app/components/ui/Input";
+import { Select } from "@/app/components/ui/Select";
+import { FormField } from "@/app/components/ui/FormField";
+import { Modal } from "@/app/components/ui/Modal";
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
 interface Step {
   id?: string;
@@ -28,11 +40,7 @@ interface Integration {
 interface BillingData {
   plan: string;
   subscriptionStatus: string | null;
-  tier: {
-    name: string;
-    invoiceLimit: number | null;
-    priceCents: number;
-  };
+  tier: { name: string; invoiceLimit: number | null; priceCents: number };
   monthlyInvoiceCount: number;
 }
 
@@ -75,11 +83,6 @@ interface NotificationSettings {
   whatsapp: NotificationChannelInfo;
 }
 
-interface IndustrySettings {
-  industry: string | null;
-  benchmarksOptOut: boolean;
-}
-
 interface LateFeeSettings {
   enabled: boolean;
   type: string;
@@ -92,6 +95,17 @@ interface LateFeeSettings {
   hasAccess: boolean;
 }
 
+interface IndustrySettings {
+  industry: string | null;
+  benchmarksOptOut: boolean;
+}
+
+interface UserProfile {
+  name: string | null;
+  email: string;
+  alertPreferences: Record<string, unknown>;
+}
+
 interface SettingsClientProps {
   schedule: Schedule | null;
   integrations: Integration[];
@@ -102,9 +116,12 @@ interface SettingsClientProps {
   notificationSettings: NotificationSettings;
   lateFeeSettings: LateFeeSettings;
   industrySettings: IndustrySettings;
+  userProfile: UserProfile;
 }
 
-type Tab = "reminders" | "integrations" | "billing" | "ai" | "portal" | "promises" | "notifications" | "late-fees" | "benchmarks";
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
 function offsetLabel(daysOffset: number): string {
   if (daysOffset < 0) return `${Math.abs(daysOffset)} days before due`;
@@ -117,16 +134,81 @@ const platformConfig: Record<string, { label: string; color: string; icon: strin
   quickbooks: { label: "QuickBooks", color: "#2CA01C", icon: "QB" },
 };
 
-export default function SettingsClient({ schedule, integrations: initialIntegrations, billing, aiSettings, portalSettings, promiseSettings, notificationSettings, lateFeeSettings, industrySettings }: SettingsClientProps) {
-  const [activeTab, setActiveTab] = useState<Tab>("reminders");
-  const [steps, setSteps] = useState<Step[]>(schedule?.steps ?? []);
-  const [name, setName] = useState(schedule?.name ?? "Standard");
-  const [saving, setSaving] = useState(false);
-  const [syncing, setSyncing] = useState<Record<string, boolean>>({});
-  const [integrations, setIntegrations] = useState<Integration[]>(initialIntegrations);
-  const [aiEnabled, setAiEnabled] = useState(aiSettings.enabled);
+type Tab = "profile" | "business" | "notifications" | "billing" | "danger";
+
+// ---------------------------------------------------------------------------
+// Sub-components
+// ---------------------------------------------------------------------------
+
+function TabBtn({ onClick, active, children }: { onClick: () => void; active: boolean; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`rounded-md px-4 py-2 text-sm font-medium transition ${
+        active
+          ? "bg-surface text-foreground shadow-sm"
+          : "text-muted hover:text-foreground"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      className={`relative h-6 w-11 rounded-full transition flex-shrink-0 ${
+        checked ? "bg-accent" : "bg-surface-muted"
+      }`}
+    >
+      <span
+        className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition ${
+          checked ? "translate-x-5" : "translate-x-0"
+        }`}
+      />
+    </button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
+export default function SettingsClient({
+  schedule,
+  integrations: initialIntegrations,
+  billing,
+  aiSettings,
+  portalSettings,
+  promiseSettings,
+  notificationSettings,
+  lateFeeSettings,
+  industrySettings,
+  userProfile,
+}: SettingsClientProps) {
+  const [activeTab, setActiveTab] = useState<Tab>("profile");
+
+  // Profile tab
+  const [industry, setIndustry] = useState(industrySettings.industry ?? "");
+  const [benchmarksOptOut, setBenchmarksOptOut] = useState(industrySettings.benchmarksOptOut);
   const [aiTone, setAiTone] = useState(aiSettings.tone);
+  const [alertPrefs, setAlertPrefs] = useState<Record<string, unknown>>(userProfile.alertPreferences);
+  const [savingIndustry, setSavingIndustry] = useState(false);
+  const [savingAlerts, setSavingAlerts] = useState(false);
+
+  // Notifications tab
+  const [steps, setSteps] = useState<Step[]>(schedule?.steps ?? []);
+  const [scheduleName, setScheduleName] = useState(schedule?.name ?? "Standard");
+  const [savingSchedule, setSavingSchedule] = useState(false);
+  const [aiEnabled, setAiEnabled] = useState(aiSettings.enabled);
   const [savingAI, setSavingAI] = useState(false);
+
+  // Business tab
+  const [integrations, setIntegrations] = useState<Integration[]>(initialIntegrations);
+  const [syncing, setSyncing] = useState<Record<string, boolean>>({});
   const [portalEnabled, setPortalEnabled] = useState(portalSettings.enabled);
   const [branding, setBranding] = useState<PortalBranding>(portalSettings.branding);
   const [savingPortal, setSavingPortal] = useState(false);
@@ -139,9 +221,10 @@ export default function SettingsClient({ schedule, integrations: initialIntegrat
   const [graceDays, setGraceDays] = useState(lateFeeSettings.graceDays);
   const [feeCap, setFeeCap] = useState(lateFeeSettings.feeCap);
   const [savingLateFees, setSavingLateFees] = useState(false);
-  const [industry, setIndustry] = useState(industrySettings.industry ?? "");
-  const [benchmarksOptOut, setBenchmarksOptOut] = useState(industrySettings.benchmarksOptOut);
-  const [savingIndustry, setSavingIndustry] = useState(false);
+
+  // Danger Zone
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState("");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -150,39 +233,87 @@ export default function SettingsClient({ schedule, integrations: initialIntegrat
     const message = params.get("message");
 
     if (success === "success" && platform) {
-      toast.success(`${platformConfig[platform]?.label || platform} connected successfully`);
-      window.history.replaceState({}, "", "/settings");
-      fetchIntegrationStatus(platform);
+      (async () => {
+        toast.success(`${platformConfig[platform]?.label || platform} connected successfully`);
+        window.history.replaceState({}, "", "/settings");
+        try {
+          const res = await fetch(`/api/integrations/${platform}/status`);
+          const data = await res.json();
+          if (data.connected) {
+            setIntegrations((prev) => {
+              const exists = prev.find((i) => i.platform === platform);
+              if (exists) {
+                return prev.map((i) =>
+                  i.platform === platform ? { ...i, ...data } : i
+                );
+              }
+              return [...prev, { ...data, platform, id: "" }];
+            });
+          }
+        } catch {}
+      })();
     } else if (success === "error") {
       toast.error(message || "Failed to connect");
       window.history.replaceState({}, "", "/settings");
     }
   }, []);
 
-  async function fetchIntegrationStatus(platform: string) {
+  const isConnected = (platform: string) =>
+    integrations.some((i) => i.platform === platform);
+
+  // -----------------------------------------------------------------------
+  // Profile tab handlers
+  // -----------------------------------------------------------------------
+
+  async function handleSaveIndustry() {
+    setSavingIndustry(true);
     try {
-      const res = await fetch(`/api/integrations/${platform}/status`);
-      const data = await res.json();
-      if (data.connected) {
-        setIntegrations((prev) => {
-          const exists = prev.find((i) => i.platform === platform);
-          if (exists) {
-            return prev.map((i) =>
-              i.platform === platform ? { ...i, ...data } : i
-            );
-          }
-          return [...prev, { ...data, platform, id: "" }];
-        });
+      const res = await fetch("/api/settings/industry", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          industry: industry || null,
+          benchmarksOptOut,
+        }),
+      });
+      if (res.ok) {
+        toast.success("Industry settings saved");
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to save");
       }
     } catch {
+      toast.error("Network error");
+    } finally {
+      setSavingIndustry(false);
     }
   }
 
-  function handleStepChange(
-    index: number,
-    field: "daysOffset" | "emailTemplate",
-    value: string,
-  ) {
+  async function handleSaveAlerts() {
+    setSavingAlerts(true);
+    try {
+      const res = await fetch("/api/settings/alerts", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(alertPrefs),
+      });
+      if (res.ok) {
+        toast.success("Alert preferences saved");
+      } else {
+        toast.error("Failed to save alert preferences");
+      }
+    } catch {
+      toast.error("Network error");
+    } finally {
+      setSavingAlerts(false);
+    }
+  }
+
+  // -----------------------------------------------------------------------
+  // Notifications tab handlers
+  // -----------------------------------------------------------------------
+
+  function handleStepChange(index: number, field: "daysOffset" | "emailTemplate", value: string) {
     setSteps((prev) => {
       const next = [...prev];
       next[index] = {
@@ -201,87 +332,34 @@ export default function SettingsClient({ schedule, integrations: initialIntegrat
     setSteps((prev) => prev.filter((_, i) => i !== index));
   }
 
-  async function handleSave() {
+  async function handleSaveSchedule() {
     if (steps.length === 0) {
       toast.error("At least one step is required");
       return;
     }
-
     for (const step of steps) {
       if (!step.emailTemplate.trim()) {
         toast.error("All steps must have an email template name");
         return;
       }
     }
-
-    setSaving(true);
-
+    setSavingSchedule(true);
     try {
       const res = await fetch("/api/schedules/default", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, steps }),
+        body: JSON.stringify({ name: scheduleName, steps }),
       });
-
       const data = await res.json();
-
       if (!res.ok) {
         toast.error(data.error || "Failed to save");
         return;
       }
-
       toast.success("Schedule saved");
     } catch {
       toast.error("Network error");
     } finally {
-      setSaving(false);
-    }
-  }
-
-  async function handleDisconnect(platform: string) {
-    if (!confirm(`Disconnect ${platformConfig[platform]?.label || platform}?`)) return;
-
-    try {
-      const res = await fetch(`/api/integrations/${platform}/disconnect`, {
-        method: "POST",
-      });
-
-      if (!res.ok) {
-        toast.error("Failed to disconnect");
-        return;
-      }
-
-      setIntegrations((prev) => prev.filter((i) => i.platform !== platform));
-      toast.success("Disconnected");
-    } catch {
-      toast.error("Network error");
-    }
-  }
-
-  async function handleSync(platform: string) {
-    setSyncing((prev) => ({ ...prev, [platform]: true }));
-
-    try {
-      const res = await fetch(`/api/integrations/${platform}/sync`, {
-        method: "POST",
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        toast.error(data.error || "Sync failed");
-        return;
-      }
-
-      if (data.errors?.length > 0) {
-        toast.error(`Sync completed with ${data.errors.length} error(s)`);
-      } else {
-        toast.success(`Synced: ${data.pulled} pulled, ${data.pushed} pushed`);
-      }
-    } catch {
-      toast.error("Network error");
-    } finally {
-      setSyncing((prev) => ({ ...prev, [platform]: false }));
+      setSavingSchedule(false);
     }
   }
 
@@ -293,14 +371,11 @@ export default function SettingsClient({ schedule, integrations: initialIntegrat
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ enabled: aiEnabled, tone: aiTone }),
       });
-
       const data = await res.json();
-
       if (!res.ok) {
         toast.error(data.error || "Failed to save AI settings");
         return;
       }
-
       toast.success("AI settings saved");
     } catch {
       toast.error("Network error");
@@ -309,7 +384,11 @@ export default function SettingsClient({ schedule, integrations: initialIntegrat
     }
   }
 
-  async function handleSavePortalSettings() {
+  // -----------------------------------------------------------------------
+  // Business tab handlers
+  // -----------------------------------------------------------------------
+
+  async function handleSavePortal() {
     setSavingPortal(true);
     try {
       const res = await fetch("/api/settings/portal", {
@@ -317,19 +396,56 @@ export default function SettingsClient({ schedule, integrations: initialIntegrat
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ enabled: portalEnabled, branding }),
       });
-
       const data = await res.json();
-
       if (!res.ok) {
         toast.error(data.error || "Failed to save portal settings");
         return;
       }
-
       toast.success("Portal settings saved");
     } catch {
       toast.error("Network error");
     } finally {
       setSavingPortal(false);
+    }
+  }
+
+  async function handleDisconnect(platform: string) {
+    if (!confirm(`Disconnect ${platformConfig[platform]?.label || platform}?`)) return;
+    try {
+      const res = await fetch(`/api/integrations/${platform}/disconnect`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        toast.error("Failed to disconnect");
+        return;
+      }
+      setIntegrations((prev) => prev.filter((i) => i.platform !== platform));
+      toast.success("Disconnected");
+    } catch {
+      toast.error("Network error");
+    }
+  }
+
+  async function handleSync(platform: string) {
+    setSyncing((prev) => ({ ...prev, [platform]: true }));
+    try {
+      const res = await fetch(`/api/integrations/${platform}/sync`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Sync failed");
+        return;
+      }
+      if (data.errors?.length > 0) {
+        toast.error(`Sync completed with ${data.errors.length} error(s)`);
+      } else {
+        toast.success(`Synced: ${data.pulled} pulled, ${data.pushed} pushed`);
+      }
+    } catch {
+      toast.error("Network error");
+    } finally {
+      setSyncing((prev) => ({ ...prev, [platform]: false }));
     }
   }
 
@@ -350,14 +466,11 @@ export default function SettingsClient({ schedule, integrations: initialIntegrat
           feeCap,
         }),
       });
-
       const data = await res.json();
-
       if (!res.ok) {
         toast.error(data.error || "Failed to save late fee settings");
         return;
       }
-
       toast.success("Late fee settings saved");
     } catch {
       toast.error("Network error");
@@ -366,312 +479,645 @@ export default function SettingsClient({ schedule, integrations: initialIntegrat
     }
   }
 
-  const isConnected = (platform: string) =>
-    integrations.some((i) => i.platform === platform);
-
-  if (!schedule) {
-    return (
-      <div className="rounded-xl border border-border bg-surface p-8 text-center shadow-sm">
-        <p className="text-muted">No default reminder schedule found.</p>
-      </div>
-    );
-  }
+  // -----------------------------------------------------------------------
+  // Render
+  // -----------------------------------------------------------------------
 
   return (
-    <div>
-      <h1 className="mb-6 text-2xl font-bold">Settings</h1>
-
-      <div className="mb-6 flex gap-1 rounded-lg bg-surface-muted p-1 w-fit">
-        <button
-          onClick={() => setActiveTab("reminders")}
-          className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-            activeTab === "reminders"
-              ? "bg-surface text-foreground shadow-sm"
-              : "text-muted hover:text-foreground"
-          }`}
-        >
-          Reminders
-        </button>
-        <button
-          onClick={() => setActiveTab("integrations")}
-          className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-            activeTab === "integrations"
-              ? "bg-surface text-foreground shadow-sm"
-              : "text-muted hover:text-foreground"
-          }`}
-        >
-          Integrations
-        </button>
-        <button
-          onClick={() => setActiveTab("billing")}
-          className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-            activeTab === "billing"
-              ? "bg-surface text-foreground shadow-sm"
-              : "text-muted hover:text-foreground"
-          }`}
-        >
-          Billing
-        </button>
-        <button
-          onClick={() => setActiveTab("ai")}
-          className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-            activeTab === "ai"
-              ? "bg-surface text-foreground shadow-sm"
-              : "text-muted hover:text-foreground"
-          }`}
-        >
-          AI Reminders
-        </button>
-        <button
-          onClick={() => setActiveTab("portal")}
-          className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-            activeTab === "portal"
-              ? "bg-surface text-foreground shadow-sm"
-              : "text-muted hover:text-foreground"
-          }`}
-        >
-          Client Portal
-        </button>
-        <button
-          onClick={() => setActiveTab("notifications")}
-          className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-            activeTab === "notifications"
-              ? "bg-surface text-foreground shadow-sm"
-              : "text-muted hover:text-foreground"
-          }`}
-        >
-          Notifications
-        </button>
-        <button
-          onClick={() => setActiveTab("promises")}
-          className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-            activeTab === "promises"
-              ? "bg-surface text-foreground shadow-sm"
-              : "text-muted hover:text-foreground"
-          }`}
-        >
-          Promise Detection
-          {promiseSettings.pending > 0 && (
-            <span className="ml-1.5 inline-block h-4 w-4 rounded-full bg-[var(--warning)] text-[10px] font-bold text-white leading-4 text-center">
-              {promiseSettings.pending}
-            </span>
-          )}
-        </button>
-        <button
-          onClick={() => setActiveTab("late-fees")}
-          className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-            activeTab === "late-fees"
-              ? "bg-surface text-foreground shadow-sm"
-              : "text-muted hover:text-foreground"
-          }`}
-        >
-          Late Fees
-        </button>
-        <button
-          onClick={() => setActiveTab("benchmarks")}
-          className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-            activeTab === "benchmarks"
-              ? "bg-surface text-foreground shadow-sm"
-              : "text-muted hover:text-foreground"
-          }`}
-        >
-          Benchmarks
-        </button>
+    <PageShell title="Settings" subtitle="Manage your account and preferences">
+      <div className="mb-6 flex gap-1 rounded-lg bg-surface-muted p-1 w-fit overflow-x-auto">
+        <TabBtn onClick={() => setActiveTab("profile")} active={activeTab === "profile"}>Profile</TabBtn>
+        <TabBtn onClick={() => setActiveTab("business")} active={activeTab === "business"}>Business</TabBtn>
+        <TabBtn onClick={() => setActiveTab("notifications")} active={activeTab === "notifications"}>Notifications</TabBtn>
+        <TabBtn onClick={() => setActiveTab("billing")} active={activeTab === "billing"}>Billing</TabBtn>
+        <TabBtn onClick={() => setActiveTab("danger")} active={activeTab === "danger"}>Danger Zone</TabBtn>
       </div>
 
-      {activeTab === "reminders" && (
-        <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-foreground">
-            Default Reminder Schedule
-          </h2>
-
-          <div className="mb-6">
-            <label
-              htmlFor="scheduleName"
-              className="block text-sm font-medium text-muted"
-            >
-              Schedule Name
-            </label>
-            <input
-              type="text"
-              id="scheduleName"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="mt-1 block w-full max-w-xs rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground shadow-sm transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
-            />
+      {/* ================================================================= */}
+      {/* PROFILE TAB */}
+      {/* ================================================================= */}
+      {activeTab === "profile" && (
+        <div className="space-y-6">
+          {/* Personal Info */}
+          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+            <h2 className="mb-4 text-lg font-semibold text-foreground">Personal Info</h2>
+            <div className="space-y-4 max-w-md">
+              <FormField label="Name">
+                <Input value={userProfile.name ?? ""} readOnly />
+              </FormField>
+              <FormField label="Email">
+                <Input value={userProfile.email} readOnly />
+              </FormField>
+            </div>
           </div>
 
-          <div className="mb-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-muted">Steps</h3>
-              <button
-                onClick={handleAddStep}
-                className="rounded-lg bg-surface px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-surface-muted"
-              >
-                + Add Step
-              </button>
+          {/* Industry & Benchmarks */}
+          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+            <h2 className="mb-4 text-lg font-semibold text-foreground">Industry & Benchmarks</h2>
+            <div className="space-y-4 max-w-md">
+              <FormField label="Your Industry" hint="Used to compare your payment collection against peers">
+                <Select value={industry} onChange={(e) => setIndustry(e.target.value)}>
+                  <option value="">-- Select industry --</option>
+                  <option value="freelance_design">Freelance Design</option>
+                  <option value="software_dev">Software Development</option>
+                  <option value="consulting">Consulting</option>
+                  <option value="marketing_agency">Marketing Agency</option>
+                  <option value="other">Other</option>
+                </Select>
+              </FormField>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted">Include in anonymous benchmarks</p>
+                  <p className="text-xs text-muted mt-0.5">
+                    Your data will be aggregated anonymously with other users
+                  </p>
+                </div>
+                <Toggle checked={!benchmarksOptOut} onChange={(v) => setBenchmarksOptOut(!v)} />
+              </div>
+              <div className="pt-2">
+                <Button onClick={handleSaveIndustry} loading={savingIndustry} size="sm">
+                  Save
+                </Button>
+              </div>
             </div>
+          </div>
 
-            <div className="mt-3 space-y-2">
-              {steps.map((step, index) => (
-                <div
-                  key={step.id ?? index}
-                  className="flex items-center gap-3 rounded-lg border border-border bg-surface-muted p-3"
-                >
-                  <span className="w-8 text-center text-sm font-medium text-muted">
-                    {index + 1}
-                  </span>
+          {/* AI Tone */}
+          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+            <h2 className="mb-4 text-lg font-semibold text-foreground">AI Tone</h2>
+            <div className="space-y-4 max-w-md">
+              <FormField label="Default Tone" hint="Used when generating AI reminder emails">
+                <Select value={aiTone} onChange={(e) => setAiTone(e.target.value)}>
+                  <option value="professional">Professional</option>
+                  <option value="friendly">Friendly</option>
+                  <option value="firm">Firm</option>
+                  <option value="casual">Casual</option>
+                </Select>
+              </FormField>
+              <div className="pt-2">
+                <Button onClick={handleSaveAISettings} loading={savingAI} size="sm">
+                  Save Tone
+                </Button>
+              </div>
+            </div>
+          </div>
 
-                  <div className="w-36">
-                    <label className="block text-xs text-muted">
-                      Days offset
-                    </label>
-                    <input
-                      type="number"
-                      value={step.daysOffset}
-                      onChange={(e) =>
-                        handleStepChange(index, "daysOffset", e.target.value)
-                      }
-                      className="mt-0.5 w-full rounded-lg border border-border bg-surface px-2 py-1.5 text-sm text-foreground transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
-                    />
+          {/* Alert Preferences */}
+          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+            <h2 className="mb-4 text-lg font-semibold text-foreground">Alert Preferences</h2>
+            <p className="text-sm text-muted mb-4">
+              Choose which alerts you want to receive in your notification bell.
+            </p>
+            <div className="space-y-4 max-w-md">
+              {[
+                { key: "highRiskInvoices", label: "High-risk invoices", desc: "When a high-risk invoice is detected" },
+                { key: "clientDeterioration", label: "Client deterioration", desc: "When a client's payment behaviour worsens" },
+                { key: "cashFlowGap", label: "Cash flow gap", desc: "When a cash flow gap is detected" },
+                { key: "weeklyDigest", label: "Weekly digest", desc: "Weekly summary of your account" },
+              ].map(({ key, label, desc }) => (
+                <div key={key} className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted">{label}</p>
+                    <p className="text-xs text-muted">{desc}</p>
                   </div>
-
-                  <div className="w-40">
-                    <label className="block text-xs text-muted">Timing</label>
-                    <p className="mt-0.5 text-sm text-foreground">
-                      {offsetLabel(step.daysOffset)}
-                    </p>
-                  </div>
-
-                  <div className="flex-1">
-                    <label className="block text-xs text-muted">
-                      Email template
-                    </label>
-                    <input
-                      type="text"
-                      value={step.emailTemplate}
-                      onChange={(e) =>
-                        handleStepChange(index, "emailTemplate", e.target.value)
-                      }
-                      placeholder="e.g. gentle_reminder"
-                      className="mt-0.5 w-full rounded-lg border border-border bg-surface px-2 py-1.5 text-sm text-foreground transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
-                    />
-                  </div>
-
-                  <button
-                    onClick={() => handleRemoveStep(index)}
-                    disabled={steps.length <= 1}
-                    className="mt-4 rounded-lg p-1.5 text-muted transition hover:bg-surface-muted hover:text-foreground disabled:opacity-30"
-                    title="Remove step"
-                  >
-                    <svg
-                      className="h-4 w-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                      />
-                    </svg>
-                  </button>
+                  <Toggle
+                    checked={!!alertPrefs[key]}
+                    onChange={(v) => setAlertPrefs((p) => ({ ...p, [key]: v }))}
+                  />
                 </div>
               ))}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted">Cash flow threshold</p>
+                  <p className="text-xs text-muted">Minimum gap ($) to trigger an alert</p>
+                </div>
+                <div className="w-28">
+                  <Input
+                    type="number"
+                    value={(alertPrefs.cashFlowThreshold as number) ?? 1000}
+                    onChange={(e) =>
+                      setAlertPrefs((p) => ({ ...p, cashFlowThreshold: parseInt(e.target.value) || 0 }))
+                    }
+                  />
+                </div>
+              </div>
+              <div className="pt-2">
+                <Button onClick={handleSaveAlerts} loading={savingAlerts} size="sm">
+                  Save Alert Preferences
+                </Button>
+              </div>
             </div>
-          </div>
-
-          <div className="flex items-center gap-3 border-t border-border pt-4">
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-surface shadow-sm transition hover:brightness-110 disabled:opacity-50"
-            >
-              {saving ? "Saving..." : "Save Changes"}
-            </button>
           </div>
         </div>
       )}
 
-      {activeTab === "integrations" && (
+      {/* ================================================================= */}
+      {/* BUSINESS TAB */}
+      {/* ================================================================= */}
+      {activeTab === "business" && (
         <div className="space-y-6">
-          {Object.entries(platformConfig).map(([platform, config]) => {
-            const connected = isConnected(platform);
-            const integration = integrations.find((i) => i.platform === platform);
+          {/* Client Portal Branding */}
+          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+            <h2 className="mb-4 text-lg font-semibold text-foreground">Client Portal</h2>
+            {!portalSettings.hasAccess ? (
+              <div className="rounded-lg bg-[var(--warning-muted)] p-4">
+                <p className="text-sm text-[var(--warning)]">
+                  The client portal is not available on the Free plan. Upgrade to Pro or Agency to unlock this feature.
+                </p>
+                <Link
+                  href="/settings/billing"
+                  className="mt-3 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-surface shadow-sm transition hover:brightness-110"
+                >
+                  Upgrade Plan
+                </Link>
+              </div>
+            ) : (
+              <>
+                <div className="mb-6 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted">Enable Client Portal</p>
+                    <p className="text-xs text-muted mt-0.5">
+                      Give clients a branded link to view invoices and make payments
+                    </p>
+                  </div>
+                  <Toggle checked={portalEnabled} onChange={setPortalEnabled} />
+                </div>
 
-            return (
-              <div
-                key={platform}
-                className="rounded-xl border border-border bg-surface p-6 shadow-sm"
-              >
-                <div className="flex items-start justify-between">
+                {portalEnabled && (
+                  <div className="space-y-4 max-w-md mb-6">
+                    <FormField label="Business Name">
+                      <Input
+                        value={branding.businessName}
+                        onChange={(e) => setBranding((p) => ({ ...p, businessName: e.target.value }))}
+                      />
+                    </FormField>
+                    <FormField label="Logo URL">
+                      <Input
+                        value={branding.logoUrl}
+                        onChange={(e) => setBranding((p) => ({ ...p, logoUrl: e.target.value }))}
+                        placeholder="https://example.com/logo.png"
+                      />
+                    </FormField>
+                    <FormField label="Accent Color">
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="color"
+                          value={branding.accentColor}
+                          onChange={(e) => setBranding((p) => ({ ...p, accentColor: e.target.value }))}
+                          className="h-9 w-12 cursor-pointer rounded border border-border bg-surface"
+                        />
+                        <Input
+                          value={branding.accentColor}
+                          onChange={(e) => {
+                            if (/^#[0-9a-fA-F]{0,6}$/.test(e.target.value)) {
+                              setBranding((p) => ({ ...p, accentColor: e.target.value }));
+                            }
+                          }}
+                          placeholder="#2563eb"
+                          className="w-28"
+                        />
+                      </div>
+                    </FormField>
+                    <FormField label="Tagline">
+                      <Input
+                        value={branding.tagline}
+                        onChange={(e) => setBranding((p) => ({ ...p, tagline: e.target.value }))}
+                        placeholder="e.g. Professional invoicing made simple"
+                      />
+                    </FormField>
+                    <FormField label="Favicon URL">
+                      <Input
+                        value={branding.faviconUrl}
+                        onChange={(e) => setBranding((p) => ({ ...p, faviconUrl: e.target.value }))}
+                        placeholder="https://example.com/favicon.ico"
+                      />
+                    </FormField>
+                  </div>
+                )}
+
+                <div className="pt-2">
+                  <Button onClick={handleSavePortal} loading={savingPortal} size="sm">
+                    Save Portal Settings
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Accounting Integrations */}
+          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+            <h2 className="mb-4 text-lg font-semibold text-foreground">Accounting Integrations</h2>
+            <p className="text-sm text-muted mb-6">
+              Sync invoices and payment status with your accounting software.
+            </p>
+
+            {Object.entries(platformConfig).length === 0 && (
+              <div className="rounded-lg bg-surface-muted p-4 text-center">
+                <p className="text-sm text-muted">No integrations available yet.</p>
+              </div>
+            )}
+
+            {Object.entries(platformConfig).map(([platform, config]) => {
+              const connected = isConnected(platform);
+              const integration = integrations.find((i) => i.platform === platform);
+              return (
+                <div key={platform} className="flex items-center justify-between py-4 border-b border-border last:border-0">
                   <div className="flex items-center gap-4">
                     <div
-                      className="flex h-12 w-12 items-center justify-center rounded-xl text-lg font-bold text-white"
+                      className="flex h-10 w-10 items-center justify-center rounded-lg text-sm font-bold text-white"
                       style={{ backgroundColor: config.color }}
                     >
                       {config.icon}
                     </div>
                     <div>
-                      <h2 className="text-lg font-semibold text-foreground">
-                        {config.label}
-                      </h2>
+                      <p className="text-sm font-medium text-foreground">{config.label}</p>
                       {connected ? (
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="inline-block h-2 w-2 rounded-full bg-success" />
-                          <span className="text-sm text-muted">
-                            Connected
-                            {integration?.connectedAt && (
-                              <span className="ml-1">
-                                since{" "}
-                                {new Date(integration.connectedAt).toLocaleDateString()}
-                              </span>
-                            )}
-                          </span>
-                        </div>
-                      ) : (
-                        <p className="mt-1 text-sm text-muted">
-                          Sync invoices and payment status with {config.label}
+                        <p className="text-xs text-muted">
+                          Connected{integration?.connectedAt ? ` since ${new Date(integration.connectedAt).toLocaleDateString()}` : ""}
                         </p>
+                      ) : (
+                        <p className="text-xs text-muted">Not connected</p>
                       )}
                     </div>
                   </div>
-
                   <div className="flex items-center gap-2">
                     {connected ? (
                       <>
-                        <button
-                          onClick={() => handleSync(platform)}
-                          disabled={syncing[platform]}
-                          className="rounded-lg bg-surface px-3 py-2 text-sm font-medium text-foreground ring-1 ring-border transition hover:bg-surface-muted disabled:opacity-50"
-                        >
-                          {syncing[platform] ? "Syncing..." : "Sync Now"}
-                        </button>
-                        <button
-                          onClick={() => handleDisconnect(platform)}
-                          className="rounded-lg bg-surface px-3 py-2 text-sm font-medium text-danger ring-1 ring-border transition hover:bg-surface-muted"
-                        >
+                        <Button variant="secondary" size="sm" onClick={() => handleSync(platform)} loading={syncing[platform]}>
+                          Sync
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDisconnect(platform)}>
                           Disconnect
-                        </button>
+                        </Button>
                       </>
                     ) : (
                       <a
                         href={`/api/integrations/${platform}/connect`}
-                        className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-surface shadow-sm transition hover:brightness-110"
+                        className="inline-flex items-center justify-center gap-2 rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-surface shadow-sm transition hover:brightness-110"
                       >
                         Connect
                       </a>
                     )}
                   </div>
                 </div>
+              );
+            })}
+          </div>
+
+          {/* Late Fees */}
+          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+            <h2 className="mb-4 text-lg font-semibold text-foreground">Late Fees & Interest</h2>
+            {!lateFeeSettings.hasAccess ? (
+              <div className="rounded-lg bg-[var(--warning-muted)] p-4">
+                <p className="text-sm text-[var(--warning)]">
+                  Late fees and interest are not available on the Free plan. Upgrade to Pro or Agency to unlock this feature.
+                </p>
+                <Link
+                  href="/settings/billing"
+                  className="mt-3 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-surface shadow-sm transition hover:brightness-110"
+                >
+                  Upgrade Plan
+                </Link>
               </div>
-            );
-          })}
+            ) : (
+              <>
+                <div className="mb-6 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted">Enable Late Fees & Interest</p>
+                    <p className="text-xs text-muted mt-0.5">
+                      Automatically apply fees to overdue invoices
+                    </p>
+                  </div>
+                  <Toggle checked={lateFeeEnabled} onChange={setLateFeeEnabled} />
+                </div>
+
+                {lateFeeEnabled && (
+                  <div className="space-y-4 max-w-md">
+                    <div className="rounded-lg border border-border bg-surface-muted p-4">
+                      <h3 className="text-sm font-medium text-foreground mb-3">Late Fee</h3>
+                      <div className="space-y-3">
+                        <FormField label="Type">
+                          <Select value={lateFeeType} onChange={(e) => setLateFeeType(e.target.value)}>
+                            <option value="fixed">Fixed amount</option>
+                            <option value="percentage">Percentage of invoice</option>
+                          </Select>
+                        </FormField>
+                        <FormField label={lateFeeType === "fixed" ? "Amount" : "Percentage"}>
+                          <Input
+                            type="number"
+                            value={lateFeeValue || ""}
+                            onChange={(e) => setLateFeeValue(parseFloat(e.target.value) || 0)}
+                            step="0.01"
+                            min="0"
+                            prefix={lateFeeType === "fixed" ? "$" : "%"}
+                          />
+                        </FormField>
+                        <FormField label="Frequency">
+                          <Select value={lateFeeFrequency} onChange={(e) => setLateFeeFrequency(e.target.value)}>
+                            <option value="once">One-time</option>
+                            <option value="recurring">Recurring</option>
+                          </Select>
+                        </FormField>
+                      </div>
+                    </div>
+
+                    <div className="rounded-lg border border-border bg-surface-muted p-4">
+                      <h3 className="text-sm font-medium text-foreground mb-3">Daily Interest</h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm text-muted">Enable Daily Interest</p>
+                          <Toggle checked={interestEnabled} onChange={setInterestEnabled} />
+                        </div>
+                        {interestEnabled && (
+                          <FormField label="Daily Rate (%)" hint="e.g. 0.05% = ~18.25% APR">
+                            <Input
+                              type="number"
+                              value={interestRate || ""}
+                              onChange={(e) => setInterestRate(parseFloat(e.target.value) || 0)}
+                              step="0.01"
+                              min="0"
+                              prefix="%"
+                            />
+                          </FormField>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="rounded-lg border border-border bg-surface-muted p-4">
+                      <h3 className="text-sm font-medium text-foreground mb-3">General</h3>
+                      <div className="space-y-3">
+                        <FormField label="Grace Period (days)">
+                          <Input
+                            type="number"
+                            value={graceDays || ""}
+                            onChange={(e) => setGraceDays(parseInt(e.target.value) || 0)}
+                            min="0"
+                          />
+                        </FormField>
+                        <FormField label="Maximum Fee Cap ($)" hint="0 = no limit">
+                          <Input
+                            type="number"
+                            value={feeCap || ""}
+                            onChange={(e) => setFeeCap(parseFloat(e.target.value) || 0)}
+                            step="0.01"
+                            min="0"
+                            prefix="$"
+                          />
+                        </FormField>
+                      </div>
+                    </div>
+
+                    <div className="rounded-lg border border-[var(--warning-muted)] bg-[var(--warning-muted)]/50 p-4">
+                      <p className="text-xs text-muted">
+                        <span className="font-medium text-foreground">Disclaimer:</span> This is not legal advice. Late fees, interest, and collections practices are subject to applicable laws. Consult a legal professional.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="pt-4 border-t border-border mt-6">
+                  <Button onClick={handleSaveLateFees} loading={savingLateFees} size="sm">
+                    Save Late Fee Settings
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Promise Detection */}
+          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+            <h2 className="mb-4 text-lg font-semibold text-foreground">AI Promise Detection</h2>
+            {!promiseSettings.hasAccess ? (
+              <p className="text-sm text-muted">Not available on the Free plan.</p>
+            ) : (
+              <>
+                <p className="text-sm text-muted mb-4">
+                  Automatically detect when clients promise to pay via email.
+                </p>
+                <div className="grid grid-cols-3 gap-4 max-w-md">
+                  <div className="rounded-lg bg-surface-muted p-3 text-center">
+                    <p className="text-xl font-bold text-[var(--success)]">{promiseSettings.active}</p>
+                    <p className="text-xs text-muted">Active</p>
+                  </div>
+                  <div className="rounded-lg bg-surface-muted p-3 text-center">
+                    <p className="text-xl font-bold text-[var(--warning)]">{promiseSettings.pending}</p>
+                    <p className="text-xs text-muted">Pending</p>
+                  </div>
+                  <div className="rounded-lg bg-surface-muted p-3 text-center">
+                    <p className="text-xl font-bold text-muted">{promiseSettings.expired}</p>
+                    <p className="text-xs text-muted">Expired</p>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       )}
 
+      {/* ================================================================= */}
+      {/* NOTIFICATIONS TAB */}
+      {/* ================================================================= */}
+      {activeTab === "notifications" && (
+        <div className="space-y-6">
+          {/* Reminder Schedule */}
+          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+            <h2 className="mb-4 text-lg font-semibold text-foreground">Reminder Schedule</h2>
+
+            <div className="mb-6 max-w-xs">
+              <FormField label="Schedule Name">
+                <Input
+                  value={scheduleName}
+                  onChange={(e) => setScheduleName(e.target.value)}
+                />
+              </FormField>
+            </div>
+
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-medium text-muted">Steps</h3>
+                <Button variant="secondary" size="sm" onClick={handleAddStep}>
+                  + Add Step
+                </Button>
+              </div>
+
+              <div className="space-y-2">
+                {steps.map((step, index) => (
+                  <div
+                    key={step.id ?? index}
+                    className="flex items-center gap-3 rounded-lg border border-border bg-surface-muted p-3"
+                  >
+                    <span className="w-6 text-center text-sm font-medium text-muted">
+                      {index + 1}
+                    </span>
+                    <div className="flex-1 grid grid-cols-2 gap-3">
+                      <FormField label="Days offset">
+                        <Input
+                          type="number"
+                          value={step.daysOffset}
+                          onChange={(e) => handleStepChange(index, "daysOffset", e.target.value)}
+                        />
+                      </FormField>
+                      <FormField label="Timing">
+                        <Input
+                          value={offsetLabel(step.daysOffset)}
+                          readOnly
+                        />
+                      </FormField>
+                    </div>
+                    <div className="flex-1">
+                      <FormField label="Email template">
+                        <Input
+                          value={step.emailTemplate}
+                          onChange={(e) => handleStepChange(index, "emailTemplate", e.target.value)}
+                          placeholder="e.g. gentle_reminder"
+                        />
+                      </FormField>
+                    </div>
+                    <button
+                      onClick={() => handleRemoveStep(index)}
+                      disabled={steps.length <= 1}
+                      className="mt-5 rounded-lg p-1.5 text-muted transition hover:bg-surface-muted hover:text-foreground disabled:opacity-30"
+                      title="Remove step"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-border">
+              <Button onClick={handleSaveSchedule} loading={savingSchedule} size="sm">
+                Save Schedule
+              </Button>
+            </div>
+          </div>
+
+          {/* AI Reminders */}
+          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+            <h2 className="mb-4 text-lg font-semibold text-foreground">AI Reminders</h2>
+            {aiSettings.limit === 0 ? (
+              <div className="rounded-lg bg-[var(--warning-muted)] p-4">
+                <p className="text-sm text-[var(--warning)]">
+                  AI reminders are not available on the Free plan.
+                </p>
+                <Link
+                  href="/settings/billing"
+                  className="mt-3 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-surface shadow-sm transition hover:brightness-110"
+                >
+                  Upgrade Plan
+                </Link>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <p className="text-sm font-medium text-muted">Enable AI Reminders</p>
+                    <p className="text-xs text-muted mt-0.5">
+                      Generate personalized reminder emails for each invoice
+                    </p>
+                  </div>
+                  <Toggle checked={aiEnabled} onChange={setAiEnabled} />
+                </div>
+
+                <div className="mb-4">
+                  <div className="flex items-center justify-between text-sm mb-1">
+                    <span className="text-muted">Monthly usage: {aiSettings.usage} / {aiSettings.limit}</span>
+                    <span className="font-medium text-foreground">
+                      {Math.round((aiSettings.usage / aiSettings.limit) * 100)}%
+                    </span>
+                  </div>
+                  <div className="h-2 w-full max-w-xs overflow-hidden rounded-full bg-surface-muted">
+                    <div
+                      className={`h-full rounded-full transition-all ${
+                        aiSettings.usage >= aiSettings.limit
+                          ? "bg-[var(--danger)]"
+                          : (aiSettings.usage / aiSettings.limit) * 100 > 80
+                          ? "bg-[var(--warning)]"
+                          : "bg-purple-600"
+                      }`}
+                      style={{ width: `${Math.min((aiSettings.usage / aiSettings.limit) * 100, 100)}%` }}
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <Button onClick={handleSaveAISettings} loading={savingAI} size="sm">
+                    Save AI Settings
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* SMS & WhatsApp */}
+          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+            <h2 className="mb-4 text-lg font-semibold text-foreground">SMS & WhatsApp</h2>
+            {!notificationSettings.sms.enabled && !notificationSettings.whatsapp.enabled ? (
+              <div className="rounded-lg bg-[var(--warning-muted)] p-4">
+                <p className="text-sm text-[var(--warning)]">
+                  SMS and WhatsApp reminders are not available on the Free plan.
+                </p>
+                <Link
+                  href="/settings/billing"
+                  className="mt-3 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-surface shadow-sm transition hover:brightness-110"
+                >
+                  Upgrade Plan
+                </Link>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4 max-w-md">
+                {(["sms", "whatsapp"] as const).map((channel) => {
+                  const info = notificationSettings[channel];
+                  return (
+                    <div key={channel} className="rounded-lg bg-surface-muted p-4">
+                      <p className="text-sm font-medium text-foreground capitalize mb-2">{channel}</p>
+                      <div className="flex items-center justify-between text-sm mb-1">
+                        <span className="text-muted">
+                          {info.used} / {info.limit}
+                        </span>
+                        <span className="font-medium text-foreground">
+                          {info.limit > 0 ? Math.round((info.used / info.limit) * 100) : 0}%
+                        </span>
+                      </div>
+                      <div className="h-2 w-full overflow-hidden rounded-full bg-surface">
+                        <div
+                          className={`h-full rounded-full transition-all ${
+                            info.used >= info.limit
+                              ? "bg-[var(--danger)]"
+                              : info.limit > 0 && (info.used / info.limit) * 100 > 80
+                              ? "bg-[var(--warning)]"
+                              : "bg-accent"
+                          }`}
+                          style={{ width: `${info.limit > 0 ? Math.min((info.used / info.limit) * 100, 100) : 0}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <details className="mt-4">
+              <summary className="text-sm text-muted cursor-pointer hover:text-foreground">
+                Configuration reference
+              </summary>
+              <pre className="mt-3 text-xs text-muted bg-surface-muted rounded-lg p-3 overflow-x-auto">
+{`TWILIO_ACCOUNT_SID=your_account_sid
+TWILIO_AUTH_TOKEN=your_auth_token
+TWILIO_PHONE_NUMBER=+12025551234
+TWILIO_WHATSAPP_NUMBER=+14155238886`}
+              </pre>
+            </details>
+          </div>
+        </div>
+      )}
+
+      {/* ================================================================= */}
+      {/* BILLING TAB */}
+      {/* ================================================================= */}
       {activeTab === "billing" && (
         <div className="space-y-6">
           <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
@@ -696,9 +1142,9 @@ export default function SettingsClient({ schedule, integrations: initialIntegrat
               </div>
             </div>
 
-            {billing.tier.invoiceLimit !== null && (
-              <div>
-                <div className="mb-2 flex items-center justify-between text-sm">
+            {billing.tier.invoiceLimit !== null ? (
+              <div className="mb-4 max-w-sm">
+                <div className="flex items-center justify-between text-sm mb-1">
                   <span className="text-muted">
                     Monthly usage: {billing.monthlyInvoiceCount} / {billing.tier.invoiceLimit} invoices
                   </span>
@@ -718,22 +1164,29 @@ export default function SettingsClient({ schedule, integrations: initialIntegrat
                     style={{ width: `${Math.min((billing.monthlyInvoiceCount / billing.tier.invoiceLimit) * 100, 100)}%` }}
                   />
                 </div>
+                {billing.monthlyInvoiceCount >= billing.tier.invoiceLimit && (
+                  <p className="mt-2 text-sm text-[var(--danger)]">
+                    Invoice limit reached.{" "}
+                    <Link href="/settings/billing" className="font-medium underline hover:text-foreground">
+                      Upgrade your plan
+                    </Link>
+                  </p>
+                )}
               </div>
+            ) : (
+              <p className="text-sm text-muted mb-4">Unlimited invoices this month.</p>
             )}
 
-            {billing.tier.invoiceLimit === null && (
-              <p className="text-sm text-muted">Unlimited invoices this month.</p>
-            )}
-
-            <div className="mt-6 flex gap-3">
+            <div className="flex gap-3">
               <Link
                 href="/settings/billing"
-                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-surface shadow-sm transition hover:brightness-110"
+                className="inline-flex items-center justify-center gap-2 rounded-md bg-accent px-4 py-2 text-sm font-medium text-surface shadow-sm transition hover:brightness-110"
               >
                 Manage Billing
               </Link>
               {billing.subscriptionStatus === "active" && (
-                <button
+                <Button
+                  variant="secondary"
                   onClick={async () => {
                     try {
                       const res = await fetch("/api/stripe/create-portal-session", { method: "POST" });
@@ -747,741 +1200,89 @@ export default function SettingsClient({ schedule, integrations: initialIntegrat
                       toast.error("Network error");
                     }
                   }}
-                  className="rounded-lg bg-surface px-4 py-2 text-sm font-medium text-foreground ring-1 ring-border transition hover:bg-surface-muted"
                 >
-                  Manage Subscription
-                </button>
+                   Manage Subscription
+                </Button>
               )}
             </div>
           </div>
         </div>
       )}
 
-      {activeTab === "ai" && (
+      {/* ================================================================= */}
+      {/* DANGER ZONE TAB */}
+      {/* ================================================================= */}
+      {activeTab === "danger" && (
         <div className="space-y-6">
-          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold text-foreground">
-              AI-Generated Reminders
-            </h2>
-            <p className="mb-6 text-sm text-muted">
-              Use AI to generate personalized, context-aware reminder emails for each invoice.
-              Requires a paid plan.
+          <div className="rounded-xl border border-danger/30 bg-surface p-6 shadow-sm">
+            <h2 className="mb-2 text-lg font-semibold text-foreground">Danger Zone</h2>
+            <p className="text-sm text-muted mb-6">
+              Irreversible actions. Proceed with caution.
             </p>
 
-            {aiSettings.limit === 0 ? (
-              <div className="rounded-lg bg-[var(--warning-muted)] p-4">
-                <p className="text-sm text-[var(--warning)]">
-                  AI reminders are not available on the Free plan. Upgrade to Pro or Agency to unlock this feature.
-                </p>
-                <Link
-                  href="/settings/billing"
-                  className="mt-3 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-surface shadow-sm transition hover:brightness-110"
-                >
-                  Upgrade Plan
-                </Link>
-              </div>
-            ) : (
-              <>
-                <div className="mb-6">
-                  <div className="mb-2 flex items-center justify-between">
-                    <label className="text-sm font-medium text-muted">
-                      Enable AI Reminders
-                    </label>
-                    <button
-                      onClick={() => setAiEnabled(!aiEnabled)}
-                      className={`relative h-6 w-11 rounded-full transition ${
-                        aiEnabled ? "bg-purple-600" : "bg-surface-muted"
-                      }`}
-                    >
-                      <span
-                        className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition ${
-                          aiEnabled ? "translate-x-5" : "translate-x-0"
-                        }`}
-                      />
-                    </button>
-                  </div>
-                  <p className="text-xs text-muted">
-                    When enabled, the cron job will generate AI reminders for due invoices. You must approve them before they are sent.
+            <div className="rounded-lg border border-danger/20 bg-danger/5 p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-foreground">Delete Account</p>
+                  <p className="text-xs text-muted mt-0.5">
+                    Permanently delete your account and all associated data
                   </p>
                 </div>
-
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-muted">
-                    Default Tone
-                  </label>
-                  <select
-                    value={aiTone}
-                    onChange={(e) => setAiTone(e.target.value)}
-                    className="mt-1 block w-full max-w-xs rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground shadow-sm transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
-                  >
-                    <option value="professional">Professional</option>
-                    <option value="friendly">Friendly</option>
-                    <option value="firm">Firm</option>
-                    <option value="casual">Casual</option>
-                  </select>
-                  <p className="mt-1 text-xs text-muted">
-                    This tone will be used by default when generating AI reminders. You can override it per-invoice.
-                  </p>
-                </div>
-
-                <div className="mb-6">
-                  <div className="mb-2 flex items-center justify-between text-sm">
-                    <span className="text-muted">
-                      Monthly AI usage: {aiSettings.usage} / {aiSettings.limit}
-                    </span>
-                    <span className="font-medium text-foreground">
-                      {Math.round((aiSettings.usage / aiSettings.limit) * 100)}%
-                    </span>
-                  </div>
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-surface-muted">
-                    <div
-                      className={`h-full rounded-full transition-all ${
-                        aiSettings.usage >= aiSettings.limit
-                          ? "bg-[var(--danger)]"
-                          : (aiSettings.usage / aiSettings.limit) * 100 > 80
-                          ? "bg-[var(--warning)]"
-                          : "bg-purple-600"
-                      }`}
-                      style={{ width: `${Math.min((aiSettings.usage / aiSettings.limit) * 100, 100)}%` }}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 border-t border-border pt-4">
-                  <button
-                    onClick={handleSaveAISettings}
-                    disabled={savingAI}
-                    className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-surface shadow-sm transition hover:brightness-110 disabled:opacity-50"
-                  >
-                    {savingAI ? "Saving..." : "Save AI Settings"}
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
-      {activeTab === "portal" && (
-        <div className="space-y-6">
-          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-            <h2 className="mb-2 text-lg font-semibold text-foreground">
-              White-Labeled Client Portal
-            </h2>
-            <p className="mb-6 text-sm text-muted">
-              Give your clients a branded portal to view their invoices and make payments.
-              Each client gets a secure, shareable link.
-            </p>
-
-            {!portalSettings.hasAccess ? (
-              <div className="rounded-lg bg-[var(--warning-muted)] p-4">
-                <p className="text-sm text-[var(--warning)]">
-                  The client portal is not available on the Free plan. Upgrade to Pro or Agency to unlock this feature.
-                </p>
-                <Link
-                  href="/settings/billing"
-                  className="mt-3 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-surface shadow-sm transition hover:brightness-110"
+                <Button
+                  variant="danger"
+                  size="sm"
+                  icon={Trash2}
+                  onClick={() => setShowDeleteModal(true)}
                 >
-                  Upgrade Plan
-                </Link>
+                  Delete Account
+                </Button>
               </div>
-            ) : (
-              <>
-                <div className="mb-6">
-                  <div className="mb-2 flex items-center justify-between">
-                    <label className="text-sm font-medium text-muted">
-                      Enable Client Portal
-                    </label>
-                    <button
-                      onClick={() => setPortalEnabled(!portalEnabled)}
-                      className={`relative h-6 w-11 rounded-full transition ${
-                        portalEnabled ? "bg-accent" : "bg-surface-muted"
-                      }`}
-                    >
-                      <span
-                        className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition ${
-                          portalEnabled ? "translate-x-5" : "translate-x-0"
-                        }`}
-                      />
-                    </button>
-                  </div>
-                  <p className="text-xs text-muted">
-                    When enabled, you can generate secure portal links for your clients from the Invoices page.
-                  </p>
-                </div>
-
-                <div className="mb-6 space-y-4">
-                  <h3 className="text-sm font-medium text-muted">Branding</h3>
-
-                  <div>
-                    <label className="block text-xs text-muted">Business Name</label>
-                    <input
-                      type="text"
-                      value={branding.businessName}
-                      onChange={(e) => setBranding((prev) => ({ ...prev, businessName: e.target.value }))}
-                      placeholder="Your business name"
-                      className="mt-1 block w-full max-w-md rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground shadow-sm transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs text-muted">Logo URL</label>
-                    <input
-                      type="text"
-                      value={branding.logoUrl}
-                      onChange={(e) => setBranding((prev) => ({ ...prev, logoUrl: e.target.value }))}
-                      placeholder="https://example.com/logo.png"
-                      className="mt-1 block w-full max-w-md rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground shadow-sm transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs text-muted">Accent Color</label>
-                    <div className="mt-1 flex items-center gap-3">
-                      <input
-                        type="color"
-                        value={branding.accentColor}
-                        onChange={(e) => setBranding((prev) => ({ ...prev, accentColor: e.target.value }))}
-                        className="h-9 w-12 cursor-pointer rounded border border-border"
-                      />
-                      <input
-                        type="text"
-                        value={branding.accentColor}
-                        onChange={(e) => {
-                          if (/^#[0-9a-fA-F]{0,6}$/.test(e.target.value)) {
-                            setBranding((prev) => ({ ...prev, accentColor: e.target.value }));
-                          }
-                        }}
-                        placeholder="#2563eb"
-                        className="w-28 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground shadow-sm transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs text-muted">Tagline</label>
-                    <input
-                      type="text"
-                      value={branding.tagline}
-                      onChange={(e) => setBranding((prev) => ({ ...prev, tagline: e.target.value }))}
-                      placeholder="e.g. Professional invoicing made simple"
-                      className="mt-1 block w-full max-w-md rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground shadow-sm transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs text-muted">Favicon URL</label>
-                    <input
-                      type="text"
-                      value={branding.faviconUrl}
-                      onChange={(e) => setBranding((prev) => ({ ...prev, faviconUrl: e.target.value }))}
-                      placeholder="https://example.com/favicon.ico"
-                      className="mt-1 block w-full max-w-md rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground shadow-sm transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
-                    />
-                  </div>
-                </div>
-
-                <div className="mb-6">
-                  <h3 className="mb-3 text-sm font-medium text-muted">Preview</h3>
-                  <div
-                    className="rounded-lg border border-border p-4"
-                    style={{ borderTopColor: branding.accentColor, borderTopWidth: "3px" }}
-                  >
-                    <div className="flex items-center gap-3 mb-3">
-                      {branding.logoUrl ? (
-                        <img
-                          src={branding.logoUrl}
-                          alt="Logo"
-                          className="h-8 w-8 rounded object-cover"
-                          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                        />
-                      ) : (
-                        <div
-                          className="flex h-8 w-8 items-center justify-center rounded text-sm font-bold text-white"
-                          style={{ backgroundColor: branding.accentColor }}
-                        >
-                          {branding.businessName.charAt(0).toUpperCase() || "B"}
-                        </div>
-                      )}
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">{branding.businessName || "Your Business"}</p>
-                        {branding.tagline && <p className="text-xs text-muted">{branding.tagline}</p>}
-                      </div>
-                    </div>
-                    <div className="rounded bg-surface-muted p-3 text-xs text-muted">
-                      Client invoices will appear here with your branding applied.
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 border-t border-border pt-4">
-                  <button
-                    onClick={handleSavePortalSettings}
-                    disabled={savingPortal}
-                    className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-surface shadow-sm transition hover:brightness-110 disabled:opacity-50"
-                  >
-                    {savingPortal ? "Saving..." : "Save Portal Settings"}
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
-      {activeTab === "promises" && (
-        <div className="space-y-6">
-          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-            <h2 className="mb-2 text-lg font-semibold text-foreground">
-              AI Promise Detection
-            </h2>
-            <p className="mb-6 text-sm text-muted">
-              Automatically detect when clients promise to pay via email replies. Reminders pause until the promised date passes.
-            </p>
-
-            {!promiseSettings.hasAccess ? (
-              <div className="rounded-lg bg-[var(--warning-muted)] p-4">
-                <p className="text-sm text-[var(--warning)]">
-                  Promise detection is not available on the Free plan. Upgrade to Pro or Agency to unlock this feature.
-                </p>
-                <Link
-                  href="/settings/billing"
-                  className="mt-3 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-surface shadow-sm transition hover:brightness-110"
-                >
-                  Upgrade Plan
-                </Link>
-              </div>
-            ) : (
-              <>
-                <div className="mb-6 grid grid-cols-3 gap-4">
-                  <div className="rounded-lg bg-surface-muted p-4 text-center">
-                    <p className="text-2xl font-bold text-[var(--success)]">{promiseSettings.active}</p>
-                    <p className="text-xs text-muted">Active Promises</p>
-                  </div>
-                  <div className="rounded-lg bg-surface-muted p-4 text-center">
-                    <p className="text-2xl font-bold text-[var(--warning)]">{promiseSettings.pending}</p>
-                    <p className="text-xs text-muted">Pending Review</p>
-                  </div>
-                  <div className="rounded-lg bg-surface-muted p-4 text-center">
-                    <p className="text-2xl font-bold text-muted">{promiseSettings.expired}</p>
-                    <p className="text-xs text-muted">Expired</p>
-                  </div>
-                </div>
-
-                <div className="rounded-lg bg-surface-muted p-4 mb-6">
-                  <h3 className="text-sm font-medium text-foreground mb-2">How it works</h3>
-                  <ol className="list-decimal list-inside text-sm text-muted space-y-1">
-                    <li>Set up Mailgun to forward email replies to your Invoice Nudger webhook</li>
-                    <li>AI analyzes replies for payment promises and extracts dates</li>
-                    <li>High confidence (&gt;80%) promises auto-pause reminders</li>
-                    <li>Medium confidence (50-80%) promises go to your review queue</li>
-                    <li>After a promised date passes, a firmer reminder is sent</li>
-                  </ol>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <Link
-                    href="/promises"
-                    className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-surface shadow-sm transition hover:brightness-110"
-                  >
-                    Review Promises
-                  </Link>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
-      {activeTab === "notifications" && (
-        <div className="space-y-6">
-          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-            <h2 className="mb-2 text-lg font-semibold text-foreground">
-              SMS & WhatsApp Reminders
-            </h2>
-            <p className="mb-6 text-sm text-muted">
-              Send reminder messages via SMS or WhatsApp when email fails or as a primary channel. Requires a paid plan and a Twilio account.
-            </p>
-
-            {!notificationSettings.sms.enabled && !notificationSettings.whatsapp.enabled ? (
-              <div className="rounded-lg bg-[var(--warning-muted)] p-4">
-                <p className="text-sm text-[var(--warning)]">
-                  SMS and WhatsApp reminders are not available on the Free plan. Upgrade to Pro or Agency to unlock this feature.
-                </p>
-                <Link
-                  href="/settings/billing"
-                  className="mt-3 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-surface shadow-sm transition hover:brightness-110"
-                >
-                  Upgrade Plan
-                </Link>
-              </div>
-            ) : (
-              <>
-                <div className="mb-6 grid grid-cols-2 gap-4">
-                  <div className="rounded-lg bg-surface-muted p-4">
-                    <h3 className="text-sm font-medium text-foreground mb-2">SMS</h3>
-                    <div className="mb-2 flex items-center justify-between text-sm">
-                      <span className="text-muted">
-                        Monthly usage: {notificationSettings.sms.used} / {notificationSettings.sms.limit}
-                      </span>
-                      <span className="font-medium text-foreground">
-                        {notificationSettings.sms.limit > 0 ? Math.round((notificationSettings.sms.used / notificationSettings.sms.limit) * 100) : 0}%
-                      </span>
-                    </div>
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-surface-muted">
-                      <div
-                        className={`h-full rounded-full transition-all ${
-                          notificationSettings.sms.used >= notificationSettings.sms.limit
-                            ? "bg-[var(--danger)]"
-                            : notificationSettings.sms.limit > 0 && (notificationSettings.sms.used / notificationSettings.sms.limit) * 100 > 80
-                            ? "bg-[var(--warning)]"
-                            : "bg-accent"
-                        }`}
-                        style={{ width: `${notificationSettings.sms.limit > 0 ? Math.min((notificationSettings.sms.used / notificationSettings.sms.limit) * 100, 100) : 0}%` }}
-                      />
-                    </div>
-                  </div>
-                  <div className="rounded-lg bg-surface-muted p-4">
-                    <h3 className="text-sm font-medium text-foreground mb-2">WhatsApp</h3>
-                    <div className="mb-2 flex items-center justify-between text-sm">
-                      <span className="text-muted">
-                        Monthly usage: {notificationSettings.whatsapp.used} / {notificationSettings.whatsapp.limit}
-                      </span>
-                      <span className="font-medium text-foreground">
-                        {notificationSettings.whatsapp.limit > 0 ? Math.round((notificationSettings.whatsapp.used / notificationSettings.whatsapp.limit) * 100) : 0}%
-                      </span>
-                    </div>
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-surface-muted">
-                      <div
-                        className={`h-full rounded-full transition-all ${
-                          notificationSettings.whatsapp.used >= notificationSettings.whatsapp.limit
-                            ? "bg-[var(--danger)]"
-                            : notificationSettings.whatsapp.limit > 0 && (notificationSettings.whatsapp.used / notificationSettings.whatsapp.limit) * 100 > 80
-                            ? "bg-[var(--warning)]"
-                            : "bg-accent"
-                        }`}
-                        style={{ width: `${notificationSettings.whatsapp.limit > 0 ? Math.min((notificationSettings.whatsapp.used / notificationSettings.whatsapp.limit) * 100, 100) : 0}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-lg bg-surface-muted p-4 mb-6">
-                  <h3 className="text-sm font-medium text-foreground mb-2">Configuration</h3>
-                  <p className="text-sm text-muted mb-3">
-                    Set the following environment variables on your server to enable SMS and WhatsApp:
-                  </p>
-                  <pre className="text-xs text-muted bg-surface rounded-lg p-3 overflow-x-auto">
-{`TWILIO_ACCOUNT_SID=your_account_sid
-TWILIO_AUTH_TOKEN=your_auth_token
-TWILIO_PHONE_NUMBER=+12025551234
-TWILIO_WHATSAPP_NUMBER=+14155238886`}
-                  </pre>
-                </div>
-
-                <div className="rounded-lg bg-surface-muted p-4 mb-6">
-                  <h3 className="text-sm font-medium text-foreground mb-2">How it works</h3>
-                  <ol className="list-decimal list-inside text-sm text-muted space-y-1">
-                    <li>Add a phone number (E.164 format, e.g. +12025551234) to your invoices</li>
-                    <li>When email reminders fail, the cron job falls back to WhatsApp first, then SMS</li>
-                    <li>You can also manually send SMS or WhatsApp reminders from the Invoices page</li>
-                    <li>All messages include opt-out language (&quot;Reply STOP to unsubscribe&quot;)</li>
-                    <li>Opt-outs are automatically recorded and respected</li>
-                  </ol>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
-      {activeTab === "benchmarks" && (
-        <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-          <h2 className="mb-2 text-lg font-semibold text-foreground">
-            Industry Benchmarks
-          </h2>
-          <p className="mb-6 text-sm text-muted">
-            Set your industry to compare your payment collection performance against peers. Your data is anonymized and aggregated — benchmarks only show when enough users are in an industry.
-          </p>
-
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-muted mb-1">
-              Your Industry
-            </label>
-            <select
-              value={industry}
-              onChange={(e) => setIndustry(e.target.value)}
-              className="block w-full max-w-xs rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground shadow-sm transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
-            >
-              <option value="">-- Select industry --</option>
-              <option value="freelance_design">Freelance Design</option>
-              <option value="software_dev">Software Development</option>
-              <option value="consulting">Consulting</option>
-              <option value="marketing_agency">Marketing Agency</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <label className="text-sm font-medium text-muted">
-                Include in anonymous benchmarks
-              </label>
-              <p className="text-xs text-muted mt-0.5">
-                Your data will be aggregated anonymously with other users in your industry. You'll still see benchmarks either way.
-              </p>
             </div>
-            <button
-              onClick={() => setBenchmarksOptOut(!benchmarksOptOut)}
-              className={`relative h-6 w-11 rounded-full transition flex-shrink-0 ${
-                !benchmarksOptOut ? "bg-accent" : "bg-surface-muted"
-              }`}
-            >
-              <span
-                className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition ${
-                  !benchmarksOptOut ? "translate-x-5" : "translate-x-0"
-                }`}
-              />
-            </button>
           </div>
+        </div>
+      )}
 
-          <div className="flex items-center gap-3 border-t border-border pt-4">
-            <button
-              onClick={async () => {
-                setSavingIndustry(true);
-                try {
-                  const res = await fetch("/api/settings/industry", {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      industry: industry || null,
-                      benchmarksOptOut,
-                    }),
-                  });
-                  if (res.ok) {
-                    toast.success("Benchmark settings saved");
-                  } else {
-                    const data = await res.json();
-                    toast.error(data.error || "Failed to save settings");
-                  }
-                } catch {
-                  toast.error("Network error");
-                } finally {
-                  setSavingIndustry(false);
-                }
+      {/* Delete Account Modal */}
+      <Modal
+        open={showDeleteModal}
+        onClose={() => { setShowDeleteModal(false); setDeleteConfirm(""); }}
+        title="Delete Account"
+        description="This action cannot be undone. All your data will be permanently deleted."
+        size="sm"
+        footer={
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => { setShowDeleteModal(false); setDeleteConfirm(""); }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              disabled={deleteConfirm !== "DELETE"}
+              onClick={() => {
+                toast.error("Account deletion is not yet implemented. Contact support.");
+                setShowDeleteModal(false);
+                setDeleteConfirm("");
               }}
-              disabled={savingIndustry}
-              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-surface shadow-sm transition hover:brightness-110 disabled:opacity-50"
             >
-              {savingIndustry ? "Saving..." : "Save"}
-            </button>
+              Confirm Delete
+            </Button>
           </div>
-        </div>
-      )}
-
-      {activeTab === "late-fees" && (
-        <div className="space-y-6">
-          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-            <h2 className="mb-2 text-lg font-semibold text-foreground">
-              Late Fees & Interest
-            </h2>
-            <p className="mb-6 text-sm text-muted">
-              Automatically apply late fees and daily interest to overdue invoices. Late fees are applied once per invoice after the grace period. Daily interest accrues each day the invoice remains unpaid.
-            </p>
-
-            {!lateFeeSettings.hasAccess ? (
-              <div className="rounded-lg bg-[var(--warning-muted)] p-4">
-                <p className="text-sm text-[var(--warning)]">
-                  Late fees and interest are not available on the Free plan. Upgrade to Pro or Agency to unlock this feature.
-                </p>
-                <Link
-                  href="/settings/billing"
-                  className="mt-3 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-surface shadow-sm transition hover:brightness-110"
-                >
-                  Upgrade Plan
-                </Link>
-              </div>
-            ) : (
-              <>
-                <div className="mb-6">
-                  <div className="mb-2 flex items-center justify-between">
-                    <label className="text-sm font-medium text-muted">
-                      Enable Late Fees & Interest
-                    </label>
-                    <button
-                      onClick={() => setLateFeeEnabled(!lateFeeEnabled)}
-                      className={`relative h-6 w-11 rounded-full transition ${
-                        lateFeeEnabled ? "bg-accent" : "bg-surface-muted"
-                      }`}
-                    >
-                      <span
-                        className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition ${
-                          lateFeeEnabled ? "translate-x-5" : "translate-x-0"
-                        }`}
-                      />
-                    </button>
-                  </div>
-                  <p className="text-xs text-muted">
-                    When enabled, the daily cron job will calculate and accrue late fees and interest on unpaid invoices.
-                  </p>
-                </div>
-
-                {lateFeeEnabled && (
-                  <>
-                    <div className="mb-6 rounded-lg border border-border bg-surface-muted p-4">
-                      <h3 className="mb-3 text-sm font-medium text-foreground">Late Fee</h3>
-
-                      <div className="mb-4">
-                        <label className="block text-xs text-muted mb-1">Type</label>
-                        <select
-                          value={lateFeeType}
-                          onChange={(e) => setLateFeeType(e.target.value)}
-                          className="block w-full max-w-xs rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground shadow-sm transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
-                        >
-                          <option value="fixed">Fixed amount</option>
-                          <option value="percentage">Percentage of invoice</option>
-                        </select>
-                      </div>
-
-                      <div className="mb-4">
-                        <label className="block text-xs text-muted mb-1">
-                          {lateFeeType === "fixed" ? "Late Fee Amount" : "Late Fee Percentage"}
-                        </label>
-                        <div className="relative max-w-xs">
-                          <input
-                            type="number"
-                            value={lateFeeValue || ""}
-                            onChange={(e) => setLateFeeValue(parseFloat(e.target.value) || 0)}
-                            step="0.01"
-                            min="0"
-                            className="block w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground shadow-sm transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
-                          />
-                          <span className="absolute right-3 top-2 text-sm text-muted">
-                            {lateFeeType === "fixed" ? "$" : "%"}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-xs text-muted mb-1">Frequency</label>
-                        <select
-                          value={lateFeeFrequency}
-                          onChange={(e) => setLateFeeFrequency(e.target.value)}
-                          className="block w-full max-w-xs rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground shadow-sm transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
-                        >
-                          <option value="once">One-time (applied once after due date)</option>
-                          <option value="recurring">Recurring (applied each billing period)</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className="mb-6 rounded-lg border border-border bg-surface-muted p-4">
-                      <h3 className="mb-3 text-sm font-medium text-foreground">Daily Interest</h3>
-
-                      <div className="mb-4">
-                        <div className="mb-2 flex items-center justify-between">
-                          <label className="text-xs text-muted">Enable Daily Interest</label>
-                          <button
-                            onClick={() => setInterestEnabled(!interestEnabled)}
-                            className={`relative h-6 w-11 rounded-full transition ${
-                              interestEnabled ? "bg-accent" : "bg-surface-muted"
-                            }`}
-                          >
-                            <span
-                              className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition ${
-                                interestEnabled ? "translate-x-5" : "translate-x-0"
-                              }`}
-                            />
-                          </button>
-                        </div>
-                        <p className="text-xs text-muted">
-                          When enabled, interest accrues daily on the original invoice amount at the rate below.
-                        </p>
-                      </div>
-
-                      {interestEnabled && (
-                        <div>
-                          <label className="block text-xs text-muted mb-1">Daily Interest Rate (%)</label>
-                          <div className="relative max-w-xs">
-                            <input
-                              type="number"
-                              value={interestRate || ""}
-                              onChange={(e) => setInterestRate(parseFloat(e.target.value) || 0)}
-                              step="0.01"
-                              min="0"
-                              placeholder="e.g. 0.05"
-                              className="block w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground shadow-sm transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
-                            />
-                            <span className="absolute right-3 top-2 text-sm text-muted">%</span>
-                          </div>
-                          <p className="mt-1 text-xs text-muted">
-                            For example, 0.05% per day = ~18.25% APR on the original invoice amount.
-                          </p>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="mb-6 rounded-lg border border-border bg-surface-muted p-4">
-                      <h3 className="mb-3 text-sm font-medium text-foreground">General Settings</h3>
-
-                      <div className="mb-4">
-                        <label className="block text-xs text-muted mb-1">Grace Period (days)</label>
-                        <input
-                          type="number"
-                          value={graceDays || ""}
-                          onChange={(e) => setGraceDays(parseInt(e.target.value) || 0)}
-                          min="0"
-                          className="block w-full max-w-xs rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground shadow-sm transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
-                        />
-                        <p className="mt-1 text-xs text-muted">
-                          Days after the due date before late fees and interest begin applying.
-                        </p>
-                      </div>
-
-                      <div>
-                        <label className="block text-xs text-muted mb-1">Maximum Fee Cap ($)</label>
-                        <input
-                          type="number"
-                          value={feeCap || ""}
-                          onChange={(e) => setFeeCap(parseFloat(e.target.value) || 0)}
-                          step="0.01"
-                          min="0"
-                          className="block w-full max-w-xs rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground shadow-sm transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
-                        />
-                        <p className="mt-1 text-xs text-muted">
-                          Maximum total fees (late fee + interest) that can accrue. Set to 0 for no limit.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mb-6 rounded-lg border border-[var(--warning-muted)] bg-[var(--warning-muted)]/50 p-4">
-                      <div className="flex items-start gap-3">
-                        <span className="text-[var(--warning)] text-lg flex-shrink-0">&#9888;&#65039;</span>
-                        <div>
-                          <h3 className="text-sm font-medium text-foreground mb-1">Legal Disclaimer</h3>
-                          <p className="text-xs text-muted">
-                            This information is provided for informational purposes only and does not constitute legal advice. Late fees, interest rates, and collections practices are subject to applicable laws and regulations, including but not limited to usury laws and fair debt collection practices. Please consult with a legal professional to ensure compliance with your jurisdiction&apos;s requirements.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 border-t border-border pt-4">
-                      <button
-                        onClick={handleSaveLateFees}
-                        disabled={savingLateFees}
-                        className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-surface shadow-sm transition hover:brightness-110 disabled:opacity-50"
-                      >
-                        {savingLateFees ? "Saving..." : "Save Late Fee Settings"}
-                      </button>
-                    </div>
-                  </>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
+        }
+      >
+        <p className="text-sm text-muted mb-4">
+          Type <span className="font-mono font-bold text-foreground">DELETE</span> to confirm.
+        </p>
+        <Input
+          value={deleteConfirm}
+          onChange={(e) => setDeleteConfirm(e.target.value)}
+          placeholder="Type DELETE"
+          className="font-mono"
+        />
+      </Modal>
+    </PageShell>
   );
 }

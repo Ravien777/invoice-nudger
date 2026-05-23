@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import toast from "react-hot-toast";
-import Link from "next/link";
+import { Button } from "@/app/components/ui/Button";
+import { Input } from "@/app/components/ui/Input";
+import { EmptyState } from "@/app/components/ui/EmptyState";
 
 interface Invoice {
   id: string;
@@ -34,9 +36,35 @@ interface PromisesClientProps {
   pendingCount: number;
 }
 
-type FilterStatus = "all" | "pending_review" | "active" | "expired" | "overridden" | "fulfilled";
+type FilterStatus =
+  | "all"
+  | "pending_review"
+  | "active"
+  | "expired"
+  | "overridden"
+  | "fulfilled";
 
-export default function PromisesClient({ initialPromises, pendingCount }: PromisesClientProps) {
+function statusBadgeStyle(status: string): string {
+  switch (status) {
+    case "active":
+      return "bg-success/10 text-success";
+    case "pending_review":
+      return "bg-warning/10 text-warning";
+    case "expired":
+      return "bg-surface-tertiary text-text-tertiary";
+    case "overridden":
+      return "bg-surface-tertiary text-text-tertiary";
+    case "fulfilled":
+      return "bg-success/10 text-success";
+    default:
+      return "bg-surface-tertiary text-text-tertiary";
+  }
+}
+
+export default function PromisesClient({
+  initialPromises,
+  pendingCount,
+}: PromisesClientProps) {
   const [promises, setPromises] = useState<PromiseEvent[]>(initialPromises);
   const [filter, setFilter] = useState<FilterStatus>("all");
   const [processing, setProcessing] = useState<string | null>(null);
@@ -66,9 +94,13 @@ export default function PromisesClient({ initialPromises, pendingCount }: Promis
       setPromises((prev) =>
         prev.map((p) =>
           p.id === id
-            ? { ...p, ...data.promise, invoice: { ...p.invoice, ...data.invoice } }
-            : p
-        )
+            ? {
+                ...p,
+                ...data.promise,
+                invoice: { ...p.invoice, ...data.invoice },
+              }
+            : p,
+        ),
       );
 
       const labels: Record<string, string> = {
@@ -85,120 +117,127 @@ export default function PromisesClient({ initialPromises, pendingCount }: Promis
     }
   }
 
-  const filtered = filter === "all" ? promises : promises.filter((p) => p.status === filter);
-
-  const statusBadge = (status: string) => {
-    switch (status) {
-      case "active":
-        return "bg-[var(--success-muted)] text-[var(--success)]";
-      case "pending_review":
-        return "bg-[var(--warning-muted)] text-[var(--warning)]";
-      case "expired":
-        return "bg-surface-muted text-muted";
-      case "overridden":
-        return "bg-surface-muted text-muted";
-      case "fulfilled":
-        return "bg-[var(--success-muted)] text-[var(--success)]";
-      default:
-        return "bg-surface-muted text-muted";
-    }
-  };
+  const filtered =
+    filter === "all"
+      ? promises
+      : promises.filter((p) => p.status === filter);
 
   const formatDate = (date: Date | string) =>
-    new Date(date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+    new Date(date).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
 
   const formatCurrency = (amount: number, currency: string) =>
-    new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount);
+    new Intl.NumberFormat("en-US", { style: "currency", currency }).format(
+      amount,
+    );
+
+  const filters: FilterStatus[] = [
+    "all",
+    "pending_review",
+    "active",
+    "expired",
+    "fulfilled",
+  ];
 
   return (
-    <div>
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Promise Detection</h1>
-          <p className="text-sm text-muted">
-            Review payment promises detected in client replies.
-            {pendingCount > 0 && (
-              <span className="ml-2 inline-block rounded-full bg-[var(--warning-muted)] px-2 py-0.5 text-xs font-medium text-[var(--warning)]">
-                {pendingCount} pending review
-              </span>
-            )}
-          </p>
+    <div className="space-y-4">
+      {/* Pending count badge */}
+      {pendingCount > 0 && (
+        <div className="inline-flex items-center rounded-full bg-warning/10 px-3 py-1 text-xs font-medium text-warning">
+          {pendingCount} pending review
         </div>
-        <Link
-          href="/settings"
-          className="rounded-lg bg-surface px-4 py-2 text-sm font-medium text-foreground ring-1 ring-border transition hover:bg-surface-muted"
-        >
-          Settings
-        </Link>
-      </div>
+      )}
 
-      <div className="mb-4 flex gap-2">
-        {(["all", "pending_review", "active", "expired", "fulfilled"] as FilterStatus[]).map((s) => (
+      {/* Filter tabs */}
+      <div className="inline-flex gap-1 rounded-lg bg-surface-tertiary p-1">
+        {filters.map((s) => (
           <button
             key={s}
             onClick={() => setFilter(s)}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+            className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
               filter === s
-                ? "bg-accent text-surface"
-                : "bg-surface text-muted ring-1 ring-border hover:bg-surface-muted"
+                ? "bg-surface-primary text-text-primary shadow-sm"
+                : "text-text-secondary hover:text-text-primary"
             }`}
           >
-            {s === "all" ? "All" : s.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+            {s === "all"
+              ? "All"
+              : s.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase())}
           </button>
         ))}
       </div>
 
+      {/* List */}
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-border bg-surface p-12 text-center shadow-sm">
-          <p className="text-muted">No promises found.</p>
-        </div>
+        <EmptyState
+          title="No promises found"
+          description={
+            filter !== "all"
+              ? "No promises match this status."
+              : "No payment promises have been detected yet."
+          }
+        />
       ) : (
         <div className="space-y-4">
           {filtered.map((promise) => (
             <div
               key={promise.id}
-              className="rounded-xl border border-border bg-surface p-6 shadow-sm"
+              className="rounded-xl border border-border-default bg-surface-secondary p-6 shadow-sm"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-lg font-semibold text-foreground">
+                    <h3 className="text-lg font-semibold text-text-primary">
                       {promise.invoice.clientName}
                     </h3>
-                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${statusBadge(promise.status)}`}>
+                    <span
+                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${statusBadgeStyle(promise.status)}`}
+                    >
                       {promise.status.replace("_", " ")}
                     </span>
-                    <span className="rounded-full bg-surface-muted px-2 py-0.5 text-xs font-medium text-muted ring-1 ring-border">
+                    <span className="inline-flex items-center rounded-full bg-surface-tertiary px-2 py-0.5 text-xs font-medium text-text-secondary border border-border-default">
                       {Math.round(promise.confidence * 100)}% confidence
                     </span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 text-sm mb-3">
                     <div>
-                      <span className="text-muted">Invoice:</span>{" "}
-                      <span className="text-foreground">
+                      <span className="text-text-secondary">Invoice:</span>{" "}
+                      <span className="text-text-primary">
                         {promise.invoice.invoiceNumber ?? promise.invoice.id}
                       </span>
                     </div>
                     <div>
-                      <span className="text-muted">Amount:</span>{" "}
-                      <span className="font-medium text-foreground">
-                        {formatCurrency(promise.invoice.amount, promise.invoice.currency)}
+                      <span className="text-text-secondary">Amount:</span>{" "}
+                      <span className="font-medium text-text-primary">
+                        {formatCurrency(
+                          promise.invoice.amount,
+                          promise.invoice.currency,
+                        )}
                       </span>
                     </div>
                     <div>
-                      <span className="text-muted">Promised Date:</span>{" "}
-                      <span className="text-foreground">{formatDate(promise.promisedDate)}</span>
+                      <span className="text-text-secondary">
+                        Promised Date:
+                      </span>{" "}
+                      <span className="text-text-primary">
+                        {formatDate(promise.promisedDate)}
+                      </span>
                     </div>
                     <div>
-                      <span className="text-muted">Detected:</span>{" "}
-                      <span className="text-foreground">{formatDate(promise.detectedAt)}</span>
+                      <span className="text-text-secondary">Detected:</span>{" "}
+                      <span className="text-text-primary">
+                        {formatDate(promise.detectedAt)}
+                      </span>
                     </div>
                   </div>
 
                   {promise.emailSnippet && (
-                    <div className="rounded-lg bg-surface-muted p-3 text-xs text-muted">
-                      <p className="font-medium text-foreground mb-1">
+                    <div className="rounded-lg bg-surface-tertiary p-3 text-xs text-text-secondary">
+                      <p className="font-medium text-text-primary mb-1">
                         {promise.emailSubject ?? "Reply"}
                       </p>
                       <p className="line-clamp-2">{promise.emailSnippet}</p>
@@ -207,68 +246,86 @@ export default function PromisesClient({ initialPromises, pendingCount }: Promis
                 </div>
               </div>
 
+              {/* pending_review actions */}
               {promise.status === "pending_review" && (
-                <div className="mt-4 flex items-center gap-3 border-t border-border pt-4">
-                  <button
+                <div className="mt-4 flex items-center gap-3 border-t border-border-default pt-4">
+                  <Button
+                    variant="primary"
+                    size="sm"
                     onClick={() => handleAction(promise.id, "approve")}
                     disabled={processing === promise.id}
-                    className="rounded-lg bg-[var(--success)] px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:brightness-110 disabled:opacity-50"
+                    loading={processing === promise.id}
                   >
-                    {processing === promise.id ? "Processing..." : "Approve & Pause"}
-                  </button>
-                  <button
+                    Approve & Pause
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
                     onClick={() => handleAction(promise.id, "reject")}
                     disabled={processing === promise.id}
-                    className="rounded-lg bg-surface px-4 py-2 text-sm font-medium text-foreground ring-1 ring-border transition hover:bg-surface-muted disabled:opacity-50"
                   >
                     Reject
-                  </button>
+                  </Button>
                   <div className="flex items-center gap-2">
-                    <input
+                    <Input
                       type="date"
                       value={overrideDate[promise.id] ?? ""}
                       onChange={(e) =>
-                        setOverrideDate((prev) => ({ ...prev, [promise.id]: e.target.value }))
+                        setOverrideDate((prev) => ({
+                          ...prev,
+                          [promise.id]: e.target.value,
+                        }))
                       }
-                      className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
+                      className="w-40"
                     />
-                    <button
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       onClick={() => handleAction(promise.id, "override")}
-                      disabled={processing === promise.id || !overrideDate[promise.id]}
-                      className="rounded-lg bg-surface px-4 py-2 text-sm font-medium text-accent ring-1 ring-border transition hover:bg-surface-muted disabled:opacity-50"
+                      disabled={
+                        processing === promise.id || !overrideDate[promise.id]
+                      }
                     >
                       Override Date
-                    </button>
+                    </Button>
                   </div>
                 </div>
               )}
 
+              {/* active actions */}
               {promise.status === "active" && (
-                <div className="mt-4 flex items-center gap-3 border-t border-border pt-4">
+                <div className="mt-4 flex items-center gap-3 border-t border-border-default pt-4">
                   <div className="flex items-center gap-2">
-                    <input
+                    <Input
                       type="date"
                       value={overrideDate[promise.id] ?? ""}
                       onChange={(e) =>
-                        setOverrideDate((prev) => ({ ...prev, [promise.id]: e.target.value }))
+                        setOverrideDate((prev) => ({
+                          ...prev,
+                          [promise.id]: e.target.value,
+                        }))
                       }
-                      className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
+                      className="w-40"
                     />
-                    <button
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       onClick={() => handleAction(promise.id, "override")}
-                      disabled={processing === promise.id || !overrideDate[promise.id]}
-                      className="rounded-lg bg-surface px-4 py-2 text-sm font-medium text-accent ring-1 ring-border transition hover:bg-surface-muted disabled:opacity-50"
+                      disabled={
+                        processing === promise.id || !overrideDate[promise.id]
+                      }
                     >
                       Change Date
-                    </button>
+                    </Button>
                   </div>
-                  <button
+                  <Button
+                    variant="secondary"
+                    size="sm"
                     onClick={() => handleAction(promise.id, "mark-fulfilled")}
                     disabled={processing === promise.id}
-                    className="rounded-lg bg-surface px-4 py-2 text-sm font-medium text-[var(--success)] ring-1 ring-border transition hover:bg-surface-muted disabled:opacity-50"
                   >
                     Mark Fulfilled
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>

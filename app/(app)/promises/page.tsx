@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { getTier } from "@/lib/tiers";
 import PromisesClient from "./PromisesClient";
+import { PageShell } from "@/app/components/layout/PageShell";
 
 export default async function PromisesPage() {
   const session = await getServerSession(authOptions);
@@ -45,5 +46,9 @@ export default async function PromisesPage() {
     where: { invoice: { userId: user.id }, status: "pending_review" },
   });
 
-  return <PromisesClient initialPromises={promises} pendingCount={pendingCount} />;
+  return (
+    <PageShell title="Promise Detection" subtitle="Review payment promises detected in client replies">
+      <PromisesClient initialPromises={promises} pendingCount={pendingCount} />
+    </PageShell>
+  );
 }

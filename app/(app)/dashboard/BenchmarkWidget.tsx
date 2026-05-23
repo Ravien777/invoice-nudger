@@ -31,9 +31,9 @@ const industryLabels: Record<string, string> = {
 export default function BenchmarkWidget({ benchmarks, industry, hasEnoughData }: BenchmarkWidgetProps) {
   if (!industry) {
     return (
-      <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-        <h2 className="text-sm font-medium text-muted">Industry Benchmarks</h2>
-        <p className="mt-2 text-sm text-muted">
+      <div className="rounded-xl border border-border-default bg-surface-secondary p-6 shadow-sm">
+        <h2 className="text-sm font-medium text-text-secondary">Industry Benchmarks</h2>
+        <p className="mt-2 text-sm text-text-secondary">
           Set your industry in{" "}
           <a href="/settings" className="text-accent hover:underline">Settings</a>{" "}
           to compare your performance against peers.
@@ -44,9 +44,9 @@ export default function BenchmarkWidget({ benchmarks, industry, hasEnoughData }:
 
   if (!hasEnoughData) {
     return (
-      <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-        <h2 className="text-sm font-medium text-muted">Industry Benchmarks</h2>
-        <p className="mt-2 text-sm text-muted">
+      <div className="rounded-xl border border-border-default bg-surface-secondary p-6 shadow-sm">
+        <h2 className="text-sm font-medium text-text-secondary">Industry Benchmarks</h2>
+        <p className="mt-2 text-sm text-text-secondary">
           Not enough data in {industryLabels[industry] || industry} yet. Benchmarks are computed daily once enough users are in your industry.
         </p>
       </div>
@@ -54,9 +54,9 @@ export default function BenchmarkWidget({ benchmarks, industry, hasEnoughData }:
   }
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-      <h2 className="mb-4 text-sm font-medium text-muted">
-        Industry Benchmarks — {industryLabels[industry] || industry}
+    <div className="rounded-xl border border-border-default bg-surface-secondary p-6 shadow-sm">
+      <h2 className="mb-4 text-sm font-medium text-text-secondary">
+        Industry Benchmarks \u2014 {industryLabels[industry] || industry}
       </h2>
       <div className="space-y-4">
         {benchmarks.map((b) => {
@@ -68,17 +68,17 @@ export default function BenchmarkWidget({ benchmarks, industry, hasEnoughData }:
           return (
             <div key={b.metric}>
               <div className="mb-1 flex items-center justify-between text-xs">
-                <span className="font-medium text-foreground">{b.label}</span>
-                <span className={isBetter ? "text-[var(--success)]" : "text-[var(--danger)]"}>
-                  {isBetter ? "▲" : "▼"} {absDiff.toFixed(1)}{b.format === "days" ? "d" : "%"} {isBetter ? "better" : "worse"}
+                <span className="font-medium text-text-primary">{b.label}</span>
+                <span className={isBetter ? "text-success" : "text-danger"}>
+                  {isBetter ? "\u25B2" : "\u25BC"} {absDiff.toFixed(1)}{b.format === "days" ? "d" : "%"} {isBetter ? "better" : "worse"}
                 </span>
               </div>
-              <div className="relative h-5 w-full overflow-hidden rounded-full bg-surface-muted">
+              <div className="relative h-5 w-full overflow-hidden rounded-full bg-surface-tertiary">
                 <div
-                  className="absolute top-0 left-0 h-full rounded-full bg-[var(--success-muted)]"
+                  className="absolute top-0 left-0 h-full rounded-full bg-success/10"
                   style={{ width: `${Math.min(userPct, 100)}%` }}
                 />
-                <span className="absolute inset-0 flex items-center justify-between px-2 text-[10px] font-medium text-muted">
+                <span className="absolute inset-0 flex items-center justify-between px-2 text-[10px] font-medium text-text-secondary">
                   <span>You: {formatVal(b.userValue, b.format)}</span>
                   <span>Avg: {formatVal(b.industryValue, b.format)}</span>
                 </span>

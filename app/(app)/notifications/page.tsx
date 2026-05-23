@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import NotificationsClient from "./NotificationsClient";
+import { PageShell } from "@/app/components/layout/PageShell";
 
 export default async function NotificationsPage() {
   const session = await getServerSession(authOptions);
@@ -36,13 +37,12 @@ export default async function NotificationsPage() {
   }));
 
   return (
-    <div>
-      <h1 className="mb-6 text-2xl font-bold">Notifications</h1>
+    <PageShell title="Notifications" subtitle="Manage your alerts and notifications">
       <NotificationsClient
         initialNotifications={serialized}
         initialTotal={total}
         initialUnreadCount={unreadCount}
       />
-    </div>
+    </PageShell>
   );
 }

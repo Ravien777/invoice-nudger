@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
 import toast from "react-hot-toast";
+import { Button } from "@/app/components/ui/Button";
+import { EmptyState } from "@/app/components/ui/EmptyState";
+import { Modal } from "@/app/components/ui/Modal";
 
 interface QueueItem {
   id: string;
@@ -62,7 +64,9 @@ export default function AIQueueClient() {
         return;
       }
 
-      toast.success("Reminder approved and will be sent on next cron run");
+      toast.success(
+        "Reminder approved and will be sent on next cron run",
+      );
       setItems((prev) => prev.filter((item) => item.id !== id));
     } catch {
       toast.error("Network error");
@@ -87,7 +91,9 @@ export default function AIQueueClient() {
         return;
       }
 
-      toast.success("Reminder rejected, will use static template");
+      toast.success(
+        "Reminder rejected, will use static template",
+      );
       setItems((prev) => prev.filter((item) => item.id !== id));
     } catch {
       toast.error("Network error");
@@ -116,134 +122,114 @@ export default function AIQueueClient() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-muted">Loading AI reminders...</p>
+        <p className="text-text-secondary">Loading AI reminders...</p>
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">AI Reminder Queue</h1>
-          <p className="text-sm text-muted">
-            Approve or reject AI-generated reminder emails before they are sent.
-          </p>
-        </div>
-        <Link
-          href="/invoices"
-          className="rounded-lg bg-surface px-4 py-2 text-sm font-medium text-foreground shadow-sm ring-1 ring-border transition hover:bg-surface-muted"
-        >
-          Back to Invoices
-        </Link>
-      </div>
-
+    <div className="space-y-4">
       {items.length === 0 ? (
-        <div className="rounded-xl border border-border bg-surface p-12 text-center shadow-sm">
-          <p className="text-muted">No AI reminders awaiting approval.</p>
-        </div>
+        <EmptyState
+          title="No AI reminders awaiting approval"
+          description="Approved reminders are sent automatically, while rejected ones fall back to static templates. Check back later for new AI-generated reminders."
+        />
       ) : (
         <div className="space-y-4">
           {items.map((item) => (
             <div
               key={item.id}
-              className="rounded-xl border border-border bg-surface p-4 shadow-sm"
+              className="rounded-xl border border-border-default bg-surface-secondary p-4 shadow-sm"
             >
               <div className="mb-3 flex items-start justify-between">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-foreground">
+                    <span className="font-medium text-text-primary">
                       {item.clientName}
                     </span>
                     {item.isExpired && (
-                      <span className="rounded-full bg-[var(--danger-muted)] px-2 py-0.5 text-[10px] font-medium text-[var(--danger)]">
+                      <span className="inline-flex items-center rounded-full bg-danger/10 px-2 py-0.5 text-[10px] font-medium text-danger">
                         Expired
                       </span>
                     )}
                     {item.projectName && (
-                      <span className="rounded-full bg-surface-muted px-2 py-0.5 text-[10px] font-medium text-muted ring-1 ring-border">
+                      <span className="inline-flex items-center rounded-full bg-surface-tertiary px-2 py-0.5 text-[10px] font-medium text-text-tertiary border border-border-default">
                         {item.projectName}
                       </span>
                     )}
                   </div>
-                  <div className="mt-1 text-xs text-muted">
-                    {item.invoiceNumber ? `Invoice #${item.invoiceNumber}` : "No invoice number"}{" "}
+                  <div className="mt-1 text-xs text-text-secondary">
+                    {item.invoiceNumber
+                      ? `Invoice #${item.invoiceNumber}`
+                      : "No invoice number"}{" "}
                     &middot; {formatCurrency(item.amount, item.currency)}{" "}
                     &middot; Due: {formatDate(item.dueDate)}
                   </div>
                 </div>
-                <div className="text-right text-xs text-muted">
+                <div className="text-right text-xs text-text-tertiary">
                   <div>Step: {item.stepName}</div>
                   <div>Generated: {formatDate(item.generatedAt)}</div>
                 </div>
               </div>
 
-              <div className="mb-3 rounded-lg border border-border bg-surface-muted p-3">
-                <span className="text-xs font-medium text-muted">Subject</span>
-                <p className="text-sm font-medium text-foreground">
+              <div className="mb-3 rounded-lg border border-border-default bg-surface-tertiary p-3">
+                <span className="text-xs font-medium text-text-secondary">
+                  Subject
+                </span>
+                <p className="text-sm font-medium text-text-primary">
                   {item.subjectLine ?? "(no subject)"}
                 </p>
               </div>
 
               <div className="flex items-center justify-end gap-2">
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setPreviewId(item.id)}
-                  className="rounded-md px-3 py-1.5 text-xs font-medium text-accent transition hover:bg-surface-muted"
                 >
                   Preview
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
                   onClick={() => handleReject(item.id)}
                   disabled={processing === item.id}
-                  className="rounded-md px-3 py-1.5 text-xs font-medium text-[var(--danger)] transition hover:bg-[var(--danger-muted)] disabled:opacity-50"
+                  loading={processing === item.id}
+                  className="text-danger border-danger/30 hover:bg-danger/10"
                 >
-                  {processing === item.id ? "Processing..." : "Reject"}
-                </button>
-                <button
+                  Reject
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
                   onClick={() => handleApprove(item.id)}
                   disabled={processing === item.id || item.isExpired}
-                  className="rounded-md bg-purple-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-purple-700 disabled:opacity-50"
+                  loading={processing === item.id}
                 >
-                  {processing === item.id ? "Processing..." : "Approve & Send"}
-                </button>
+                  Approve & Send
+                </Button>
               </div>
             </div>
           ))}
         </div>
       )}
 
+      {/* Preview modal */}
       {previewItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <Modal
+          open={!!previewId}
+          onClose={() => setPreviewId(null)}
+          title="Email Preview"
+          size="lg"
+          description={previewItem.subjectLine ?? undefined}
+        >
           <div
-            className="absolute inset-0 bg-black/50"
-            onClick={() => setPreviewId(null)}
+            className="max-h-96 overflow-auto rounded-lg border border-border-default bg-surface-primary p-4 text-sm text-text-primary"
+            dangerouslySetInnerHTML={{
+              __html: previewItem.emailBody ?? "",
+            }}
           />
-          <div className="relative z-10 w-full max-w-2xl rounded-xl border border-border bg-surface p-6 shadow-xl">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-foreground">
-                Email Preview
-              </h2>
-              <button
-                onClick={() => setPreviewId(null)}
-                className="rounded-md p-1 text-muted transition hover:bg-surface-muted hover:text-foreground"
-              >
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <div className="mb-3">
-              <span className="text-xs font-medium text-muted">Subject</span>
-              <p className="text-sm font-medium text-foreground">
-                {previewItem.subjectLine}
-              </p>
-            </div>
-            <div
-              className="max-h-96 overflow-auto rounded-lg border border-border bg-surface p-4 text-sm text-foreground"
-              dangerouslySetInnerHTML={{ __html: previewItem.emailBody ?? "" }}
-            />
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

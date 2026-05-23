@@ -1,7 +1,16 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import Link from "next/link";
+
+import { Input } from "@/app/components/ui/Input";
+import { EmptyState } from "@/app/components/ui/EmptyState";
+import {
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+} from "@/app/components/ui/Table";
 
 interface ClientProfile {
   id: string;
@@ -22,14 +31,21 @@ interface ClientsClientProps {
   initialProfiles: ClientProfile[];
 }
 
-type SortField = "clientEmail" | "riskScore" | "totalAmount" | "lastPaymentDate";
+type SortField =
+  | "clientEmail"
+  | "riskScore"
+  | "totalAmount"
+  | "lastPaymentDate";
 type SortDir = "asc" | "desc";
 
-function riskLevel(score: number | null): { label: string; color: string } {
-  if (score === null) return { label: "Unknown", color: "bg-surface-muted text-muted" };
-  if (score <= 0.3) return { label: "Low", color: "bg-[var(--success-muted)] text-[var(--success)]" };
-  if (score <= 0.7) return { label: "Medium", color: "bg-[var(--warning-muted)] text-[var(--warning)]" };
-  return { label: "High", color: "bg-[var(--danger-muted)] text-[var(--danger)]" };
+function riskLevel(score: number | null): { label: string; badge: string } {
+  if (score === null)
+    return { label: "Unknown", badge: "bg-surface-tertiary text-text-tertiary" };
+  if (score <= 0.3)
+    return { label: "Low", badge: "bg-success/10 text-success" };
+  if (score <= 0.7)
+    return { label: "Medium", badge: "bg-warning/10 text-warning" };
+  return { label: "High", badge: "bg-danger/10 text-danger" };
 }
 
 function formatCurrency(amount: number): string {
@@ -53,7 +69,9 @@ function onTimePercent(paid: number, onTime: number): string {
   return ((onTime / paid) * 100).toFixed(0) + "%";
 }
 
-export default function ClientsClient({ initialProfiles }: ClientsClientProps) {
+export default function ClientsClient({
+  initialProfiles,
+}: ClientsClientProps) {
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState<SortField>("riskScore");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
@@ -61,7 +79,7 @@ export default function ClientsClient({ initialProfiles }: ClientsClientProps) {
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return initialProfiles.filter((p) =>
-      p.clientEmail.toLowerCase().includes(q)
+      p.clientEmail.toLowerCase().includes(q),
     );
   }, [search, initialProfiles]);
 
@@ -80,7 +98,9 @@ export default function ClientsClient({ initialProfiles }: ClientsClientProps) {
           cmp = a.totalAmount - b.totalAmount;
           break;
         case "lastPaymentDate":
-          cmp = (a.lastPaymentDate ?? "").localeCompare(b.lastPaymentDate ?? "");
+          cmp = (a.lastPaymentDate ?? "").localeCompare(
+            b.lastPaymentDate ?? "",
+          );
           break;
       }
       return sortDir === "asc" ? cmp : -cmp;
@@ -99,111 +119,103 @@ export default function ClientsClient({ initialProfiles }: ClientsClientProps) {
 
   function sortArrow(field: SortField): string {
     if (sortField !== field) return "";
-    return sortDir === "asc" ? " ▲" : " ▼";
+    return sortDir === "asc" ? " \u2191" : " \u2193";
   }
 
   if (initialProfiles.length === 0) {
     return (
-      <div className="rounded-xl border border-border bg-surface p-12 text-center shadow-sm">
-        <p className="text-muted">No client payment data yet.</p>
-        <p className="mt-2 text-sm text-muted">
-          Client profiles will appear once you create invoices and record payments.
-        </p>
-        <Link
-          href="/invoices/new"
-          className="mt-4 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-surface transition hover:brightness-110"
-        >
-          Create your first invoice
-        </Link>
-      </div>
+      <EmptyState
+        variant="no-clients"
+        action={{ label: "Create your first invoice", href: "/invoices/new" }}
+      />
     );
   }
 
   return (
     <div>
       <div className="mb-4">
-        <input
+        <Input
           type="text"
           placeholder="Search by email..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full max-w-xs rounded-lg border border-border bg-surface px-4 py-2 text-sm text-foreground placeholder-muted outline-none focus:border-accent"
+          className="max-w-xs"
         />
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
-        <table className="w-full text-left text-sm">
-          <thead className="border-b border-border bg-surface-muted">
-            <tr>
-              <th
-                className="cursor-pointer px-4 py-3 font-medium text-muted hover:text-foreground"
-                onClick={() => toggleSort("clientEmail")}
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableCell
+              onClick={() => toggleSort("clientEmail")}
+              className="cursor-pointer hover:text-text-primary"
+            >
+              Client Email{sortArrow("clientEmail")}
+            </TableCell>
+            <TableCell>Total Invoices</TableCell>
+            <TableCell>On-Time %</TableCell>
+            <TableCell>Avg Days Late</TableCell>
+            <TableCell
+              onClick={() => toggleSort("riskScore")}
+              className="cursor-pointer hover:text-text-primary"
+            >
+              Risk Level{sortArrow("riskScore")}
+            </TableCell>
+            <TableCell
+              onClick={() => toggleSort("totalAmount")}
+              className="cursor-pointer hover:text-text-primary"
+            >
+              Total Amount{sortArrow("totalAmount")}
+            </TableCell>
+            <TableCell
+              onClick={() => toggleSort("lastPaymentDate")}
+              className="cursor-pointer hover:text-text-primary"
+            >
+              Last Payment{sortArrow("lastPaymentDate")}
+            </TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {sorted.map((p) => {
+            const risk = riskLevel(p.riskScore);
+            return (
+              <TableRow
+                key={p.id}
+                onClick={() =>
+                  (window.location.href = `/clients/${encodeURIComponent(p.clientEmail)}`)
+                }
+                className="cursor-pointer"
               >
-                Client Email{sortArrow("clientEmail")}
-              </th>
-              <th className="px-4 py-3 font-medium text-muted">Total Invoices</th>
-              <th className="px-4 py-3 font-medium text-muted">On-Time %</th>
-              <th className="px-4 py-3 font-medium text-muted">Avg Days Late</th>
-              <th
-                className="cursor-pointer px-4 py-3 font-medium text-muted hover:text-foreground"
-                onClick={() => toggleSort("riskScore")}
-              >
-                Risk Level{sortArrow("riskScore")}
-              </th>
-              <th
-                className="cursor-pointer px-4 py-3 font-medium text-muted hover:text-foreground"
-                onClick={() => toggleSort("totalAmount")}
-              >
-                Total Amount{sortArrow("totalAmount")}
-              </th>
-              <th
-                className="cursor-pointer px-4 py-3 font-medium text-muted hover:text-foreground"
-                onClick={() => toggleSort("lastPaymentDate")}
-              >
-                Last Payment{sortArrow("lastPaymentDate")}
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {sorted.map((p) => {
-              const risk = riskLevel(p.riskScore);
-              return (
-                <tr
-                  key={p.id}
-                  className="cursor-pointer transition hover:bg-surface-muted"
-                  onClick={() =>
-                    window.location.href = `/clients/${encodeURIComponent(p.clientEmail)}`
-                  }
-                >
-                  <td className="px-4 py-3 font-medium text-foreground">
-                    {p.clientEmail}
-                  </td>
-                  <td className="px-4 py-3 text-muted">{p.totalInvoices}</td>
-                  <td className="px-4 py-3 text-muted">
-                    {onTimePercent(p.paidInvoices, p.onTimePayments)}
-                  </td>
-                  <td className="px-4 py-3 text-muted">
-                    {p.avgDaysLate !== null ? `${p.avgDaysLate.toFixed(1)} days` : "-"}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${risk.color}`}>
-                      {risk.label}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 font-medium text-foreground">
-                    {formatCurrency(p.totalAmount)}
-                  </td>
-                  <td className="px-4 py-3 text-muted">
-                    {formatDate(p.lastPaymentDate)}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                <TableCell className="font-medium text-text-primary">
+                  {p.clientEmail}
+                </TableCell>
+                <TableCell>{p.totalInvoices}</TableCell>
+                <TableCell>
+                  {onTimePercent(p.paidInvoices, p.onTimePayments)}
+                </TableCell>
+                <TableCell>
+                  {p.avgDaysLate !== null
+                    ? `${p.avgDaysLate.toFixed(1)} days`
+                    : "-"}
+                </TableCell>
+                <TableCell>
+                  <span
+                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${risk.badge}`}
+                  >
+                    {risk.label}
+                  </span>
+                </TableCell>
+                <TableCell className="font-medium text-text-primary">
+                  {formatCurrency(p.totalAmount)}
+                </TableCell>
+                <TableCell>{formatDate(p.lastPaymentDate)}</TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
 
-      <p className="mt-3 text-xs text-muted">
+      <p className="mt-3 text-xs text-text-tertiary">
         Showing {sorted.length} of {initialProfiles.length} clients
       </p>
     </div>

@@ -48,9 +48,9 @@ export default function ForecastWidget({ forecast, hasAccess }: ForecastWidgetPr
 
   if (!hasAccess) {
     return (
-      <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-        <h2 className="text-sm font-medium text-muted">Cash Flow Forecast</h2>
-        <p className="mt-2 text-sm text-muted">
+      <div className="rounded-xl border border-border-default bg-surface-secondary p-6 shadow-sm">
+        <h2 className="text-sm font-medium text-text-secondary">Cash Flow Forecast</h2>
+        <p className="mt-2 text-sm text-text-secondary">
           Upgrade to{" "}
           <a href="/settings/billing" className="text-accent hover:underline">Pro or Agency</a>{" "}
           to see your projected cash flow.
@@ -61,9 +61,9 @@ export default function ForecastWidget({ forecast, hasAccess }: ForecastWidgetPr
 
   if (!forecast || forecast.days.length === 0) {
     return (
-      <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-        <h2 className="text-sm font-medium text-muted">Cash Flow Forecast</h2>
-        <p className="mt-2 text-sm text-muted">No open invoices to forecast.</p>
+      <div className="rounded-xl border border-border-default bg-surface-secondary p-6 shadow-sm">
+        <h2 className="text-sm font-medium text-text-secondary">Cash Flow Forecast</h2>
+        <p className="mt-2 text-sm text-text-secondary">No open invoices to forecast.</p>
       </div>
     );
   }
@@ -79,18 +79,18 @@ export default function ForecastWidget({ forecast, hasAccess }: ForecastWidgetPr
   );
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+    <div className="rounded-xl border border-border-default bg-surface-secondary p-6 shadow-sm">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-sm font-medium text-muted">Cash Flow Forecast</h2>
-        <div className="flex gap-1 rounded-lg bg-surface-muted p-0.5">
+        <h2 className="text-sm font-medium text-text-secondary">Cash Flow Forecast</h2>
+        <div className="flex gap-1 rounded-lg bg-surface-tertiary p-0.5">
           {HORIZONS.map((h) => (
             <button
               key={h}
               onClick={() => setHorizon(h)}
               className={`rounded-md px-3 py-1 text-xs font-medium transition ${
                 horizon === h
-                  ? "bg-accent text-surface"
-                  : "text-muted hover:text-foreground"
+                  ? "bg-accent text-white"
+                  : "text-text-secondary hover:text-text-primary"
               }`}
             >
               {h}d
@@ -134,16 +134,16 @@ export default function ForecastWidget({ forecast, hasAccess }: ForecastWidgetPr
                 const data = payload[0]?.payload;
                 if (!data) return null;
                 return (
-                  <div className="rounded-lg border border-border bg-surface px-3 py-2 text-xs shadow-lg">
-                    <p className="mb-1 font-medium text-foreground">{data.date}</p>
-                    <p className="text-[var(--success)]">Best: {formatCurrency(data.best)}</p>
+                  <div className="rounded-lg border border-border-default bg-surface-secondary px-3 py-2 text-xs shadow-lg">
+                    <p className="mb-1 font-medium text-text-primary">{data.date}</p>
+                    <p className="text-success">Best: {formatCurrency(data.best)}</p>
                     <p className="text-accent">Expected: {formatCurrency(data.expected)}</p>
-                    <p className="text-[var(--danger)]">Worst: {formatCurrency(data.worst)}</p>
+                    <p className="text-danger">Worst: {formatCurrency(data.worst)}</p>
                     {data.invoices?.length > 0 && (
                       <>
-                        <p className="mt-1.5 text-[10px] font-medium text-muted">Top invoices:</p>
+                        <p className="mt-1.5 text-[10px] font-medium text-text-secondary">Top invoices:</p>
                         {data.invoices.map((inv: { clientName: string; amount: number; probability: number }, i: number) => (
-                          <p key={i} className="text-muted">
+                          <p key={i} className="text-text-secondary">
                             {inv.clientName} — {formatCurrency(inv.amount)} ({(inv.probability * 100).toFixed(0)}%)
                           </p>
                         ))}
@@ -192,20 +192,20 @@ export default function ForecastWidget({ forecast, hasAccess }: ForecastWidgetPr
 
       <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
         <div>
-          <p className="text-muted">Expected</p>
-          <p className="font-semibold text-foreground">{formatCurrency(visibleTotals.expected)}</p>
+          <p className="text-text-secondary">Expected</p>
+          <p className="font-semibold text-text-primary">{formatCurrency(visibleTotals.expected)}</p>
         </div>
         <div>
-          <p className="text-muted">Best Case</p>
-          <p className="font-semibold text-[var(--success)]">{formatCurrency(visibleTotals.best)}</p>
+          <p className="text-text-secondary">Best Case</p>
+          <p className="font-semibold text-success">{formatCurrency(visibleTotals.best)}</p>
         </div>
         <div>
-          <p className="text-muted">Worst Case</p>
-          <p className="font-semibold text-[var(--danger)]">{formatCurrency(visibleTotals.worst)}</p>
+          <p className="text-text-secondary">Worst Case</p>
+          <p className="font-semibold text-danger">{formatCurrency(visibleTotals.worst)}</p>
         </div>
       </div>
 
-      <p className="mt-4 text-[11px] leading-relaxed text-muted">
+      <p className="mt-4 text-[11px] leading-relaxed text-text-tertiary">
         Based on historical client payment patterns and current open invoices. Actual results may vary.
       </p>
     </div>

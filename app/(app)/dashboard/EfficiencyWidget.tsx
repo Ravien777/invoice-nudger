@@ -1,6 +1,7 @@
 "use client";
 
 import type { CollectionEfficiencyMetrics } from "@/lib/analytics";
+import { Button } from "@/app/components/ui/Button";
 
 const TEMPLATE_LABELS: Record<string, string> = {
   gentle_reminder: "Gentle Reminder",
@@ -28,12 +29,12 @@ function channelColor(channel: string): string {
 }
 
 function fmtPct(val: number | null): string {
-  if (val === null) return "—";
+  if (val === null) return "\u2014";
   return (val * 100).toFixed(0) + "%";
 }
 
 function fmtDays(val: number | null): string {
-  if (val === null) return "—";
+  if (val === null) return "\u2014";
   return val.toFixed(1) + "d";
 }
 
@@ -48,9 +49,9 @@ export default function EfficiencyWidget({ metrics, plan }: EfficiencyWidgetProp
 
   if (!hasData) {
     return (
-      <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-        <h2 className="text-sm font-medium text-muted">Collection Efficiency</h2>
-        <p className="mt-2 text-sm text-muted">
+      <div className="rounded-xl border border-border-default bg-surface-secondary p-6 shadow-sm">
+        <h2 className="text-sm font-medium text-text-secondary">Collection Efficiency</h2>
+        <p className="mt-2 text-sm text-text-secondary">
           Send your first reminders to see collection efficiency insights.
         </p>
       </div>
@@ -64,75 +65,72 @@ export default function EfficiencyWidget({ metrics, plan }: EfficiencyWidgetProp
   }
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+    <div className="rounded-xl border border-border-default bg-surface-secondary p-6 shadow-sm">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-sm font-medium text-muted">Collection Efficiency</h2>
+        <h2 className="text-sm font-medium text-text-secondary">Collection Efficiency</h2>
         {isProOrAgency && (
-          <button
-            onClick={handleDownloadReport}
-            className="rounded-lg bg-surface px-3 py-1.5 text-xs font-medium text-foreground ring-1 ring-border transition hover:bg-surface-muted"
-          >
+          <Button variant="secondary" size="sm" onClick={handleDownloadReport}>
             Download Efficiency Report
-          </button>
+          </Button>
         )}
       </div>
 
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <div className="rounded-lg border border-border bg-surface-muted p-4">
-          <p className="text-xs font-medium text-muted">Paid After Reminder</p>
-          <p className="mt-1 text-2xl font-bold text-foreground">{overall.totalPaidWithReminders}</p>
+        <div className="rounded-lg border border-border-default bg-surface-tertiary p-4">
+          <p className="text-xs font-medium text-text-secondary">Paid After Reminder</p>
+          <p className="mt-1 text-2xl font-bold text-text-primary">{overall.totalPaidWithReminders}</p>
         </div>
-        <div className="rounded-lg border border-border bg-surface-muted p-4">
-          <p className="text-xs font-medium text-muted">Avg Days from Reminder to Payment</p>
-          <p className="mt-1 text-2xl font-bold text-foreground">{fmtDays(overall.avgDaysReminderToPayment)}</p>
+        <div className="rounded-lg border border-border-default bg-surface-tertiary p-4">
+          <p className="text-xs font-medium text-text-secondary">Avg Days from Reminder to Payment</p>
+          <p className="mt-1 text-2xl font-bold text-text-primary">{fmtDays(overall.avgDaysReminderToPayment)}</p>
         </div>
-        <div className="rounded-lg border border-border bg-surface-muted p-4">
-          <p className="text-xs font-medium text-muted">Paid Within 3 Days</p>
-          <p className="mt-1 text-2xl font-bold text-foreground">
+        <div className="rounded-lg border border-border-default bg-surface-tertiary p-4">
+          <p className="text-xs font-medium text-text-secondary">Paid Within 3 Days</p>
+          <p className="mt-1 text-2xl font-bold text-text-primary">
             {overall.paidWithin3Days}
-            <span className="ml-1.5 text-sm font-normal text-muted">
+            <span className="ml-1.5 text-sm font-normal text-text-secondary">
               ({fmtPct(overall.within3DaysRate)})
             </span>
           </p>
         </div>
       </div>
 
-      <p className="mb-4 text-sm text-muted">
+      <p className="mb-4 text-sm text-text-secondary">
         Your reminders help you get paid faster. On average, invoices are paid{" "}
-        <strong className="text-foreground">{fmtDays(overall.avgDaysReminderToPayment)}</strong>{" "}
+        <strong className="text-text-primary">{fmtDays(overall.avgDaysReminderToPayment)}</strong>{" "}
         after the last reminder.
       </p>
 
       {byTemplate.length > 0 && (
         <div className="mb-6">
-          <h3 className="mb-2 text-xs font-semibold text-muted">Per Template</h3>
-          <div className="overflow-hidden rounded-lg border border-border">
+          <h3 className="mb-2 text-xs font-semibold text-text-secondary">Per Template</h3>
+          <div className="overflow-hidden rounded-lg border border-border-default">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-border bg-surface-muted">
-                  <th className="px-3 py-2 font-medium text-muted">Template</th>
-                  <th className="px-3 py-2 font-medium text-muted">Sent</th>
-                  <th className="px-3 py-2 font-medium text-muted">Paid Within 3d</th>
-                  <th className="px-3 py-2 font-medium text-muted">Conversion Rate</th>
+                <tr className="border-b border-border-default bg-surface-tertiary">
+                  <th className="px-3 py-2 font-medium text-text-secondary">Template</th>
+                  <th className="px-3 py-2 font-medium text-text-secondary">Sent</th>
+                  <th className="px-3 py-2 font-medium text-text-secondary">Paid Within 3d</th>
+                  <th className="px-3 py-2 font-medium text-text-secondary">Conversion Rate</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-border-default/50">
                 {byTemplate.map((t) => (
-                  <tr key={t.template} className="transition hover:bg-surface-muted">
-                    <td className="px-3 py-2 font-medium text-foreground">
+                  <tr key={t.template} className="transition hover:bg-surface-tertiary/50">
+                    <td className="px-3 py-2 font-medium text-text-primary">
                       {TEMPLATE_LABELS[t.template] || t.template}
                     </td>
-                    <td className="px-3 py-2 text-muted">{t.timesSent}</td>
-                    <td className="px-3 py-2 text-muted">{t.paymentsWithin3Days}</td>
+                    <td className="px-3 py-2 text-text-secondary">{t.timesSent}</td>
+                    <td className="px-3 py-2 text-text-secondary">{t.paymentsWithin3Days}</td>
                     <td className="px-3 py-2">
                       <div className="flex items-center gap-2">
-                        <div className="h-1.5 w-16 overflow-hidden rounded-full bg-surface-muted">
+                        <div className="h-1.5 w-16 overflow-hidden rounded-full bg-surface-tertiary">
                           <div
-                            className="h-full rounded-full bg-[var(--accent)]"
+                            className="h-full rounded-full bg-accent"
                             style={{ width: `${(t.conversionRate ?? 0) * 100}%` }}
                           />
                         </div>
-                        <span className="font-medium text-foreground">
+                        <span className="font-medium text-text-primary">
                           {fmtPct(t.conversionRate)}
                         </span>
                       </div>
@@ -147,28 +145,28 @@ export default function EfficiencyWidget({ metrics, plan }: EfficiencyWidgetProp
 
       {byChannel.length > 0 && (
         <div>
-          <h3 className="mb-2 text-xs font-semibold text-muted">Per Channel</h3>
+          <h3 className="mb-2 text-xs font-semibold text-text-secondary">Per Channel</h3>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {byChannel.map((c) => (
               <div
                 key={c.channel}
-                className="rounded-lg border border-border bg-surface-muted p-3"
+                className="rounded-lg border border-border-default bg-surface-tertiary p-3"
               >
                 <div className="mb-1 flex items-center gap-1.5">
                   <span
                     className="inline-block h-2.5 w-2.5 rounded-full"
                     style={{ backgroundColor: channelColor(c.channel) }}
                   />
-                  <span className="text-xs font-medium text-foreground">
+                  <span className="text-xs font-medium text-text-primary">
                     {CHANNEL_LABELS[c.channel] || c.channel}
                   </span>
                 </div>
-                <p className="text-xs text-muted">
-                  Sent <strong className="text-foreground">{c.timesSent}</strong> times,{" "}
+                <p className="text-xs text-text-secondary">
+                  Sent <strong className="text-text-primary">{c.timesSent}</strong> times,{" "}
                   {c.paymentsWithin3Days} paid within 3d
                 </p>
-                <p className="text-xs text-muted">
-                  Conversion: <strong className="text-foreground">{fmtPct(c.conversionRate)}</strong>
+                <p className="text-xs text-text-secondary">
+                  Conversion: <strong className="text-text-primary">{fmtPct(c.conversionRate)}</strong>
                 </p>
               </div>
             ))}
@@ -177,7 +175,7 @@ export default function EfficiencyWidget({ metrics, plan }: EfficiencyWidgetProp
       )}
 
       {!isProOrAgency && (
-        <p className="mt-4 text-[11px] text-muted">
+        <p className="mt-4 text-[11px] text-text-secondary">
           Upgrade to{" "}
           <a href="/settings/billing" className="text-accent hover:underline">Pro or Agency</a>{" "}
           to download an Efficiency Report PDF.
