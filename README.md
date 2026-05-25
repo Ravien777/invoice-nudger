@@ -137,6 +137,41 @@ Make small-business finance so simple that a 15-year-old starting their first la
 
 ---
 
+## UI Component Library
+
+Invoice Nudger ships with a dark-themed component library inspired by Linear/Notion/Vercel design patterns. All components live in `app/components/ui/` and use CSS custom properties defined in `app/design-tokens.css`.
+
+| Component | Variants | Props |
+|-----------|----------|-------|
+| **Button** | `primary` / `secondary` / `ghost` / `danger` | `size` (sm/md/lg), `icon`, `loading`, `href`, `disabled` |
+| **Badge** | `unpaid` / `paid` / `overdue` / `cancelled` / `draft` | `variant`, `children` |
+| **Table** | Composable (`Table`, `TableHead`, `TableBody`, `TableRow`, `TableCell`) | Standard HTML table attrs |
+| **Input** | — | `icon`, `prefix`, `error`, plus native input attrs |
+| **Select** | — | `error`, plus native select attrs |
+| **Modal** | — | `open`, `onClose`, `title`, `description`, `size` (sm/md/lg), `footer` |
+| **EmptyState** | `no-invoices` / `no-clients` / `no-results` | `title`, `description`, `action` |
+| **StatCard** | `default` / `highlight` / `warning` | `icon`, `trend`, `loading` |
+| **Toast** | via react-hot-toast with pre-styled wrapper | `toast.success()`, `toast.error()`, `toast.custom()` |
+| **PageShell** | Page wrapper with title/subtitle/actions | `title`, `subtitle`, `actions`, `children` |
+
+All pages use `PageShell` for consistent layout (title bar + scrollable content area) and `Button`/`Badge`/`Table` for interactive elements.
+
+### Phase A UX Redesign
+
+The entire authenticated UI has been redesigned with a dark theme, collapsible sidebar, and consistent component library. Highlights:
+- **Collapsible sidebar** — Expanded (220px) / collapsed (60px) with smooth animation. Mobile slide-over with backdrop.
+- **PageShell wrapper** — Every page gets a unified title/subtitle/actions header and scrollable content area.
+- **Button overhaul** — Four variants (primary, secondary, ghost, danger) with sizes, icons, and loading states.
+- **Badge system** — Status badges with semantic colors (paid=green, overdue=red, unpaid=amber).
+- **Composable Table** — Table/TableHead/TableBody/TableRow/TableCell with consistent styling.
+- **Modal with animations** — Backdrop blur, Escape-key dismiss, slide-in animation.
+- **Toast wrapper** — Dark-themed toast notifications via react-hot-toast.
+- **Empty states** — Illustrated empty states with CTAs for no-invoices, no-clients, no-results.
+
+Redesigned pages: Settings (5-tab), Benchmarks, Billing, Promises, Notifications, Reconciliation, Invoices list, Forecast widget, AI Reminder modal, Portal Token modal.
+
+---
+
 ## Planned Features
 
 See [NEXT.md](./NEXT.md) for the full roadmap. Highlights:

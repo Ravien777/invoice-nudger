@@ -5,6 +5,7 @@ import Link from "next/link";
 import toast from "react-hot-toast";
 import { Table, TableHead, TableBody, TableRow, TableCell } from "@/app/components/ui/Table";
 import { Badge, type BadgeVariant } from "@/app/components/ui/Badge";
+import { Button } from "@/app/components/ui/Button";
 
 interface Invoice {
   id: string;
@@ -279,12 +280,9 @@ export default function InvoiceTable({
             Create your first invoice
           </Link>
           {onUploadCsv && (
-            <button
-              onClick={onUploadCsv}
-              className="inline-flex items-center justify-center gap-2 rounded-md bg-surface-tertiary text-text-primary border border-border-default hover:bg-surface-secondary font-medium text-sm px-4 py-2 transition-colors"
-            >
+            <Button variant="secondary" size="md" onClick={onUploadCsv}>
               Upload CSV
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -456,13 +454,16 @@ export default function InvoiceTable({
                       Pay Now
                     </a>
                   ) : inv.status !== "paid" && inv.status !== "cancelled" ? (
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-accent"
                       onClick={() => handleCreatePaymentLink(inv.id)}
                       disabled={creatingLink === inv.id}
-                      className="rounded-md px-2 py-1 text-xs font-medium text-accent transition hover:bg-surface-tertiary disabled:opacity-50"
+                      loading={creatingLink === inv.id}
                     >
                       {creatingLink === inv.id ? "Creating..." : "Payment Link"}
-                    </button>
+                    </Button>
                   ) : null}
                   <Link
                     href={`/invoices/${inv.id}/edit`}
@@ -471,13 +472,16 @@ export default function InvoiceTable({
                     Edit
                   </Link>
                   {inv.status !== "paid" && inv.status !== "cancelled" && (
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-success"
                       onClick={() => handleMarkPaid(inv.id)}
                       disabled={markingPaid === inv.id}
-                      className="rounded-md px-2 py-1 text-xs font-medium text-success transition hover:bg-success/10 disabled:opacity-50"
+                      loading={markingPaid === inv.id}
                     >
                       {markingPaid === inv.id ? "Marking..." : "Mark Paid"}
-                    </button>
+                    </Button>
                   )}
                   {inv.status !== "paid" &&
                     inv.status !== "cancelled" &&
@@ -485,28 +489,33 @@ export default function InvoiceTable({
                     scheduleSteps.length > 0 && (
                       <>
                         {onGenerateAI && (
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-purple-500"
                             onClick={() => onGenerateAI(inv.id)}
-                            className="rounded-md px-2 py-1 text-xs font-medium text-purple-500 transition hover:bg-purple-500/10"
                           >
                             Generate AI
-                          </button>
+                          </Button>
                         )}
                         <div
                         className="relative"
                         ref={openDropdown === inv.id ? dropdownRef : undefined}
                       >
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-accent"
                           onClick={() =>
                             setOpenDropdown(
                               openDropdown === inv.id ? null : inv.id,
                             )
                           }
                           disabled={sending === inv.id}
-                          className="rounded-md px-2 py-1 text-xs font-medium text-accent transition hover:bg-surface-tertiary disabled:opacity-50"
+                          loading={sending === inv.id}
                         >
                           {sending === inv.id ? "Sending..." : "Send Reminder"}
-                        </button>
+                        </Button>
                         {openDropdown === inv.id && (
                           <div className="absolute right-0 z-10 mt-1 w-64 rounded-lg border border-border-default bg-surface-secondary shadow-lg">
                             <div className="py-1">
@@ -567,13 +576,16 @@ export default function InvoiceTable({
                       </div>
                       </>
                     )}
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-danger"
                     onClick={() => handleDelete(inv.id)}
                     disabled={deleting === inv.id}
-                    className="rounded-md px-2 py-1 text-xs font-medium text-danger transition hover:bg-danger/10 disabled:opacity-50"
+                    loading={deleting === inv.id}
                   >
                     {deleting === inv.id ? "Deleting..." : "Delete"}
-                  </button>
+                  </Button>
                 </div>
               </TableCell>
             </TableRow>

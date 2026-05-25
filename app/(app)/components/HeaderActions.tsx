@@ -5,6 +5,7 @@ import ThemeToggle from "./ThemeToggle";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { NotificationBell } from "@/app/components/layout/NotificationBell";
+import { Button } from "@/app/components/ui/Button";
 
 export default function HeaderActions() {
   const { data: session } = useSession();
@@ -46,12 +47,13 @@ export default function HeaderActions() {
       <span className="hidden text-sm text-muted sm:inline">
         {session?.user?.email}
       </span>
-      <button
+      <Button
+        variant="ghost"
+        size="sm"
         onClick={() => signOut({ callbackUrl: "/" })}
-        className="rounded-lg px-3 py-1.5 text-sm font-medium text-muted transition hover:bg-surface-muted hover:text-foreground"
       >
         Sign out
-      </button>
+      </Button>
     </div>
   );
 }

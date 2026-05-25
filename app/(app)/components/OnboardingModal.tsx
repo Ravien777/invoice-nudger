@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { Button } from "@/app/components/ui/Button";
 
 const DISMISSED_KEY = "invoice-nudger-onboarding-dismissed";
 
@@ -52,10 +53,10 @@ export default function OnboardingModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-lg rounded-2xl bg-surface shadow-2xl">
+      <div className="w-full max-w-lg rounded-2xl bg-surface-secondary shadow-2xl">
         <div className="px-6 pb-6 pt-8">
           <div className="mb-6 text-center">
-            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-surface-muted">
+            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-surface-tertiary">
               <svg
                 className="h-7 w-7 text-accent"
                 fill="none"
@@ -70,10 +71,10 @@ export default function OnboardingModal({
                 />
               </svg>
             </div>
-            <h2 className="text-xl font-bold text-foreground">
+            <h2 className="text-xl font-bold text-text-primary">
               Welcome to Invoice Nudger!
             </h2>
-            <p className="mt-2 text-sm text-muted">
+            <p className="mt-2 text-sm text-text-secondary">
               You&apos;re all set up. Here&apos;s how to get started:
             </p>
           </div>
@@ -81,9 +82,9 @@ export default function OnboardingModal({
           <div className="grid gap-3">
             <button
               onClick={handleCreateInvoice}
-              className="flex items-start gap-4 rounded-xl border border-border p-4 text-left transition hover:border-accent hover:bg-surface-muted"
+              className="flex items-start gap-4 rounded-xl border border-border-default p-4 text-left transition hover:border-accent hover:bg-surface-tertiary"
             >
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-muted">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-tertiary">
                 <svg
                   className="h-5 w-5 text-accent"
                   fill="none"
@@ -99,10 +100,10 @@ export default function OnboardingModal({
                 </svg>
               </div>
               <div>
-                <p className="font-medium text-foreground">
+                <p className="font-medium text-text-primary">
                   Create your first invoice
                 </p>
-                <p className="mt-0.5 text-sm text-muted">
+                <p className="mt-0.5 text-sm text-text-secondary">
                   Add a client, set an amount and due date
                 </p>
               </div>
@@ -110,9 +111,9 @@ export default function OnboardingModal({
 
             <button
               onClick={handleUploadCsv}
-              className="flex items-start gap-4 rounded-xl border border-border p-4 text-left transition hover:border-accent hover:bg-surface-muted"
+              className="flex items-start gap-4 rounded-xl border border-border-default p-4 text-left transition hover:border-accent hover:bg-surface-tertiary"
             >
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-muted">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-tertiary">
                 <svg
                   className="h-5 w-5 text-accent"
                   fill="none"
@@ -128,23 +129,23 @@ export default function OnboardingModal({
                 </svg>
               </div>
               <div>
-                <p className="font-medium text-foreground">
+                <p className="font-medium text-text-primary">
                   Upload a sample CSV
                 </p>
-                <p className="mt-0.5 text-sm text-muted">
+                <p className="mt-0.5 text-sm text-text-secondary">
                   Bulk-import multiple invoices at once
                 </p>
               </div>
             </button>
           </div>
 
-          <div className="mt-4 rounded-lg border border-border bg-surface-muted p-3">
-            <p className="text-xs text-muted">
-              <span className="font-medium text-foreground">Tip:</span> Download{" "}
+          <div className="mt-4 rounded-lg border border-border-default bg-surface-tertiary p-3">
+            <p className="text-xs text-text-secondary">
+              <span className="font-medium text-text-primary">Tip:</span> Download{" "}
               <a
                 href="/sample-invoices.csv"
                 download
-                className="font-medium text-accent underline hover:text-foreground"
+                className="font-medium text-accent underline hover:text-text-primary"
               >
                 sample-invoices.csv
               </a>{" "}
@@ -153,12 +154,12 @@ export default function OnboardingModal({
           </div>
 
           <div className="mt-6 flex justify-end">
-            <button
+            <Button
+              variant="primary"
               onClick={handleDismiss}
-              className="rounded-lg bg-accent px-5 py-2 text-sm font-medium text-surface transition hover:brightness-110"
             >
               Get started
-            </button>
+            </Button>
           </div>
         </div>
       </div>

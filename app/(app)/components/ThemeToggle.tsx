@@ -1,19 +1,21 @@
 "use client";
 
 import { useTheme } from "@/app/components/ThemeProvider";
+import { Button } from "@/app/components/ui/Button";
 
 export default function ThemeToggle() {
   const { theme, toggleTheme } = useTheme();
 
   return (
-    <button
-      type="button"
+    <Button
+      variant="ghost"
+      size="md"
       onClick={toggleTheme}
       aria-label={
         theme === "dark" ? "Switch to light mode" : "Switch to dark mode"
       }
       title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-      className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface text-foreground shadow-sm transition duration-200 hover:border-border/80 hover:bg-surface-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-(--ring)"
+      className="h-10 w-10 rounded-full border border-border-default bg-surface-secondary text-text-secondary shadow-sm hover:border-border-default/80 hover:bg-surface-tertiary hover:text-text-primary"
     >
       {theme === "dark" ? (
         <svg
@@ -44,6 +46,6 @@ export default function ThemeToggle() {
           />
         </svg>
       )}
-    </button>
+    </Button>
   );
 }

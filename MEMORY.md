@@ -140,6 +140,34 @@
 
 ---
 
+## Phase A — UX Redesign (Complete)
+
+All authenticated pages now use a unified dark theme with collapsible sidebar, `PageShell` wrapper, and the refactored component library.
+
+| Task | Key files | Status |
+|------|-----------|--------|
+| A-1 Design tokens + layout shell | `app/design-tokens.css`, sidebar, layout, `PageShell` | Complete |
+| A-2 Component library refactor | `Button`, `Badge`, `Table`, `Input`, `Select`, `Modal`, `EmptyState`, `StatCard`, `Toast` | Complete |
+| A-3 Shared chrome | `PageShell`, user menu, `NotificationBell`, `NotificationPanel` | Complete |
+| A-4.1 Dashboard | `dashboard/page.tsx` — StatCards, Table, Badge, EmptyState | Complete |
+| A-4.2 Invoice list | `invoices/InvoicesClient.tsx` — filter bar, bulk actions, pagination | Complete |
+| A-4.6 Settings | `settings/SettingsClient.tsx` — 5-tab layout (Profile, Business, Notifications, Billing, Danger Zone) | Complete |
+| A-4.7 Client pages | `app/(app)/clients/` — Table, Badge, StatCard polish | Complete |
+| Benchmarks | `benchmarks/` page.tsx + BenchmarksClient.tsx — PageShell, Button, EmptyState | Complete |
+| Billing | `settings/billing/` page.tsx + BillingClient.tsx — PageShell, Button, Badge, Tailwind tokens | Complete |
+| ForecastWidget | `dashboard/ForecastWidget.tsx` — horizon buttons → Button | Complete |
+| Promises | `promises/PromisesClient.tsx` — filter tabs → Button | Complete |
+| Notifications | `notifications/NotificationsClient.tsx` — filter tabs → Button | Complete |
+| Reconciliation | `reconciliation/ReconciliationClient.tsx` — tab bar → Button | Complete |
+| InvoiceTable | `components/InvoiceTable.tsx` — 8 action buttons → Button | Complete |
+| AIReminderModal | `invoices/components/AIReminderModal.tsx` — Modal, Select, Button, CSS vars | Complete |
+| PortalTokenModal | `invoices/components/PortalTokenModal.tsx` — Modal, Input, Button, CSS vars | Complete |
+| HeaderActions | `app/(app)/components/HeaderActions.tsx` — Sign Out → Button | Complete |
+| ThemeToggle | `app/(app)/components/ThemeToggle.tsx` — raw button → Button (ghost, circular) | Complete |
+| OnboardingModal | `app/(app)/components/OnboardingModal.tsx` — 3 buttons → Button, token modernization | Complete |
+
+---
+
 ## Next Priorities
 
 - Deploy the `Notification` and `alertPreferences` schema changes to production via `prisma db push`
@@ -147,3 +175,4 @@
 - Monitor analytics cron execution to ensure no timeouts with large datasets
 - Consider a "benchmark seeding" script to populate `IndustryBenchmark` with realistic defaults until enough real users exist
 - Front-optimise dashboard query: the efficiency metrics query fetches all reminders + paid invoices — add pagination or caching if slow at scale
+- Token migration cleanup: replace remaining old token names (`bg-surface`, `text-foreground`, `text-muted`, `border-border`) with modern equivalents across the codebase

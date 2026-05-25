@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { Button } from "@/app/components/ui/Button";
+import { Select } from "@/app/components/ui/Select";
+import { Modal } from "@/app/components/ui/Modal";
 
 type Tone = "professional" | "friendly" | "firm" | "casual";
 
@@ -75,99 +78,81 @@ export default function AIReminderModal({
     onClose();
   }
 
-  if (!open) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div
-        className="absolute inset-0 bg-black/50"
-        onClick={handleClose}
-      />
-      <div className="relative z-10 w-full max-w-2xl rounded-xl border border-border bg-surface p-6 shadow-xl">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-foreground">
-            Generate AI Reminder
-          </h2>
-          <button
-            onClick={handleClose}
-            className="rounded-md p-1 text-muted transition hover:bg-surface-muted hover:text-foreground"
-          >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-muted">
-            Tone
-          </label>
-          <select
-            value={tone}
-            onChange={(e) => setTone(e.target.value as Tone)}
-            className="mt-1 block w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground shadow-sm transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-[var(--ring)]"
-          >
-            {TONES.map((t) => (
-              <option key={t.value} value={t.value}>
-                {t.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {!generated && !error && (
-          <div className="mb-4 rounded-lg bg-surface-muted p-4 text-center">
-            <p className="text-sm text-muted">
-              Click &quot;Generate&quot; to create an AI-powered reminder email.
-            </p>
-          </div>
-        )}
-
-        {error && (
-          <div className="mb-4 rounded-lg bg-[var(--danger-muted)] p-4 text-sm text-[var(--danger)]">
-            {error}
-          </div>
-        )}
-
-        {generated && (
-          <div className="mb-4">
-            <div className="mb-2">
-              <span className="text-xs font-medium text-muted">Subject</span>
-              <p className="text-sm font-medium text-foreground">
-                {generated.subject}
-              </p>
-            </div>
-            <div>
-              <span className="text-xs font-medium text-muted">Preview</span>
-              <div
-                className="mt-1 max-h-64 overflow-auto rounded-lg border border-border bg-surface p-4 text-sm text-foreground"
-                dangerouslySetInnerHTML={{ __html: generated.html }}
-              />
-            </div>
-            <p className="mt-2 text-xs text-muted">
-              {generated.usageRemaining} AI reminders remaining this month.
-            </p>
-          </div>
-        )}
-
-        <div className="flex items-center justify-end gap-3">
-          <button
-            onClick={handleClose}
-            className="rounded-lg bg-surface px-4 py-2 text-sm font-medium text-foreground shadow-sm ring-1 ring-border transition hover:bg-surface-muted"
-          >
+    <Modal
+      open={open}
+      onClose={handleClose}
+      title="Generate AI Reminder"
+      size="lg"
+      footer={
+        <>
+          <Button variant="secondary" onClick={handleClose}>
             Close
-          </button>
+          </Button>
           {!generated && (
-            <button
+            <Button
+              variant="primary"
+              className="bg-purple-600 hover:bg-purple-700"
               onClick={handleGenerate}
               disabled={generating}
-              className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-purple-700 disabled:opacity-50"
+              loading={generating}
             >
               {generating ? "Generating..." : "Generate"}
-            </button>
+            </Button>
           )}
-        </div>
+        </>
+      }
+    >
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-text-primary mb-1">
+          Tone
+        </label>
+        <Select
+          value={tone}
+          onChange={(e) => setTone(e.target.value as Tone)}
+        >
+          {TONES.map((t) => (
+            <option key={t.value} value={t.value}>
+              {t.label}
+            </option>
+          ))}
+        </Select>
       </div>
-    </div>
+
+      {!generated && !error && (
+        <div className="mb-4 rounded-lg bg-surface-tertiary p-4 text-center">
+          <p className="text-sm text-text-secondary">
+            Click &quot;Generate&quot; to create an AI-powered reminder email.
+          </p>
+        </div>
+      )}
+
+      {error && (
+        <div className="mb-4 rounded-lg bg-danger/10 p-4 text-sm text-danger">
+          {error}
+        </div>
+      )}
+
+      {generated && (
+        <div className="mb-4">
+          <div className="mb-2">
+            <span className="text-xs font-medium text-text-secondary">Subject</span>
+            <p className="text-sm font-medium text-text-primary">
+              {generated.subject}
+            </p>
+          </div>
+          <div>
+            <span className="text-xs font-medium text-text-secondary">Preview</span>
+            <div
+              className="mt-1 max-h-64 overflow-auto rounded-lg border border-border-default bg-surface-secondary p-4 text-sm text-text-primary"
+              dangerouslySetInnerHTML={{ __html: generated.html }}
+            />
+          </div>
+          <p className="mt-2 text-xs text-text-secondary">
+            {generated.usageRemaining} AI reminders remaining this month.
+          </p>
+        </div>
+      )}
+    </Modal>
   );
 }

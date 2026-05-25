@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { startOfMonth, endOfMonth, subMonths, differenceInCalendarDays, subDays, format } from "date-fns";
 import Link from "next/link";
-import { Plus, FileText, AlertCircle, CheckCircle } from "lucide-react";
+import { Plus, FileText, AlertCircle, CheckCircle, Receipt } from "lucide-react";
 import DashboardClient from "./DashboardClient";
 import { getTier } from "@/lib/subscriptions";
 import BenchmarkWidget from "./BenchmarkWidget";
@@ -35,7 +35,7 @@ export default async function DashboardPage() {
   const lastMonthStart = startOfMonth(subMonths(new Date(), 1));
   const lastMonthEnd = endOfMonth(subMonths(new Date(), 1));
 
-  const [unpaidCount, overdueCount, paidThisMonth, totalInvoices, monthlyInvoiceCount, reconciledCount, discrepancyCount, totalOutstanding, recentInvoices, paidLastMonth] =
+  const [unpaidCount, overdueCount, paidThisMonth, totalInvoices, monthlyInvoiceCount, reconciledCount, discrepancyCount, totalOutstanding, recentInvoices, paidLastMonth, expenseAgg] =
     await Promise.all([
       prisma.invoice.count({
         where: { userId: user!.id, status: "unpaid" },
@@ -81,6 +81,11 @@ export default async function DashboardPage() {
           status: "paid",
           updatedAt: { gte: lastMonthStart, lte: lastMonthEnd },
         },
+      }),
+      prisma.expense.aggregate({
+        where: { userId: user!.id, date: { gte: monthStart, lte: monthEnd } },
+        _sum: { amount: true },
+        _count: true,
       }),
     ]);
 
@@ -218,8 +223,8 @@ export default async function DashboardPage() {
           </p>
         </div>
 
-        {/* Three StatCards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        {/* StatCards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <StatCard
             label="Unpaid"
             value={unpaidCount.toString()}
@@ -241,6 +246,16 @@ export default async function DashboardPage() {
           >
             <CheckCircle className="h-5 w-5 text-text-tertiary" />
           </StatCard>
+          {expenseAgg._count > 0 && (
+            <StatCard
+              label="Expenses This Month"
+              value={`$${expenseAgg._sum.amount?.toFixed(0) ?? "0"}`}
+              variant="default"
+              href="/expenses"
+            >
+              <Receipt className="h-5 w-5 text-text-tertiary" />
+            </StatCard>
+          )}
         </div>
 
         {/* Reconciliation summary */}

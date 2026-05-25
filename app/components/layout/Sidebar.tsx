@@ -17,6 +17,9 @@ import {
   Settings,
   LogOut,
   X,
+  Receipt,
+  Calculator,
+  ScrollText,
 } from "lucide-react";
 
 interface NavItem {
@@ -29,7 +32,10 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard", zone: 1 },
   { label: "Invoices", icon: FileText, href: "/invoices", zone: 1 },
+  { label: "Quotes", icon: ScrollText, href: "/quotes", zone: 1 },
   { label: "Clients", icon: Users, href: "/clients", zone: 1 },
+  { label: "Expenses", icon: Receipt, href: "/expenses", zone: 1 },
+  { label: "Tax", icon: Calculator, href: "/tax", zone: 1 },
   { label: "Benchmarks", icon: BarChart3, href: "/benchmarks", zone: 2 },
   { label: "Promises", icon: Handshake, href: "/promises", zone: 2 },
   { label: "Reconciliation", icon: RefreshCw, href: "/reconciliation", zone: 2 },
