@@ -168,6 +168,66 @@ All authenticated pages now use a unified dark theme with collapsible sidebar, `
 
 ---
 
+## Phase B — Expense Tracking (Complete)
+
+| Feature | Decision | Rationale | Rejected alternatives |
+|---|---|---|---|
+| Expense schema | `ExpenseCategory` + `Expense` Prisma models, seeded lazily via `lib/expense-categories.ts` | Lazy seed called from GET handler — no dedicated onboarding API needed | Separate seed endpoint (extra route for one-time setup) |
+| Tax fields on User | `taxRate`, `fiscalYearStart`, `taxSavingsAmount` added directly to `User` model | Follows existing pattern (`lateFeeEnabled`, `portalEnabled` live on User) | New `BusinessProfile` model (downstream phases E/G/L/T expect this — caveat documented in `instructions.md`) |
+| Expense CRUD | `GET/POST /api/expenses`, `GET/PUT/DELETE /api/expenses/[id]` with Zod validation + owner check | Standard CRUD pattern matching invoices | Combined expense+income endpoint (unnecessary coupling) |
+| Expense UI | Inline addition form on list page + month picker filter | Minimal navigation, fast entry | Modal/drawer form (more clicks, slower workflow) |
+| Dashboard card | Conditionally shown `StatCard` with `href="/expenses"` when expenses exist this month | Surfaces feature without permanent nav clutter | Always-visible card (wasted space for non-users) |
+
+## Phase C — Tax Estimation & Financial Reports (Complete)
+
+| Feature | Decision | Rationale | Rejected alternatives |
+|---|---|---|---|
+| Tax estimate API | `GET /api/reports/tax-estimate?year=YYYY` — computes `(grossIncome - deductibleExpenses) × taxRate` | Single endpoint, no complex state machine | Multi-step calculator (over-engineered for an estimate) |
+| P&L report API | `GET /api/reports/profit-loss?year=YYYY` — income by month + expenses by category | Separate concerns from tax estimate; both callable independently | Merged endpoint (different query patterns, different consumers) |
+| P&L UI | Collapsible section inside `/tax` page, not a separate route | Keeps navigation minimal; P&L is supplementary to tax view | Separate `/reports` page + sidebar nav (more clicks) |
+| Set aside tracker | Pro/Agency-gated input field that saves tax savings amount via `PUT /api/settings/profile` | Uses existing profile API — no new endpoint needed | Dedicated tax-savings API (unnecessary route) |
+| CSV download | String-join generation in `TaxClient` (no library) | Simpler than adding PapaParse dependency for this use case | PapaParse (heavier, no benefit for simple CSV) |
+
+## Phase D — Quotes & Proposals (Complete)
+
+| Feature | Decision | Rationale | Rejected alternatives |
+|---|---|---|---|
+| Schema | `Quote` + `QuoteLineItem` as persisted Prisma models | Diverges from Invoice (which uses client-only line items). Line items are **lost on convert-to-invoice** — caveat documented | Client-only line items like Invoice (would lose data on page refresh before convert) |
+| Auto-numbering | `Q-001` format computed in POST handler via `MAX(CAST(SUBSTRING(quoteNumber,3) AS INTEGER)) + 1` | Simple, no separate sequence table or transaction lock | UUID-based display numbers (less readable for user-facing quotes) |
+| Status lifecycle | `draft → sent → accepted/declined/expired` | PUT/DELETE guarded — only `draft`/`sent` statuses are mutable | Free-form status (prone to inconsistent states) |
+| Convert to invoice | `POST /api/quotes/[id]/convert` — creates Invoice with `amount`, 30-day due date | Line items not carried over (no `InvoiceLineItem` model). Invoice uses quote's `clientName`/`clientEmail` | Carrying line items (would require creating InvoiceLineItem table — future improvement) |
+| Public respond | `POST /api/quotes/[id]/respond` — no auth, raw `quoteId` as access token | Matches spec simplicity. Creates Notification on accept/decline, redirects to success page | Auth token per quote (added complexity, no clear benefit for single-use URL) |
+| Email on Send | **Skipped** — status changed to `sent` only | Designed for future email integration (Resend + `sendQuoteEmail` template) | Inline email send (would need template + error handling — deferred) |
+| QuoteForm | Client-side line items with live preview (total auto-computed) | Follows InvoiceForm pattern; user sees final amount before saving | Server-side computation on each line item change (slower UX, more API calls) |
+| Public view | `app/quote/[quoteId]/page.tsx` + `QuotePublicClient.tsx` — renders quote doc + Accept/Decline buttons | Self-contained public page, no sidebar/auth wrapper | Embedded modal on main site (requires auth context, more complex) |
+| Sidebar nav | "Quotes" with `ScrollText` icon, positioned after Invoices | Follows sidebar ordering convention | Tab in invoices page (less discoverable for a distinct feature) |
+
+## Caveats & Known Gaps
+
+| Area | Caveat | Severity | Future Action |
+|---|---|---|---|
+| Convert → Invoice | Line items lost on conversion (no `InvoiceLineItem` model) | Medium | Create `InvoiceLineItem` model and migrate data |
+| Email on Send | Quote "Send" action changes status only — no email sent | Low | Implement `sendQuoteEmail` template + Resend call |
+| BusinessProfile | Tax/expense fields live on `User` but downstream phases E/G/L/T expect `BusinessProfile` | Medium | Extract `BusinessProfile` model, migrate fields |
+| P&L expense categories | Categories use text labels from `ExpenseCategory`, not normalized IDs in reports | Low | Join on `ExpenseCategory.id` for consistency |
+| Public respond auth | `quoteId` is the sole access token — anyone with the URL can respond | Low | Add optional token-based auth for production use |
+| Test coverage | No tests for quote workflows yet | High | Add integration tests for CRUD + convert + respond |
+
+---
+
+## Current State
+
+**All phases complete.** The product now covers:
+1. Core invoice management + automated reminders
+2. Monetisation (Stripe subscriptions, payment links)
+3. Advanced features (accounting integrations, AI reminders, client portal, promise detection, multi-channel, late fees, reconciliation)
+4. Insights flywheel (analytics data layer, client risk profiles, payment probability, industry benchmarks, cash flow forecasting, collection efficiency, predictive alerts)
+5. Expense tracking (categories, CRUD, dashboard card)
+6. Tax estimation & financial reports (estimate, P&L, CSV download, Pro-gated set aside tracker)
+7. Quotes & proposals (CRUD, convert-to-invoice, public accept/decline)
+
+---
+
 ## Next Priorities
 
 - Deploy the `Notification` and `alertPreferences` schema changes to production via `prisma db push`
@@ -176,3 +236,6 @@ All authenticated pages now use a unified dark theme with collapsible sidebar, `
 - Consider a "benchmark seeding" script to populate `IndustryBenchmark` with realistic defaults until enough real users exist
 - Front-optimise dashboard query: the efficiency metrics query fetches all reminders + paid invoices — add pagination or caching if slow at scale
 - Token migration cleanup: replace remaining old token names (`bg-surface`, `text-foreground`, `text-muted`, `border-border`) with modern equivalents across the codebase
+- Add test coverage for quote CRUD, convert, and respond workflows
+- Implement quote email sending on "Send" action
+- Extract `BusinessProfile` model from User fields before Phase E

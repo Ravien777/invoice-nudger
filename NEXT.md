@@ -47,7 +47,7 @@
 
 # PHASE A: UX simplification + legal invoices
 
-@instructions.md
+Done.
 
 ---
 

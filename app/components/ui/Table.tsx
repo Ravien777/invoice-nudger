@@ -17,7 +17,7 @@ interface TableProps {
 
 export function Table({ children, emptyState, className = "" }: TableProps) {
   return (
-    <div className={`bg-surface-secondary rounded-lg border border-border-default overflow-hidden ${className}`}>
+    <div className={`bg-surface-secondary rounded-lg border border-border-default overflow-x-auto ${className}`}>
       {emptyState ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <emptyState.icon className="h-10 w-10 text-text-tertiary mb-3" />

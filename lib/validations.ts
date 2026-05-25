@@ -65,3 +65,19 @@ export const quoteSchema = z.object({
 });
 
 export type QuoteFormData = z.infer<typeof quoteSchema>;
+
+export const recurringSchema = z.object({
+  clientName: z.string().min(1, "Client name is required"),
+  clientEmail: z.string().email("Invalid email address"),
+  clientPhone: z.string().optional().or(z.literal("")),
+  amount: z.coerce.number().positive("Amount must be greater than 0"),
+  currency: z.string().default("USD"),
+  frequency: z.enum(["weekly", "biweekly", "monthly", "quarterly", "annually"]),
+  dayOfMonth: z.coerce.number().int().min(1).max(28).optional(),
+  nextRunDate: z.string().refine((val) => !isNaN(new Date(val).getTime()), "Invalid date"),
+  endDate: z.string().refine((val) => !isNaN(new Date(val).getTime()), "Invalid date").optional().or(z.literal("")),
+  description: z.string().optional().or(z.literal("")),
+  autoSend: z.boolean().default(true),
+});
+
+export type RecurringFormData = z.infer<typeof recurringSchema>;

@@ -8,6 +8,7 @@ import { useSidebar } from "./SidebarProvider";
 import {
   LayoutDashboard,
   FileText,
+  Repeat,
   Users,
   BarChart3,
   Handshake,
@@ -32,6 +33,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard", zone: 1 },
   { label: "Invoices", icon: FileText, href: "/invoices", zone: 1 },
+  { label: "Recurring", icon: Repeat, href: "/recurring", zone: 1 },
   { label: "Quotes", icon: ScrollText, href: "/quotes", zone: 1 },
   { label: "Clients", icon: Users, href: "/clients", zone: 1 },
   { label: "Expenses", icon: Receipt, href: "/expenses", zone: 1 },
