@@ -107,6 +107,9 @@ export default async function SettingsPage() {
         name: user!.name,
         email: user!.email,
         alertPreferences: parsedAlertPrefs,
+        taxRate: user!.taxRate,
+        fiscalYearStart: user!.fiscalYearStart,
+        taxSavingsAmount: user!.taxSavingsAmount,
       }}
     />
   );

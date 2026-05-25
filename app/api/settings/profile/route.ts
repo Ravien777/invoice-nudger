@@ -38,16 +38,44 @@ export async function PUT(request: Request) {
   }
 
   const body = await request.json();
-  const { name } = body;
 
-  if (typeof name !== "string") {
-    return NextResponse.json({ error: "name must be a string" }, { status: 400 });
+  const data: Record<string, unknown> = {};
+
+  if (body.name !== undefined) {
+    if (typeof body.name !== "string") {
+      return NextResponse.json({ error: "name must be a string" }, { status: 400 });
+    }
+    data.name = body.name.trim() || null;
+  }
+
+  if (body.taxRate !== undefined) {
+    const rate = Number(body.taxRate);
+    if (isNaN(rate) || rate < 0 || rate > 100) {
+      return NextResponse.json({ error: "taxRate must be between 0 and 100" }, { status: 400 });
+    }
+    data.taxRate = rate / 100;
+  }
+
+  if (body.fiscalYearStart !== undefined) {
+    const month = Number(body.fiscalYearStart);
+    if (!Number.isInteger(month) || month < 1 || month > 12) {
+      return NextResponse.json({ error: "fiscalYearStart must be 1-12" }, { status: 400 });
+    }
+    data.fiscalYearStart = month;
+  }
+
+  if (body.taxSavingsAmount !== undefined) {
+    const amount = Number(body.taxSavingsAmount);
+    if (isNaN(amount) || amount < 0) {
+      return NextResponse.json({ error: "taxSavingsAmount must be a non-negative number" }, { status: 400 });
+    }
+    data.taxSavingsAmount = amount;
   }
 
   await prisma.user.update({
     where: { id: user.id },
-    data: { name: name.trim() || null },
+    data,
   });
 
-  return NextResponse.json({ success: true, name: name.trim() || null });
+  return NextResponse.json({ success: true });
 }

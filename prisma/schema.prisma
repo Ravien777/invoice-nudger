@@ -30,6 +30,9 @@ model User {
   interestRate      Float            @default(0)
   lateFeeGraceDays  Int              @default(0)
    feeCap            Float            @default(0)
+  taxRate           Float            @default(0.25)
+  fiscalYearStart   Int              @default(1)
+  taxSavingsAmount  Float            @default(0)
   alertPreferences  Json?
   accounts         Account[]
   sessions         Session[]
@@ -48,6 +51,9 @@ model User {
   dailySummaries   InvoiceDailySummary[]
   clientProfiles   ClientPaymentProfile[]
   notifications    Notification[]
+  expenses         Expense[]
+  expenseCategories ExpenseCategory[]
+  quotes           Quote[]
 }
 
 model Account {
@@ -323,6 +329,76 @@ model ClientPaymentProfile {
   createdAt       DateTime @default(now())
 
   @@unique([userId, clientEmail])
+}
+
+model ExpenseCategory {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  color     String?
+  isDefault Boolean   @default(false)
+  expenses  Expense[]
+  createdAt DateTime  @default(now())
+
+  @@unique([userId, name])
+}
+
+model Expense {
+  id            String           @id @default(cuid())
+  userId        String
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId    String?
+  category      ExpenseCategory? @relation(fields: [categoryId], references: [id])
+  description   String
+  amount        Float
+  currency      String           @default("USD")
+  date          DateTime         @db.Date
+  vendor        String?
+  receiptUrl    String?
+  taxDeductible Boolean          @default(true)
+  notes         String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+}
+
+model Quote {
+  id             String          @id @default(cuid())
+  userId         String
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quoteNumber    String?
+  clientName     String
+  clientEmail    String
+  clientAddress  String?
+  issueDate      DateTime        @default(now())
+  expiryDate     DateTime?
+  status         String          @default("draft") // draft | sent | accepted | declined | expired
+  amount         Float
+  subtotal       Float?
+  totalTax       Float?
+  currency       String          @default("USD")
+  notes          String?
+  sellerName     String?
+  sellerAddress  String?
+  sellerTaxId    String?
+  paymentTerms   String?
+  convertedToInvoiceId String?   @unique
+  lineItems      QuoteLineItem[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model QuoteLineItem {
+  id          String  @id @default(cuid())
+  quoteId     String
+  quote       Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Float   @default(1)
+  unitPrice   Float
+  taxRate     Float?
+  taxAmount   Float?
+  total       Float
+  sortOrder   Int     @default(0)
 }
 
 model IndustryBenchmark {

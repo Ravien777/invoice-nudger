@@ -104,6 +104,9 @@ interface UserProfile {
   name: string | null;
   email: string;
   alertPreferences: Record<string, unknown>;
+  taxRate: number;
+  fiscalYearStart: number;
+  taxSavingsAmount: number;
 }
 
 interface SettingsClientProps {
@@ -198,6 +201,10 @@ export default function SettingsClient({
   const [alertPrefs, setAlertPrefs] = useState<Record<string, unknown>>(userProfile.alertPreferences);
   const [savingIndustry, setSavingIndustry] = useState(false);
   const [savingAlerts, setSavingAlerts] = useState(false);
+  const [taxRate, setTaxRate] = useState(Math.round(userProfile.taxRate * 100));
+  const [fiscalYearStart, setFiscalYearStart] = useState(userProfile.fiscalYearStart);
+  const [taxSavingsAmount, setTaxSavingsAmount] = useState(userProfile.taxSavingsAmount);
+  const [savingTax, setSavingTax] = useState(false);
 
   // Notifications tab
   const [steps, setSteps] = useState<Step[]>(schedule?.steps ?? []);
@@ -307,6 +314,27 @@ export default function SettingsClient({
       toast.error("Network error");
     } finally {
       setSavingIndustry(false);
+    }
+  }
+
+  async function handleSaveTax() {
+    setSavingTax(true);
+    try {
+      const res = await fetch("/api/settings/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taxRate, fiscalYearStart, taxSavingsAmount }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Failed to save tax settings");
+        return;
+      }
+      toast.success("Tax settings saved");
+    } catch {
+      toast.error("Network error");
+    } finally {
+      setSavingTax(false);
     }
   }
 
@@ -630,6 +658,42 @@ export default function SettingsClient({
               <div className="pt-2">
                 <Button onClick={handleSaveAlerts} loading={savingAlerts} size="sm">
                   Save Alert Preferences
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Tax Settings */}
+          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+            <h2 className="mb-4 text-lg font-semibold text-foreground">Tax Settings</h2>
+            <p className="text-sm text-muted mb-4">
+              Used to estimate how much to set aside for taxes. Ask your accountant for the right numbers.
+            </p>
+            <div className="space-y-4 max-w-md">
+              <FormField label="Your approximate tax rate (%)" hint="Used to calculate estimated tax on taxable income">
+                <Input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={taxRate}
+                  onChange={(e) => setTaxRate(Number(e.target.value) || 0)}
+                />
+              </FormField>
+              <FormField label="Tax year starts in" hint="When your fiscal year begins (January for most)">
+                <Select value={fiscalYearStart} onChange={(e) => setFiscalYearStart(Number(e.target.value))}>
+                  {[
+                    { n: 1, l: "January" }, { n: 2, l: "February" }, { n: 3, l: "March" },
+                    { n: 4, l: "April" }, { n: 5, l: "May" }, { n: 6, l: "June" },
+                    { n: 7, l: "July" }, { n: 8, l: "August" }, { n: 9, l: "September" },
+                    { n: 10, l: "October" }, { n: 11, l: "November" }, { n: 12, l: "December" },
+                  ].map((m) => (
+                    <option key={m.n} value={m.n}>{m.l}</option>
+                  ))}
+                </Select>
+              </FormField>
+              <div className="pt-2">
+                <Button onClick={handleSaveTax} loading={savingTax} size="sm">
+                  Save Tax Settings
                 </Button>
               </div>
             </div>
