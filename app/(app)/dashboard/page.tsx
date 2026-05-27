@@ -12,6 +12,8 @@ import { computeForecast } from "@/lib/forecast";
 import ForecastWidget from "./ForecastWidget";
 import EfficiencyWidget from "./EfficiencyWidget";
 import { computeCollectionEfficiencyForUser } from "@/lib/analytics";
+import { calculatePayYourselfAmount } from "@/lib/pay-yourself";
+import PayYourselfWidget from "./PayYourselfWidget";
 import { PageShell } from "@/app/components/layout/PageShell";
 import { Button } from "@/app/components/ui/Button";
 import { StatCard } from "@/app/components/ui/StatCard";
@@ -162,6 +164,7 @@ export default async function DashboardPage() {
 
   const efficiencyMetrics = await computeCollectionEfficiencyForUser(user!.id);
 
+  const payYourself = await calculatePayYourselfAmount(user!.id);
   const tier = getTier(user!.plan);
   const usagePercent = tier.invoiceLimit
     ? Math.min((monthlyInvoiceCount / tier.invoiceLimit) * 100, 100)
@@ -356,6 +359,14 @@ export default async function DashboardPage() {
 
         <div className="mb-8">
           <EfficiencyWidget metrics={efficiencyMetrics} plan={user!.plan} />
+        </div>
+
+        <div className="mb-8 max-w-sm">
+          <PayYourselfWidget
+            available={payYourself.available}
+            baseCurrency={user!.baseCurrency}
+            hasAccess={tier.features.includes("cash_flow_forecast")}
+          />
         </div>
 
         <div className="mb-8">

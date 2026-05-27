@@ -5,6 +5,8 @@ import toast from "react-hot-toast";
 import Link from "next/link";
 import { Trash2, Mail, UserX } from "lucide-react";
 
+import { currenciesWithSymbol } from "@/lib/format-currency";
+
 import { PageShell } from "@/app/components/layout/PageShell";
 import { Button } from "@/app/components/ui/Button";
 import { Input } from "@/app/components/ui/Input";
@@ -772,8 +774,8 @@ export default function SettingsClient({
               </FormField>
               <FormField label="Base Currency" hint="Your default currency for new invoices and reports">
                 <Select value={baseCurrency} onChange={(e) => setBaseCurrency(e.target.value)}>
-                  {["USD", "EUR", "GBP", "AUD", "CAD", "SGD", "ZAR", "INR", "NZD", "CHF", "JPY", "BRL", "MXN"].map((c) => (
-                    <option key={c} value={c}>{c}</option>
+                  {currenciesWithSymbol().map((c) => (
+                    <option key={c.code} value={c.code}>{c.label}</option>
                   ))}
                 </Select>
               </FormField>

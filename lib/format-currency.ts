@@ -1,5 +1,5 @@
 export const SUPPORTED_CURRENCIES = [
-  "USD", "EUR", "GBP", "AUD", "CAD", "SGD", "ZAR", "INR", "NZD", "CHF", "JPY", "BRL", "MXN",
+  "USD", "EUR", "GBP", "AUD", "CAD", "SGD", "ZAR", "INR", "NZD", "CHF", "JPY", "BRL", "MXN", "SRD",
 ] as const;
 
 export type Currency = (typeof SUPPORTED_CURRENCIES)[number];
@@ -18,6 +18,7 @@ const SYMBOLS: Record<string, string> = {
   JPY: "¥",
   BRL: "R$",
   MXN: "MX$",
+  SRD: "SR$",
 };
 
 export function currencySymbol(currency: string): string {

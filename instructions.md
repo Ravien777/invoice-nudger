@@ -3,7 +3,7 @@
 | Phase | Status |
 |---|---|
 | A — UX Redesign | ✅ Complete — no outstanding tasks |
-| B — Expense Tracking | ✅ Implemented — 6 known gaps below |
+| B — Expense Tracking | ✅ Implemented — 5 known gaps below |
 | C — Tax Estimation & P&L | ✅ Implemented — 6 known gaps below |
 | D — Quotes & Proposals | ✅ Implemented — 4 known gaps below |
 | F — Recurring Invoices | ✅ Implemented — 7 known gaps below |
@@ -55,11 +55,17 @@
 ---
 
 ## B.5 — Receipt upload
-**Goal:** Users can upload receipt images to expenses. Requires file storage (Supabase Storage or S3).
-**Files:** `app/api/expenses/upload-receipt/route.ts` (new), `app/(app)/expenses/ExpensesClient.tsx`
-**Change:** Create a multipart upload endpoint that stores the file and returns a URL. Add a file input to the expense form labeled "Attach receipt (optional)". Show a 📎 icon in the table when a receipt URL is present, linking to the file.
+**Goal:** Users can upload receipt images to expenses.
+**Files:** `app/api/upload/route.ts` (new), `lib/storage.ts` (new), `app/(app)/expenses/ExpensesClient.tsx`
+**Change:** A multipart upload endpoint at `/api/upload` that stores the file and returns a URL. The expense form has a file input labeled "Attach receipt (optional)". The table shows a paperclip icon when a receipt is attached; clicking opens the file.
+**Implemented:** Using `@vercel/blob` for development.
+**Before deploying to production:** Migrate to Supabase Storage or S3:
+  1. Replace `@vercel/blob` with `@supabase/supabase-js` (or AWS SDK).
+  2. Update `lib/storage.ts` — replace `uploadReceipt` and `deleteBlob` with Supabase/S3 equivalents.
+  3. Add required env vars (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, etc.).
+  4. Create a `receipts` bucket in Supabase Storage (public).
+  5. Remove `@vercel/blob` from `package.json` and `BLOB_READ_WRITE_TOKEN` from env.
 **Verify:** Upload a JPEG receipt; expense row shows 📎; clicking opens the file.
-**Depends on:** Supabase Storage bucket or S3 bucket configuration.
 
 ---
 

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/app/components/ui/Button";
 import toast from "react-hot-toast";
-import { formatCurrency, currencySymbol } from "@/lib/format-currency";
+import { formatCurrency, currencySymbol, currenciesWithSymbol } from "@/lib/format-currency";
 
 interface LineItem {
   id: string;
@@ -36,19 +36,6 @@ interface QuoteFormProps {
   mode: "create" | "edit";
   quoteId?: string;
 }
-
-const currencies = [
-  { code: "USD", symbol: "$" },
-  { code: "EUR", symbol: "€" },
-  { code: "GBP", symbol: "£" },
-  { code: "AUD", symbol: "A$" },
-  { code: "CAD", symbol: "C$" },
-  { code: "SGD", symbol: "S$" },
-  { code: "ZAR", symbol: "R" },
-  { code: "INR", symbol: "₹" },
-  { code: "JPY", symbol: "¥" },
-  { code: "CHF", symbol: "Fr" },
-];
 
 let itemCounter = 0;
 function newItem(): LineItem {
@@ -214,8 +201,8 @@ export default function QuoteForm({ initialData, mode, quoteId }: QuoteFormProps
                   onChange={(e) => setCurrency(e.target.value)}
                   className="w-full rounded-lg border border-border-default bg-surface-secondary px-3 py-2 text-sm text-text-primary"
                 >
-                  {currencies.map((c) => (
-                    <option key={c.code} value={c.code}>{c.code} ({c.symbol})</option>
+                  {currenciesWithSymbol().map((c) => (
+                    <option key={c.code} value={c.code}>{c.label}</option>
                   ))}
                 </select>
               </div>

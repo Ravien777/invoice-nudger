@@ -1,7 +1,6 @@
 "use client";
 
 import { signOut, useSession } from "next-auth/react";
-import ThemeToggle from "./ThemeToggle";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { NotificationBell } from "@/app/components/layout/NotificationBell";
@@ -29,7 +28,6 @@ export default function HeaderActions() {
   return (
     <div className="flex items-center gap-2">
       <NotificationBell />
-      <ThemeToggle />
       {pendingPromises > 0 && (
         <Link
           href="/promises"

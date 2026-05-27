@@ -29,11 +29,12 @@ model User {
   interestEnabled   Boolean          @default(false)
   interestRate      Float            @default(0)
   lateFeeGraceDays  Int              @default(0)
-   feeCap            Float            @default(0)
+  feeCap            Float            @default(0)
   taxRate           Float            @default(0.25)
   fiscalYearStart   Int              @default(1)
   taxSavingsAmount  Float            @default(0)
   baseCurrency      String           @default("USD")
+  lastPayYourselfDate DateTime?
   alertPreferences  Json?
   accounts         Account[]
   sessions         Session[]

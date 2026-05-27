@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Pencil, Trash2, Receipt, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Receipt, X, Paperclip, Upload, Loader2 } from "lucide-react";
 import { Button } from "@/app/components/ui/Button";
 import { Table, TableHead, TableBody, TableRow, TableCell } from "@/app/components/ui/Table";
 import { EmptyState } from "@/app/components/ui/EmptyState";
@@ -62,6 +62,8 @@ export default function ExpensesClient({
     taxDeductible: true,
     notes: "",
   });
+  const [receiptUrl, setReceiptUrl] = useState("");
+  const [receiptUploading, setReceiptUploading] = useState(false);
 
   const resetForm = () => {
     setForm({
@@ -74,6 +76,7 @@ export default function ExpensesClient({
       taxDeductible: true,
       notes: "",
     });
+    setReceiptUrl("");
     setEditingId(null);
     setShowForm(false);
   };
@@ -90,7 +93,7 @@ export default function ExpensesClient({
     e.preventDefault();
     setSubmitting(true);
 
-    const payload = {
+    const payload: Record<string, unknown> = {
       ...form,
       amount: parseFloat(form.amount),
       currency: form.currency,
@@ -98,6 +101,7 @@ export default function ExpensesClient({
       categoryId: form.categoryId || undefined,
       notes: form.notes || undefined,
     };
+    if (receiptUrl) payload.receiptUrl = receiptUrl;
 
     const url = editingId ? `/api/expenses/${editingId}` : "/api/expenses";
     const method = editingId ? "PUT" : "POST";
@@ -135,8 +139,39 @@ export default function ExpensesClient({
       taxDeductible: expense.taxDeductible,
       notes: expense.notes || "",
     });
+    setReceiptUrl(expense.receiptUrl || "");
     setEditingId(expense.id);
     setShowForm(true);
+  };
+
+  const handleReceiptFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setReceiptUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("receipt", file);
+
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      if (!res.ok) {
+        const err = await res.json();
+        toast.error(err.error || "Upload failed");
+        return;
+      }
+
+      const data = await res.json();
+      setReceiptUrl(data.url);
+      toast.success("Receipt uploaded");
+    } catch {
+      toast.error("Failed to upload receipt");
+    } finally {
+      setReceiptUploading(false);
+    }
+  };
+
+  const handleRemoveReceipt = () => {
+    setReceiptUrl("");
   };
 
   const handleDelete = async (id: string) => {
@@ -292,6 +327,58 @@ export default function ExpensesClient({
             </div>
           </div>
 
+          <div>
+            <label className="block text-xs text-text-secondary mb-1">Receipt (optional)</label>
+            {receiptUploading ? (
+              <div className="flex items-center gap-2 text-sm text-text-tertiary">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Uploading...
+              </div>
+            ) : receiptUrl ? (
+              <div className="flex items-center gap-3">
+                <a
+                  href={receiptUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-sm text-[var(--accent)] hover:underline"
+                >
+                  <Paperclip className="h-3.5 w-3.5" />
+                  View receipt
+                </a>
+                <label className="cursor-pointer text-xs text-text-secondary hover:text-text-primary">
+                  Replace
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,application/pdf"
+                    onChange={handleReceiptFile}
+                    className="hidden"
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={handleRemoveReceipt}
+                  className="text-xs text-[var(--danger)] hover:underline"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <label className="cursor-pointer inline-flex items-center gap-2 rounded-lg border border-border-default bg-surface-secondary px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:border-border-focus transition-colors">
+                  <Upload className="h-4 w-4" />
+                  Choose file
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,application/pdf"
+                    onChange={handleReceiptFile}
+                    className="hidden"
+                  />
+                </label>
+                <span className="text-xs text-text-tertiary">JPEG, PNG, WebP, or PDF (10 MB max)</span>
+              </div>
+            )}
+          </div>
+
           <div className="flex justify-end gap-2">
             <Button variant="ghost" size="sm" type="button" onClick={resetForm}>
               Cancel
@@ -320,6 +407,7 @@ export default function ExpensesClient({
                 <TableCell>Description</TableCell>
                 <TableCell>Vendor</TableCell>
                 <TableCell>Category</TableCell>
+                <TableCell className="text-center">Recpt</TableCell>
                 <TableCell>Amount</TableCell>
                 <TableCell>Tax Deductible</TableCell>
                 <TableCell className="text-right">Actions</TableCell>
@@ -344,6 +432,20 @@ export default function ExpensesClient({
                       </span>
                     ) : (
                       <span className="text-sm text-text-tertiary">Uncategorised</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {expense.receiptUrl ? (
+                      <a
+                        href={expense.receiptUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="View receipt"
+                      >
+                        <Paperclip className="h-3.5 w-3.5 inline-block text-text-tertiary hover:text-text-primary transition-colors" />
+                      </a>
+                    ) : (
+                      <span className="text-text-tertiary">-</span>
                     )}
                   </TableCell>
                   <TableCell className="font-medium text-text-primary">
