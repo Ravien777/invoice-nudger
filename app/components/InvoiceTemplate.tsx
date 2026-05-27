@@ -1,3 +1,5 @@
+import { formatCurrency } from "@/lib/format-currency";
+
 interface InvoiceLineItem {
   description: string;
   quantity: number;
@@ -40,14 +42,6 @@ interface BusinessProfileData {
 interface InvoiceTemplateProps {
   invoice: InvoiceData;
   businessProfile?: BusinessProfileData;
-}
-
-function formatCurrency(amount: number, currency: string = "USD"): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 2,
-  }).format(amount);
 }
 
 function formatDate(dateStr: string): string {

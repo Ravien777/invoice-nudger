@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { expenseSchema } from "@/lib/validations";
 import { startOfMonth, endOfMonth, parse } from "date-fns";
 import { seedDefaultExpenseCategories } from "@/lib/expense-categories";
+import { getOwnerIdForAccountant } from "@/lib/accountant-session";
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -19,7 +20,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  await seedDefaultExpenseCategories(user.id);
+  const accountantOwnerId = await getOwnerIdForAccountant(session.user.email);
+  const effectiveUserId = accountantOwnerId ?? user.id;
+
+  if (!accountantOwnerId) {
+    await seedDefaultExpenseCategories(user.id);
+  }
 
   const { searchParams } = new URL(req.url);
   const monthParam = searchParams.get("month");
@@ -37,7 +43,7 @@ export async function GET(req: NextRequest) {
   }
 
   const where: Record<string, unknown> = {
-    userId: user.id,
+    userId: effectiveUserId,
     date: dateFilter,
   };
   if (categoryId) where.categoryId = categoryId;
@@ -54,7 +60,7 @@ export async function GET(req: NextRequest) {
   ]);
 
   const categories = await prisma.expenseCategory.findMany({
-    where: { userId: user.id },
+    where: { userId: effectiveUserId },
     orderBy: { name: "asc" },
   });
 
@@ -72,6 +78,11 @@ export async function POST(req: NextRequest) {
   });
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+
+  const accountantOwnerId = await getOwnerIdForAccountant(session.user.email);
+  if (accountantOwnerId) {
+    return NextResponse.json({ error: "Accountant access is read-only." }, { status: 403 });
   }
 
   const body = await req.json();

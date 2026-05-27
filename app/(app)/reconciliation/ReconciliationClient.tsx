@@ -12,6 +12,7 @@ import {
   TableRow,
   TableCell,
 } from "@/app/components/ui/Table";
+import { formatCurrency } from "@/lib/format-currency";
 
 interface Payment {
   id: string;
@@ -48,12 +49,6 @@ interface ReconciliationClientProps {
 }
 
 type Tab = "discrepancies" | "recent";
-
-function formatCurrency(amount: number, currency: string): string {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(
-    amount,
-  );
-}
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("en-US", {

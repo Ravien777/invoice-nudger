@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getOwnerIdForAccountant } from "@/lib/accountant-session";
 
 function getTaxYearRange(user: { fiscalYearStart: number }, year: number) {
   const startMonth = user.fiscalYearStart - 1;
@@ -16,8 +17,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const accountantOwnerId = await getOwnerIdForAccountant(session.user.email);
+  const lookupEmail = accountantOwnerId
+    ? (await prisma.user.findUnique({ where: { id: accountantOwnerId }, select: { email: true } }))?.email
+    : session.user.email;
+
   const user = await prisma.user.findUnique({
-    where: { email: session.user.email },
+    where: { email: lookupEmail ?? session.user.email },
     select: { id: true, taxRate: true, fiscalYearStart: true },
   });
   if (!user) {
@@ -27,10 +33,12 @@ export async function GET(req: NextRequest) {
   const year = parseInt(req.nextUrl.searchParams.get("year") ?? String(new Date().getFullYear()), 10);
   const { start, end } = getTaxYearRange(user, year);
 
+  const effectiveUserId = accountantOwnerId ?? user.id;
+
   const [paidInvoices, expenses] = await Promise.all([
     prisma.invoice.findMany({
       where: {
-        userId: user.id,
+        userId: effectiveUserId,
         status: "paid",
         paidAt: { gte: start, lt: end },
       },
@@ -39,7 +47,7 @@ export async function GET(req: NextRequest) {
     }),
     prisma.expense.findMany({
       where: {
-        userId: user.id,
+        userId: effectiveUserId,
         date: { gte: start, lt: end },
       },
       select: { amount: true, date: true, taxDeductible: true, category: { select: { name: true } } },

@@ -22,6 +22,7 @@ import {
   TableRow,
   TableCell,
 } from "@/app/components/ui/Table";
+import { formatCurrency } from "@/lib/format-currency";
 
 interface ClientProfile {
   id: string;
@@ -65,12 +66,6 @@ function riskLevel(
   if (score <= 0.7)
     return { label: "Medium", badge: "bg-warning/10 text-warning" };
   return { label: "High", badge: "bg-danger/10 text-danger" };
-}
-
-function formatCurrency(amount: number, currency = "USD"): string {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(
-    amount,
-  );
 }
 
 function formatDate(dateStr: string | null): string {

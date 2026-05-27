@@ -44,6 +44,7 @@ export default async function EditInvoicePage({
       <InvoiceForm
         mode="edit"
         schedules={schedules}
+        baseCurrency={user.baseCurrency}
         initialData={{
           id: invoice.id,
           clientName: invoice.clientName,

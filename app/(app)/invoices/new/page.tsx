@@ -22,7 +22,7 @@ export default async function NewInvoicePage() {
       title="New Invoice"
       subtitle="Create a new invoice for your client"
     >
-      <InvoiceForm mode="create" schedules={schedules} />
+      <InvoiceForm mode="create" schedules={schedules} baseCurrency={user!.baseCurrency} />
     </PageShell>
   );
 }

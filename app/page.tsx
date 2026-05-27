@@ -17,7 +17,7 @@ export default async function Home() {
       <header className="border-b border-border bg-surface/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <span className="text-xl font-bold text-foreground">
-            Invoice Nudger
+            Maroni
           </span>
           <div className="flex items-center gap-4">
             <Link
@@ -40,10 +40,10 @@ export default async function Home() {
         <section className="border-b border-border bg-linear-to-b from-surface-muted via-surface to-surface-muted px-6 py-20 sm:py-28">
           <div className="mx-auto max-w-4xl text-center">
             <p className="mb-4 text-sm font-semibold uppercase tracking-[0.25em] text-accent">
-              Invoice Nudger
+              Maroni
             </p>
             <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl ">
-              Never chase a late payment again
+              From invoices to payout, steady
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted ">
               Automate polite, escalating email reminders for your unpaid
@@ -294,7 +294,7 @@ export default async function Home() {
       <footer className="border-t border-border bg-surface px-6 py-8  ">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 sm:flex-row">
           <p className="text-sm text-muted ">
-            &copy; {new Date().getFullYear()} Invoice Nudger. All rights
+            &copy; {new Date().getFullYear()} Maroni. All rights
             reserved.
           </p>
           <div className="flex items-center gap-6">

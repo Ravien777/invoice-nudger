@@ -18,6 +18,7 @@ import { StatCard } from "@/app/components/ui/StatCard";
 import { Badge, type BadgeVariant } from "@/app/components/ui/Badge";
 import { Table, TableHead, TableBody, TableRow, TableCell } from "@/app/components/ui/Table";
 import { EmptyState } from "@/app/components/ui/EmptyState";
+import { formatCurrency } from "@/lib/format-currency";
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
@@ -35,7 +36,7 @@ export default async function DashboardPage() {
   const lastMonthStart = startOfMonth(subMonths(new Date(), 1));
   const lastMonthEnd = endOfMonth(subMonths(new Date(), 1));
 
-  const [unpaidCount, overdueCount, paidThisMonth, totalInvoices, monthlyInvoiceCount, reconciledCount, discrepancyCount, totalOutstanding, recentInvoices, paidLastMonth, expenseAgg] =
+  const [unpaidCount, overdueCount, paidThisMonth, totalInvoices, monthlyInvoiceCount, reconciledCount, discrepancyCount, outstandingByCurrency, recentInvoices, paidLastMonth, expenseAgg] =
     await Promise.all([
       prisma.invoice.count({
         where: { userId: user!.id, status: "unpaid" },
@@ -65,15 +66,16 @@ export default async function DashboardPage() {
       prisma.invoice.count({
         where: { userId: user!.id, reconciliationStatus: "discrepancy" },
       }),
-      prisma.invoice.aggregate({
+      prisma.invoice.groupBy({
+        by: ["currency"],
         where: { userId: user!.id, status: { in: ["unpaid", "overdue"] } },
         _sum: { amount: true },
-      }).then(r => r._sum.amount ?? 0),
+      }),
       prisma.invoice.findMany({
         where: { userId: user!.id },
         orderBy: { createdAt: "desc" },
         take: 5,
-        select: { id: true, invoiceNumber: true, clientName: true, amount: true, status: true, dueDate: true },
+        select: { id: true, invoiceNumber: true, clientName: true, amount: true, currency: true, status: true, dueDate: true },
       }),
       prisma.invoice.count({
         where: {
@@ -173,10 +175,13 @@ export default async function DashboardPage() {
         }
       : undefined;
 
-  const outstandingFormatted = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(Number(totalOutstanding));
+  const outstandingLines = outstandingByCurrency.length > 0
+    ? outstandingByCurrency.map((g) => formatCurrency(g._sum.amount ?? 0, g.currency))
+    : [];
+  const hasMultiCurrency = outstandingByCurrency.length > 1;
+  const outstandingFormatted = hasMultiCurrency
+    ? outstandingLines.join(" | ")
+    : outstandingLines[0] || "$0";
 
   if (totalInvoices === 0) {
     return (
@@ -221,6 +226,11 @@ export default async function DashboardPage() {
           <p className="text-5xl font-bold text-text-primary tracking-tight">
             {outstandingFormatted}
           </p>
+          {hasMultiCurrency && (
+            <p className="text-xs text-text-tertiary mt-1">
+              Amounts shown as invoiced (no conversion applied).
+            </p>
+          )}
         </div>
 
         {/* StatCards */}
@@ -249,7 +259,7 @@ export default async function DashboardPage() {
           {expenseAgg._count > 0 && (
             <StatCard
               label="Expenses This Month"
-              value={`$${expenseAgg._sum.amount?.toFixed(0) ?? "0"}`}
+              value={formatCurrency(expenseAgg._sum.amount ?? 0, user!.baseCurrency)}
               variant="default"
               href="/expenses"
             >
@@ -373,7 +383,7 @@ export default async function DashboardPage() {
                       {inv.invoiceNumber || inv.id.slice(0, 8)}
                     </TableCell>
                     <TableCell>{inv.clientName}</TableCell>
-                    <TableCell>${inv.amount.toFixed(2)}</TableCell>
+                    <TableCell>{formatCurrency(inv.amount, inv.currency)}</TableCell>
                     <TableCell>
                       <Badge variant={inv.status as BadgeVariant}>{inv.status}</Badge>
                     </TableCell>

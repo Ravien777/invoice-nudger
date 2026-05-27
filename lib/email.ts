@@ -68,7 +68,7 @@ export async function sendReminderEmail(
 
   try {
     const { error } = await resend.emails.send({
-      from: process.env.EMAIL_FROM ?? "onboarding@resend.dev",
+      from: process.env.EMAIL_FROM ?? "maroni@getmaroni.com",
       to: invoice.clientEmail,
       subject,
       html,

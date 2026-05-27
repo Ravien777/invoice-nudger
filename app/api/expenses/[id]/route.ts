@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { expenseSchema } from "@/lib/validations";
+import { getOwnerIdForAccountant } from "@/lib/accountant-session";
 
 export async function GET(
   req: NextRequest,
@@ -26,7 +27,13 @@ export async function GET(
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
   });
-  if (!user || expense.userId !== user.id) {
+  if (!user) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  const accountantOwnerId = await getOwnerIdForAccountant(session.user.email);
+  const effectiveUserId = accountantOwnerId ?? user.id;
+  if (expense.userId !== effectiveUserId) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
@@ -48,6 +55,11 @@ export async function PUT(
   });
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+
+  const accountantOwnerId = await getOwnerIdForAccountant(session.user.email);
+  if (accountantOwnerId) {
+    return NextResponse.json({ error: "Accountant access is read-only." }, { status: 403 });
   }
 
   const expense = await prisma.expense.findFirst({
@@ -96,6 +108,11 @@ export async function DELETE(
   });
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+
+  const accountantOwnerId = await getOwnerIdForAccountant(session.user.email);
+  if (accountantOwnerId) {
+    return NextResponse.json({ error: "Accountant access is read-only." }, { status: 403 });
   }
 
   const expense = await prisma.expense.findFirst({

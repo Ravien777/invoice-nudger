@@ -29,6 +29,53 @@ export async function seedDefaultSchedule(userId: string) {
   });
 }
 
+interface SampleInvoiceInput {
+  clientName: string;
+  clientEmail: string;
+  amount: number;
+  projectName: string;
+  status: "unpaid" | "paid" | "overdue";
+  dueDate: Date;
+  paidAt?: Date;
+}
+
+const SAMPLE_INVOICES: SampleInvoiceInput[] = [
+  { clientName: "Acme Corp", clientEmail: "billing@acme.com", amount: 2500, projectName: "Web development project", status: "paid", dueDate: new Date("2026-05-01"), paidAt: new Date("2026-05-03") },
+  { clientName: "Smith Design", clientEmail: "hello@smithdesign.com", amount: 850, projectName: "Brand identity package", status: "paid", dueDate: new Date("2026-04-20"), paidAt: new Date("2026-04-25") },
+  { clientName: "Greenfield LLC", clientEmail: "accounts@greenfield.io", amount: 4200, projectName: "Q3 consulting retainer", status: "overdue", dueDate: new Date("2026-05-01") },
+  { clientName: "Pixel Studio", clientEmail: "info@pixelstudio.co", amount: 1200, projectName: "Mobile app UI design", status: "unpaid", dueDate: new Date("2026-07-10") },
+  { clientName: "Coastal Marketing", clientEmail: "jane@coastalmarketing.com", amount: 1800, projectName: "SEO audit + recommendations", status: "paid", dueDate: new Date("2026-05-15"), paidAt: new Date("2026-05-14") },
+  { clientName: "Beacon Agency", clientEmail: "billing@beaconagency.com", amount: 3400, projectName: "Social media campaign", status: "unpaid", dueDate: new Date("2026-07-20") },
+  { clientName: "Riverbend Consulting", clientEmail: "hello@riverbend.co", amount: 950, projectName: "Business strategy session", status: "paid", dueDate: new Date("2026-05-10"), paidAt: new Date("2026-05-08") },
+  { clientName: "Northwind Traders", clientEmail: "accounts@northwind.com", amount: 6800, projectName: "Supply chain audit", status: "overdue", dueDate: new Date("2026-04-01") },
+  { clientName: "Sterling & Co.", clientEmail: "info@sterlingco.com", amount: 2100, projectName: "Annual brand refresh", status: "unpaid", dueDate: new Date("2026-06-30") },
+  { clientName: "Horizon Ventures", clientEmail: "jane@horizon.ventures", amount: 5500, projectName: "Market research report", status: "paid", dueDate: new Date("2026-05-20"), paidAt: new Date("2026-05-22") },
+  { clientName: "Maple Leaf Services", clientEmail: "contact@mapleleaf.io", amount: 1600, projectName: "IT infrastructure assessment", status: "unpaid", dueDate: new Date("2026-07-25") },
+  { clientName: "Blue Ridge Partners", clientEmail: "team@blueridgepartners.com", amount: 3900, projectName: "Q4 advisory retainer", status: "overdue", dueDate: new Date("2026-05-25") },
+  { clientName: "Crestview Media", clientEmail: "hello@crestview.media", amount: 750, projectName: "Content strategy workshop", status: "unpaid", dueDate: new Date("2026-08-01") },
+  { clientName: "Pacific Northwest Ltd", clientEmail: "billing@pacificnw.com", amount: 4800, projectName: "Product launch campaign", status: "unpaid", dueDate: new Date("2026-09-15") },
+  { clientName: "Apex Digital", clientEmail: "info@apexdigital.com", amount: 2950, projectName: "Website redesign", status: "unpaid", dueDate: new Date("2026-06-10") },
+];
+
+export async function seedSampleInvoices(userId: string) {
+  const count = await prisma.invoice.count({ where: { userId } });
+  if (count > 0) return;
+
+  await prisma.invoice.createMany({
+    data: SAMPLE_INVOICES.map((inv) => ({
+      userId,
+      clientName: inv.clientName,
+      clientEmail: inv.clientEmail,
+      amount: inv.amount,
+      projectName: inv.projectName,
+      status: inv.status,
+      dueDate: inv.dueDate,
+      paidAt: inv.paidAt ?? null,
+      currency: "USD",
+    })),
+  });
+}
+
 export async function seedHistoricalAnalytics() {
   const users = await prisma.user.findMany({ select: { id: true } });
 

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
-import { Trash2 } from "lucide-react";
+import { Trash2, Mail, UserX } from "lucide-react";
 
 import { PageShell } from "@/app/components/layout/PageShell";
 import { Button } from "@/app/components/ui/Button";
@@ -100,6 +100,15 @@ interface IndustrySettings {
   benchmarksOptOut: boolean;
 }
 
+interface AccountantAccessItem {
+  id: string;
+  accountantEmail: string;
+  status: string;
+  invitedAt: string;
+  acceptedAt: string | null;
+  revokedAt: string | null;
+}
+
 interface UserProfile {
   name: string | null;
   email: string;
@@ -107,6 +116,7 @@ interface UserProfile {
   taxRate: number;
   fiscalYearStart: number;
   taxSavingsAmount: number;
+  baseCurrency: string;
 }
 
 interface SettingsClientProps {
@@ -120,6 +130,7 @@ interface SettingsClientProps {
   lateFeeSettings: LateFeeSettings;
   industrySettings: IndustrySettings;
   userProfile: UserProfile;
+  accountantAccess: AccountantAccessItem[];
 }
 
 // ---------------------------------------------------------------------------
@@ -137,7 +148,7 @@ const platformConfig: Record<string, { label: string; color: string; icon: strin
   quickbooks: { label: "QuickBooks", color: "#2CA01C", icon: "QB" },
 };
 
-type Tab = "profile" | "business" | "notifications" | "billing" | "danger";
+type Tab = "profile" | "business" | "notifications" | "accountant" | "billing" | "danger";
 
 // ---------------------------------------------------------------------------
 // Sub-components
@@ -189,6 +200,7 @@ export default function SettingsClient({
   lateFeeSettings,
   industrySettings,
   userProfile,
+  accountantAccess: initialAccountantAccess,
 }: SettingsClientProps) {
   const [activeTab, setActiveTab] = useState<Tab>("profile");
 
@@ -204,6 +216,7 @@ export default function SettingsClient({
   const [taxRate, setTaxRate] = useState(Math.round(userProfile.taxRate * 100));
   const [fiscalYearStart, setFiscalYearStart] = useState(userProfile.fiscalYearStart);
   const [taxSavingsAmount, setTaxSavingsAmount] = useState(userProfile.taxSavingsAmount);
+  const [baseCurrency, setBaseCurrency] = useState(userProfile.baseCurrency);
   const [savingTax, setSavingTax] = useState(false);
 
   // Notifications tab
@@ -228,6 +241,11 @@ export default function SettingsClient({
   const [graceDays, setGraceDays] = useState(lateFeeSettings.graceDays);
   const [feeCap, setFeeCap] = useState(lateFeeSettings.feeCap);
   const [savingLateFees, setSavingLateFees] = useState(false);
+
+  // Accountant Access tab
+  const [accountantAccess, setAccountantAccess] = useState(initialAccountantAccess);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [sendingInvite, setSendingInvite] = useState(false);
 
   // Danger Zone
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -323,7 +341,7 @@ export default function SettingsClient({
       const res = await fetch("/api/settings/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ taxRate, fiscalYearStart, taxSavingsAmount }),
+        body: JSON.stringify({ taxRate, fiscalYearStart, taxSavingsAmount, baseCurrency }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -529,6 +547,66 @@ export default function SettingsClient({
   }
 
   // -----------------------------------------------------------------------
+  // Accountant Access handlers
+  // -----------------------------------------------------------------------
+
+  async function handleInviteAccountant() {
+    if (!inviteEmail.trim() || !inviteEmail.includes("@")) {
+      toast.error("Enter a valid email address");
+      return;
+    }
+    setSendingInvite(true);
+    try {
+      const res = await fetch("/api/accountant/invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: inviteEmail.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Failed to send invite");
+        return;
+      }
+      toast.success("Invitation sent");
+      setInviteEmail("");
+      setAccountantAccess((prev) => [
+        {
+          id: `local-${Date.now()}`,
+          accountantEmail: inviteEmail.trim(),
+          status: "pending",
+          invitedAt: new Date().toISOString(),
+          acceptedAt: null,
+          revokedAt: null,
+        },
+        ...prev,
+      ]);
+    } catch {
+      toast.error("Network error");
+    } finally {
+      setSendingInvite(false);
+    }
+  }
+
+  async function handleRevokeAccountant(id: string) {
+    if (!confirm("Revoke this accountant's access?")) return;
+    try {
+      const res = await fetch(`/api/accountant/revoke?id=${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        toast.error("Failed to revoke access");
+        return;
+      }
+      toast.success("Access revoked");
+      setAccountantAccess((prev) =>
+        prev.map((a) => (a.id === id ? { ...a, status: "revoked", revokedAt: new Date().toISOString() } : a)),
+      );
+    } catch {
+      toast.error("Network error");
+    }
+  }
+
+  // -----------------------------------------------------------------------
   // Render
   // -----------------------------------------------------------------------
 
@@ -538,6 +616,7 @@ export default function SettingsClient({
         <TabBtn onClick={() => setActiveTab("profile")} active={activeTab === "profile"}>Profile</TabBtn>
         <TabBtn onClick={() => setActiveTab("business")} active={activeTab === "business"}>Business</TabBtn>
         <TabBtn onClick={() => setActiveTab("notifications")} active={activeTab === "notifications"}>Notifications</TabBtn>
+        <TabBtn onClick={() => setActiveTab("accountant")} active={activeTab === "accountant"}>Accountant</TabBtn>
         <TabBtn onClick={() => setActiveTab("billing")} active={activeTab === "billing"}>Billing</TabBtn>
         <TabBtn onClick={() => setActiveTab("danger")} active={activeTab === "danger"}>Danger Zone</TabBtn>
       </div>
@@ -688,6 +767,13 @@ export default function SettingsClient({
                     { n: 10, l: "October" }, { n: 11, l: "November" }, { n: 12, l: "December" },
                   ].map((m) => (
                     <option key={m.n} value={m.n}>{m.l}</option>
+                  ))}
+                </Select>
+              </FormField>
+              <FormField label="Base Currency" hint="Your default currency for new invoices and reports">
+                <Select value={baseCurrency} onChange={(e) => setBaseCurrency(e.target.value)}>
+                  {["USD", "EUR", "GBP", "AUD", "CAD", "SGD", "ZAR", "INR", "NZD", "CHF", "JPY", "BRL", "MXN"].map((c) => (
+                    <option key={c} value={c}>{c}</option>
                   ))}
                 </Select>
               </FormField>
@@ -1200,6 +1286,91 @@ TWILIO_PHONE_NUMBER=+12025551234
 TWILIO_WHATSAPP_NUMBER=+14155238886`}
               </pre>
             </details>
+          </div>
+        </div>
+      )}
+
+      {/* ================================================================= */}
+      {/* ACCOUNTANT ACCESS TAB */}
+      {/* ================================================================= */}
+      {activeTab === "accountant" && (
+        <div className="space-y-6">
+          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+            <h2 className="mb-4 text-lg font-semibold text-foreground">Accountant Access</h2>
+            <p className="text-sm text-muted mb-6">
+              Invite your accountant or bookkeeper to view your account in read-only mode.
+            </p>
+
+            {/* Invite form */}
+            <div className="mb-6 max-w-md">
+              <label className="block text-sm font-medium text-muted mb-2">Accountant email</label>
+              <div className="flex gap-2">
+                <Input
+                  type="email"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  placeholder="accountant@example.com"
+                  className="flex-1"
+                />
+                <Button onClick={handleInviteAccountant} loading={sendingInvite} size="sm">
+                  Send Invite
+                </Button>
+              </div>
+            </div>
+
+            {/* Access list */}
+            {accountantAccess.length === 0 ? (
+              <div className="rounded-lg bg-surface-muted p-6 text-center">
+                <Mail className="mx-auto h-8 w-8 text-muted mb-3" />
+                <p className="text-sm text-muted">No accountants invited yet.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {accountantAccess.map((access) => (
+                  <div
+                    key={access.id}
+                    className="flex items-center justify-between rounded-lg border border-border bg-surface-muted p-4"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-8 w-8 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
+                        <Mail className="h-4 w-4 text-accent" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{access.accountantEmail}</p>
+                        <p className="text-xs text-muted">
+                          {access.status === "active" && "Active"}
+                          {access.status === "pending" && "Invitation sent"}
+                          {access.status === "revoked" && `Revoked${access.revokedAt ? ` on ${new Date(access.revokedAt).toLocaleDateString()}` : ""}`}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span
+                        className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
+                          access.status === "active"
+                            ? "bg-[var(--success-muted)] text-[var(--success)]"
+                            : access.status === "pending"
+                            ? "bg-[var(--warning-muted)] text-[var(--warning)]"
+                            : "bg-surface-muted text-muted"
+                        }`}
+                      >
+                        {access.status}
+                      </span>
+                      {access.status !== "revoked" && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="p-1.5"
+                          onClick={() => handleRevokeAccountant(access.id)}
+                          icon={UserX}
+                          title="Revoke access"
+                        />
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

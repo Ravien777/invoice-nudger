@@ -72,6 +72,14 @@ export async function PUT(request: Request) {
     data.taxSavingsAmount = amount;
   }
 
+  if (body.baseCurrency !== undefined) {
+    const currency = String(body.baseCurrency).toUpperCase();
+    if (currency.length !== 3) {
+      return NextResponse.json({ error: "baseCurrency must be a 3-letter ISO code" }, { status: 400 });
+    }
+    data.baseCurrency = currency;
+  }
+
   await prisma.user.update({
     where: { id: user.id },
     data,

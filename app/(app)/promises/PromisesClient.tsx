@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { Button } from "@/app/components/ui/Button";
 import { Input } from "@/app/components/ui/Input";
 import { EmptyState } from "@/app/components/ui/EmptyState";
+import { formatCurrency } from "@/lib/format-currency";
 
 interface Invoice {
   id: string;
@@ -128,11 +129,6 @@ export default function PromisesClient({
       month: "short",
       day: "numeric",
     });
-
-  const formatCurrency = (amount: number, currency: string) =>
-    new Intl.NumberFormat("en-US", { style: "currency", currency }).format(
-      amount,
-    );
 
   const filters: FilterStatus[] = [
     "all",

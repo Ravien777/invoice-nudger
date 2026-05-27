@@ -1,15 +1,12 @@
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import { formatCurrency } from "@/lib/format-currency";
 
 export const metadata: Metadata = {
-  title: "Payment Status | Invoice Nudger",
+  title: "Payment Status | Maroni",
   description: "Check your payment status for this invoice.",
 };
-
-function formatCurrency(amount: number, currency: string): string {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount);
-}
 
 function formatDate(dateStr: Date): string {
   return dateStr.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });

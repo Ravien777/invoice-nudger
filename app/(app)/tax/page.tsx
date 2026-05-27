@@ -17,7 +17,7 @@ export default async function TaxPage() {
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
-    select: { id: true, plan: true, taxRate: true, fiscalYearStart: true, taxSavingsAmount: true },
+    select: { id: true, plan: true, taxRate: true, fiscalYearStart: true, taxSavingsAmount: true, baseCurrency: true },
   });
   if (!user) redirect("/");
 
@@ -34,6 +34,7 @@ export default async function TaxPage() {
         fiscalYearStart={user.fiscalYearStart}
         plan={user.plan}
         initialTaxSavings={user.taxSavingsAmount}
+        baseCurrency={user.baseCurrency}
       />
     </PageShell>
   );

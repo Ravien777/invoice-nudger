@@ -139,7 +139,7 @@ export async function GET() {
 </head>
 <body>
   <h1>Collection Efficiency Report</h1>
-  <p class="subtitle">Invoice Nudger — ${user.email}</p>
+  <p class="subtitle">Maroni — ${user.email}</p>
   <p class="report-date">Generated ${reportDate}</p>
 
   ${hasData ? `
@@ -219,7 +219,7 @@ export async function GET() {
   `}
 
   <div class="footer">
-    <p>Invoice Nudger — Collection Efficiency Report</p>
+    <p>Maroni — Collection Efficiency Report</p>
     <p>Based on historical reminder and payment data. Only includes invoices where reminders were sent.</p>
   </div>
 </body>

@@ -1,4 +1,4 @@
-# Invoice Nudger
+# Maroni
 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-0.1.0-brightgreen)]()
@@ -7,17 +7,17 @@
 [![Prisma](https://img.shields.io/badge/Prisma-4-2D3748?logo=prisma)]()
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql)]()
 
-> Never chase a late payment again.
+> From invoices to payout, steady.
 
-Invoice Nudger is an all-in-one finance platform for freelancers, indie hackers, and small businesses. It automatically sends escalating payment reminders when invoices are unpaid, and now covers your entire financial workflow — from quotes and time tracking to expense management, tax estimation, and accounting.
+Maroni is an all-in-one finance platform for freelancers, indie hackers, and small businesses. It automatically sends escalating payment reminders when invoices are unpaid, and now covers your entire financial workflow — from quotes and time tracking to expense management, tax estimation, and accounting.
 
 ---
 
-## Why Invoice Nudger?
+## Why Maroni?
 
-Most finance tools were built for accountants. Invoice Nudger was built for **you** — the solo founder, freelancer, or micro-agency that just wants to get paid without the overhead.
+Most finance tools were built for accountants. Maroni was built for **you** — the solo founder, freelancer, or micro-agency that just wants to get paid without the overhead.
 
-| You need to... | Wave | FreshBooks | HoneyBook | QuickBooks | **Invoice Nudger** |
+| You need to... | Wave | FreshBooks | HoneyBook | QuickBooks | **Maroni** |
 |---|---|---|---|---|---|
 | Send a quick invoice | ✅ | ✅ | ✅ | ✅ | ✅ **(simpler)** |
 | Auto-remind late payers | ❌ | ✅ | ❌ | ❌ | ✅ **(built-in)** |
@@ -30,7 +30,7 @@ Most finance tools were built for accountants. Invoice Nudger was built for **yo
 | Pay per month | ~$20+ | ~$17+ | ~$39+ | ~$30+ | **Free tier, Pro $12, Agency $29** |
 | Set up in 5 minutes | ❌ | ❌ | ❌ | ❌ | **✅ (magic link, no CC)** |
 
-**The short version:** Wave is free but has no reminders or portal. HoneyBook is built for event pros and costs more. FreshBooks and QuickBooks are powerful but expensive and complex. Invoice Nudger is **simple, affordable, and does the chasing for you**.
+**The short version:** Wave is free but has no reminders or portal. HoneyBook is built for event pros and costs more. FreshBooks and QuickBooks are powerful but expensive and complex. Maroni is **simple, affordable, and does the chasing for you**.
 
 ---
 
@@ -139,7 +139,7 @@ Make small-business finance so simple that a 15-year-old starting their first la
 
 ## UI Component Library
 
-Invoice Nudger ships with a dark-themed component library inspired by Linear/Notion/Vercel design patterns. All components live in `app/components/ui/` and use CSS custom properties defined in `app/design-tokens.css`.
+Maroni ships with a dark-themed component library inspired by Linear/Notion/Vercel design patterns. All components live in `app/components/ui/` and use CSS custom properties defined in `app/design-tokens.css`.
 
 | Component | Variants | Props |
 |-----------|----------|-------|
@@ -211,7 +211,7 @@ Click "New Invoice" on the dashboard. Enter the client name, email, amount, and 
 
 ### 3. Let the robot do the chasing
 
-Every morning at 8am UTC, Invoice Nudger checks which invoices are unpaid and sends the right reminder. You don't have to think about it.
+Every morning at 8am UTC, Maroni checks which invoices are unpaid and sends the right reminder. You don't have to think about it.
 
 ---
 

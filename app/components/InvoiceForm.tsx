@@ -8,6 +8,7 @@ import { Input } from "@/app/components/ui/Input";
 import { Select } from "@/app/components/ui/Select";
 import { Button } from "@/app/components/ui/Button";
 import { InvoiceTemplate } from "@/app/components/InvoiceTemplate";
+import { formatCurrency, SUPPORTED_CURRENCIES, currenciesWithSymbol } from "@/lib/format-currency";
 import { Plus, Trash2, FileText } from "lucide-react";
 
 interface LineItem {
@@ -42,6 +43,7 @@ interface InvoiceFormProps {
   };
   mode: "create" | "edit";
   schedules: Schedule[];
+  baseCurrency?: string;
 }
 
 function formatDateForInput(date: Date | string): string {
@@ -52,18 +54,11 @@ function formatDateForInput(date: Date | string): string {
   return `${year}-${month}-${day}`;
 }
 
-function formatCurrency(amount: number, currency: string = "USD"): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 2,
-  }).format(amount);
-}
-
 export default function InvoiceForm({
   initialData,
   mode,
   schedules,
+  baseCurrency = "USD",
 }: InvoiceFormProps) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
@@ -75,7 +70,7 @@ export default function InvoiceForm({
     clientPhone: initialData?.clientPhone ?? "",
     projectName: initialData?.projectName ?? "",
     amount: initialData?.amount ?? 0,
-    currency: initialData?.currency ?? "USD",
+    currency: initialData?.currency ?? baseCurrency,
     dueDate: initialData?.dueDate
       ? formatDateForInput(initialData.dueDate)
       : "",
@@ -374,9 +369,9 @@ export default function InvoiceForm({
                 value={formData.currency}
                 onChange={handleChange}
               >
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
-                <option value="GBP">GBP</option>
+                {currenciesWithSymbol().map((c) => (
+                  <option key={c.code} value={c.code}>{c.label}</option>
+                ))}
               </Select>
             </div>
             <div>

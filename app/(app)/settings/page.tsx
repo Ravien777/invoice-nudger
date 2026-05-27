@@ -47,6 +47,11 @@ export default async function SettingsPage() {
     }),
   };
 
+  const accountantAccess = await prisma.accountantAccess.findMany({
+    where: { ownerId: user!.id },
+    orderBy: { invitedAt: "desc" },
+  });
+
   const parsedAlertPrefs = user!.alertPreferences
     ? JSON.parse(JSON.stringify(user!.alertPreferences))
     : {};
@@ -55,6 +60,14 @@ export default async function SettingsPage() {
     <SettingsClient
       schedule={schedule}
       integrations={integrations}
+      accountantAccess={accountantAccess.map((a) => ({
+        id: a.id,
+        accountantEmail: a.accountantEmail,
+        status: a.status,
+        invitedAt: a.invitedAt.toISOString(),
+        acceptedAt: a.acceptedAt?.toISOString() ?? null,
+        revokedAt: a.revokedAt?.toISOString() ?? null,
+      }))}
       billing={{
         plan: user!.plan,
         subscriptionStatus: user!.subscriptionStatus,
@@ -110,6 +123,7 @@ export default async function SettingsPage() {
         taxRate: user!.taxRate,
         fiscalYearStart: user!.fiscalYearStart,
         taxSavingsAmount: user!.taxSavingsAmount,
+        baseCurrency: user!.baseCurrency,
       }}
     />
   );

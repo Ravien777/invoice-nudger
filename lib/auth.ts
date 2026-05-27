@@ -38,10 +38,10 @@ async function sendVerificationRequest({
     const { data, error } = await resend.emails.send({
       from: provider.from,
       to: email,
-      subject: "Invoice Nudger sign in",
+      subject: "Maroni sign in",
       html: `
         <div style="font-family: system-ui, sans-serif; line-height: 1.6; color: #111; padding: 24px;">
-          <h1 style="font-size: 20px; margin-bottom: 16px;">Sign in to Invoice Nudger</h1>
+          <h1 style="font-size: 20px; margin-bottom: 16px;">Sign in to Maroni</h1>
           <p style="margin-bottom: 24px;">Use the magic link below to sign in to your account.</p>
           <a href="${url}" style="display: inline-block; padding: 12px 20px; background: #2563eb; color: white; border-radius: 8px; text-decoration: none;">Sign in</a>
           <p style="margin-top: 24px; color: #666;">If you did not request this email, you can ignore it.</p>

@@ -16,9 +16,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Invoice Nudger",
+  title: "Maroni",
   description:
-    "Automated invoice reminders for freelancers and small businesses.",
+    "From invoices to payout, steady.",
 };
 
 export default function RootLayout({
@@ -42,7 +42,7 @@ export default function RootLayout({
             __html: `
               (function() {
                 try {
-                  var stored = localStorage.getItem('invoice-nudger-theme');
+                  var stored = localStorage.getItem('maroni-theme') || localStorage.getItem('invoice-nudger-theme');
                   if (stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
                     document.documentElement.classList.add('dark');
                   }

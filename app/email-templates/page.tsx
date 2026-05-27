@@ -4,21 +4,21 @@ import { getAllTemplatePreviews, generateTemplatePdfHtml } from "@/lib/email-tem
 import { TemplateCard } from "./components/TemplateCard";
 import { DownloadAllButton } from "./components/DownloadAllButton";
 
-const siteUrl = process.env.NEXTAUTH_URL || "https://invoice-nudger.com";
+const siteUrl = process.env.NEXTAUTH_URL || "https://getmaroni.com";
 
 export const metadata: Metadata = {
-  title: "Free Invoice Reminder Email Templates | Invoice Nudger",
-  description: "5 professional, escalating email templates for chasing late payments. Copy, customize, and use them free — or automate them with Invoice Nudger.",
+  title: "Free Invoice Reminder Email Templates | Maroni",
+  description: "5 professional, escalating email templates for chasing late payments. Copy, customize, and use them free — or automate them with Maroni.",
   openGraph: {
-    title: "Free Invoice Reminder Email Templates | Invoice Nudger",
+    title: "Free Invoice Reminder Email Templates | Maroni",
     description: "5 professional, escalating email templates for chasing late payments. Copy, customize, and use them free.",
     url: `${siteUrl}/email-templates`,
     type: "website",
-    siteName: "Invoice Nudger",
+    siteName: "Maroni",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Free Invoice Reminder Email Templates | Invoice Nudger",
+    title: "Free Invoice Reminder Email Templates | Maroni",
     description: "5 professional, escalating email templates for chasing late payments.",
   },
 };
@@ -35,7 +35,7 @@ export default function EmailTemplatesPage() {
     url: `${siteUrl}/email-templates`,
     publisher: {
       "@type": "Organization",
-      name: "Invoice Nudger",
+      name: "Maroni",
       url: siteUrl,
     },
   };
@@ -50,7 +50,7 @@ export default function EmailTemplatesPage() {
       <header className="border-b border-border bg-surface/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link href="/" className="text-xl font-bold text-foreground">
-            Invoice Nudger
+            Maroni
           </Link>
           <div className="flex items-center gap-4">
             <Link
@@ -108,7 +108,7 @@ export default function EmailTemplatesPage() {
               Stop copying and pasting
             </h2>
             <p className="mt-4 text-lg text-muted">
-              Invoice Nudger sends these escalating reminders automatically — on
+              Maroni sends these escalating reminders automatically — on
               schedule, every time. Just add your invoices and we handle the rest.
             </p>
             <div className="mt-8">
@@ -126,7 +126,7 @@ export default function EmailTemplatesPage() {
       <footer className="border-t border-border bg-surface px-6 py-8">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 sm:flex-row">
           <p className="text-sm text-muted">
-            &copy; {new Date().getFullYear()} Invoice Nudger. All rights reserved.
+            &copy; {new Date().getFullYear()} Maroni. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
             <Link

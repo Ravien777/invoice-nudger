@@ -6,6 +6,7 @@ import { ArrowRight, Ban, FileText, Pencil } from "lucide-react";
 import { Button } from "@/app/components/ui/Button";
 import { Badge } from "@/app/components/ui/Badge";
 import toast from "react-hot-toast";
+import { formatCurrency } from "@/lib/format-currency";
 
 interface QuoteLineItem {
   description: string;
@@ -37,14 +38,8 @@ interface QuoteData {
   lineItems: QuoteLineItem[];
 }
 
-const currencySymbols: Record<string, string> = {
-  USD: "$", EUR: "€", GBP: "£", AUD: "A$", CAD: "C$",
-  SGD: "S$", ZAR: "R", INR: "₹", JPY: "¥", CHF: "Fr",
-};
-
 export default function QuoteDetailClient({ quote }: { quote: QuoteData }) {
   const router = useRouter();
-  const sym = currencySymbols[quote.currency] || quote.currency;
 
   const handleConvert = async () => {
     const res = await fetch(`/api/quotes/${quote.id}/convert`, { method: "POST" });
@@ -162,8 +157,8 @@ export default function QuoteDetailClient({ quote }: { quote: QuoteData }) {
                 <tr key={i} className="border-b border-gray-100">
                   <td className="py-2 text-gray-900">{item.description}</td>
                   <td className="py-2 text-right text-gray-700">{item.quantity}</td>
-                  <td className="py-2 text-right text-gray-700">{sym}{item.unitPrice.toFixed(2)}</td>
-                  <td className="py-2 text-right text-gray-900 font-medium">{sym}{item.total.toFixed(2)}</td>
+                  <td className="py-2 text-right text-gray-700">{formatCurrency(item.unitPrice, quote.currency)}</td>
+                  <td className="py-2 text-right text-gray-900 font-medium">{formatCurrency(item.total, quote.currency)}</td>
                 </tr>
               ))}
             </tbody>
@@ -174,17 +169,17 @@ export default function QuoteDetailClient({ quote }: { quote: QuoteData }) {
           <div className="w-48 space-y-1 text-sm">
             <div className="flex justify-between">
               <span className="text-gray-500">Subtotal</span>
-              <span className="text-gray-900">{sym}{(quote.subtotal ?? quote.amount).toFixed(2)}</span>
+              <span className="text-gray-900">{formatCurrency(quote.subtotal ?? quote.amount, quote.currency)}</span>
             </div>
             {quote.totalTax ? (
               <div className="flex justify-between">
                 <span className="text-gray-500">Tax</span>
-                <span className="text-gray-900">{sym}{quote.totalTax.toFixed(2)}</span>
+                <span className="text-gray-900">{formatCurrency(quote.totalTax, quote.currency)}</span>
               </div>
             ) : null}
             <div className="flex justify-between border-t border-gray-300 pt-1 font-bold text-base">
               <span className="text-gray-900">Total</span>
-              <span className="text-gray-900">{sym}{quote.amount.toFixed(2)}</span>
+              <span className="text-gray-900">{formatCurrency(quote.amount, quote.currency)}</span>
             </div>
           </div>
         </div>

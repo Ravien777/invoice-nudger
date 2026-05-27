@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getOwnerIdForAccountant } from "@/lib/accountant-session";
 
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
@@ -18,13 +19,16 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
+  const accountantOwnerId = await getOwnerIdForAccountant(session.user.email);
+  const effectiveUserId = accountantOwnerId ?? user.id;
+
   const { searchParams } = new URL(request.url);
   const limit = Math.min(parseInt(searchParams.get("limit") || "20"), 100);
   const offset = parseInt(searchParams.get("offset") || "0");
   const type = searchParams.get("type");
   const unreadFirst = searchParams.get("unreadFirst") !== "false";
 
-  const where: Record<string, unknown> = { userId: user.id };
+  const where: Record<string, unknown> = { userId: effectiveUserId };
   if (type) {
     where.type = type;
   }
@@ -39,7 +43,7 @@ export async function GET(request: Request) {
       take: limit,
     }),
     prisma.notification.count({ where }),
-    prisma.notification.count({ where: { userId: user.id, read: false } }),
+    prisma.notification.count({ where: { userId: effectiveUserId, read: false } }),
   ]);
 
   return NextResponse.json({

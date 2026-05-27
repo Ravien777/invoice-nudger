@@ -253,7 +253,7 @@ async function sendDiscrepancyEmail(
 
   try {
     await resend.emails.send({
-      from: process.env.EMAIL_FROM ?? "onboarding@resend.dev",
+      from: process.env.EMAIL_FROM ?? "maroni@getmaroni.com",
       to: userEmail,
       subject: `Payment discrepancy detected for invoice ${ref}`,
       html,

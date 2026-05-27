@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getOwnerIdForAccountant } from "@/lib/accountant-session";
 
 export async function GET(
   _request: Request,
@@ -21,11 +22,14 @@ export async function GET(
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
+  const accountantOwnerId = await getOwnerIdForAccountant(session.user.email);
+  const effectiveUserId = accountantOwnerId ?? user.id;
+
   const { email } = await params;
   const clientEmail = decodeURIComponent(email);
 
   const profile = await prisma.clientPaymentProfile.findUnique({
-    where: { userId_clientEmail: { userId: user.id, clientEmail } },
+    where: { userId_clientEmail: { userId: effectiveUserId, clientEmail } },
   });
 
   if (!profile) {
@@ -33,7 +37,7 @@ export async function GET(
   }
 
   const invoices = await prisma.invoice.findMany({
-    where: { userId: user.id, clientEmail },
+    where: { userId: effectiveUserId, clientEmail },
     orderBy: { dueDate: "desc" },
   });
 

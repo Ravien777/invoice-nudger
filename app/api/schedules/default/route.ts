@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getOwnerIdForAccountant } from "@/lib/accountant-session";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -18,8 +19,11 @@ export async function GET() {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
+  const accountantOwnerId = await getOwnerIdForAccountant(session.user.email);
+  const effectiveUserId = accountantOwnerId ?? user.id;
+
   const schedule = await prisma.reminderSchedule.findFirst({
-    where: { userId: user.id, isDefault: true },
+    where: { userId: effectiveUserId, isDefault: true },
     include: { steps: { orderBy: { daysOffset: "asc" } } },
   });
 
@@ -39,6 +43,11 @@ export async function PUT(request: Request) {
 
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+
+  const accountantOwnerId = await getOwnerIdForAccountant(session.user.email);
+  if (accountantOwnerId) {
+    return NextResponse.json({ error: "Accountant access is read-only." }, { status: 403 });
   }
 
   const schedule = await prisma.reminderSchedule.findFirst({

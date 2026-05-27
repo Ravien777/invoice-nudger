@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { recurringSchema } from "@/lib/validations";
 import { computeNextRunDate } from "@/lib/date-utils";
+import { getOwnerIdForAccountant } from "@/lib/accountant-session";
 
 async function getUserId(): Promise<string | null> {
   const session = await getServerSession(authOptions);
@@ -12,18 +13,32 @@ async function getUserId(): Promise<string | null> {
   return user?.id ?? null;
 }
 
+async function getEffectiveUserId(sessionEmail: string): Promise<{ userId: string; accountantOwnerId: string | null }> {
+  const user = await prisma.user.findUnique({ where: { email: sessionEmail } });
+  if (!user) return { userId: "", accountantOwnerId: null };
+  const accountantOwnerId = await getOwnerIdForAccountant(sessionEmail);
+  return { userId: user.id, accountantOwnerId };
+}
+
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const userId = await getUserId();
-  if (!userId) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const { userId, accountantOwnerId } = await getEffectiveUserId(session.user.email);
+  if (!userId) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+
+  const effectiveUserId = accountantOwnerId ?? userId;
+
   const { id } = await params;
   const recurring = await prisma.recurringInvoice.findFirst({
-    where: { id, userId },
+    where: { id, userId: effectiveUserId },
   });
   if (!recurring) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -36,9 +51,18 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const userId = await getUserId();
-  if (!userId) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { userId, accountantOwnerId } = await getEffectiveUserId(session.user.email);
+  if (!userId) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+
+  if (accountantOwnerId) {
+    return NextResponse.json({ error: "Accountant access is read-only." }, { status: 403 });
   }
 
   const { id } = await params;
@@ -91,9 +115,18 @@ export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const userId = await getUserId();
-  if (!userId) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { userId, accountantOwnerId } = await getEffectiveUserId(session.user.email);
+  if (!userId) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+
+  if (accountantOwnerId) {
+    return NextResponse.json({ error: "Accountant access is read-only." }, { status: 403 });
   }
 
   const { id } = await params;

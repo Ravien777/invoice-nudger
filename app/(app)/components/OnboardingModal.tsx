@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { Button } from "@/app/components/ui/Button";
 
-const DISMISSED_KEY = "invoice-nudger-onboarding-dismissed";
+const DISMISSED_KEY = "maroni-onboarding-dismissed";
 
 interface OnboardingModalProps {
   open: boolean;
@@ -21,7 +21,7 @@ export default function OnboardingModal({
 
   useEffect(() => {
     if (open) {
-      const dismissed = localStorage.getItem(DISMISSED_KEY);
+      const dismissed = localStorage.getItem(DISMISSED_KEY) || localStorage.getItem("invoice-nudger-onboarding-dismissed");
       if (!dismissed) {
         const timer = setTimeout(() => setVisible(true), 400);
         return () => clearTimeout(timer);
@@ -72,7 +72,7 @@ export default function OnboardingModal({
               </svg>
             </div>
             <h2 className="text-xl font-bold text-text-primary">
-              Welcome to Invoice Nudger!
+              Welcome to Maroni!
             </h2>
             <p className="mt-2 text-sm text-text-secondary">
               You&apos;re all set up. Here&apos;s how to get started:

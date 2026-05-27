@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { invoiceSchema } from "@/lib/validations";
 import { canCreateInvoice } from "@/lib/subscriptions";
 import { computePaymentProbabilityForInvoice } from "@/lib/analytics";
+import { getOwnerIdForAccountant } from "@/lib/accountant-session";
 
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
@@ -21,10 +22,13 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
+  const accountantOwnerId = await getOwnerIdForAccountant(session.user.email);
+  const effectiveUserId = accountantOwnerId ?? user.id;
+
   const { searchParams } = new URL(request.url);
   const statusFilter = searchParams.get("status");
 
-  const where: Record<string, unknown> = { userId: user.id };
+  const where: Record<string, unknown> = { userId: effectiveUserId };
   if (statusFilter && statusFilter !== "all") {
     where.status = statusFilter;
   }
@@ -50,6 +54,11 @@ export async function POST(request: Request) {
 
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+
+  const accountantOwnerId = await getOwnerIdForAccountant(session.user.email);
+  if (accountantOwnerId) {
+    return NextResponse.json({ error: "Accountant access is read-only." }, { status: 403 });
   }
 
   const body = await request.json();

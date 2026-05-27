@@ -18,7 +18,7 @@ export function useTheme() {
 
 function getInitialTheme(): Theme {
   if (typeof window === "undefined") return "light";
-  const stored = localStorage.getItem("invoice-nudger-theme");
+  const stored = localStorage.getItem("maroni-theme") || localStorage.getItem("invoice-nudger-theme");
   if (stored === "dark" || stored === "light") return stored;
   return window.matchMedia("(prefers-color-scheme: dark)").matches
     ? "dark"
@@ -48,7 +48,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     } else {
       root.classList.remove("dark");
     }
-    localStorage.setItem("invoice-nudger-theme", theme);
+    localStorage.setItem("maroni-theme", theme);
   }, [theme]);
 
   const toggleTheme = () => {

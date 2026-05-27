@@ -25,7 +25,7 @@ async function sendPromiseNotificationEmail(userEmail: string, invoice: any, pro
   const formattedDate = promisedDate.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 
   await resend.emails.send({
-    from: process.env.EMAIL_FROM ?? "onboarding@resend.dev",
+    from: process.env.EMAIL_FROM ?? "maroni@getmaroni.com",
     to: userEmail,
     subject: `Payment promise detected — ${invoice.clientName}`,
     html: `

@@ -6,6 +6,7 @@ import { Button } from "@/app/components/ui/Button";
 import { Badge, type BadgeVariant } from "@/app/components/ui/Badge";
 import { Table, TableHead, TableBody, TableRow, TableCell } from "@/app/components/ui/Table";
 import toast from "react-hot-toast";
+import { formatCurrency, currencySymbol } from "@/lib/format-currency";
 
 interface RecurringItem {
   id: string;
@@ -40,11 +41,6 @@ const FREQ_OPTIONS = [
   { value: "quarterly", label: "Quarterly" },
   { value: "annually", label: "Annually" },
 ];
-
-const currencySymbols: Record<string, string> = {
-  USD: "$", EUR: "€", GBP: "£", AUD: "A$", CAD: "C$",
-  SGD: "S$", ZAR: "R", INR: "₹", JPY: "¥", CHF: "Fr",
-};
 
 const STATUS_VARIANTS: Record<string, BadgeVariant> = {
   active: "active",
@@ -372,14 +368,13 @@ export default function RecurringClient({ initial }: { initial: RecurringItem[] 
           </TableHead>
           <TableBody>
             {items.map((item) => {
-              const sym = currencySymbols[item.currency] || item.currency;
               return (
                 <TableRow key={item.id}>
                   <TableCell>
                     <span className="font-medium text-text-primary">{item.clientName}</span>
                     <span className="text-text-tertiary text-xs block">{item.clientEmail}</span>
                   </TableCell>
-                  <TableCell className="font-medium text-text-primary">{sym}{item.amount.toFixed(2)}</TableCell>
+                  <TableCell className="font-medium text-text-primary">{formatCurrency(item.amount, item.currency)}</TableCell>
                   <TableCell className="text-text-secondary">{FREQ_LABELS[item.frequency] || item.frequency}</TableCell>
                   <TableCell className="text-text-secondary">{formatDate(item.nextRunDate)}</TableCell>
                   <TableCell className="text-text-secondary">{item.invoicesCreated}</TableCell>

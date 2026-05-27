@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/app/components/ui/Button";
 import toast from "react-hot-toast";
+import { formatCurrency, currencySymbol } from "@/lib/format-currency";
 
 interface LineItem {
   id: string;
@@ -72,8 +73,6 @@ export default function QuoteForm({ initialData, mode, quoteId }: QuoteFormProps
   const [paymentTerms, setPaymentTerms] = useState(initialData?.paymentTerms ?? "");
   const [lineItems, setLineItems] = useState<LineItem[]>(initialData?.lineItems ?? [newItem()]);
   const [submitting, setSubmitting] = useState(false);
-
-  const currencySymbol = currencies.find((c) => c.code === currency)?.symbol || "$";
 
   const computedSubtotal = useMemo(
     () => lineItems.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0),
@@ -294,7 +293,7 @@ export default function QuoteForm({ initialData, mode, quoteId }: QuoteFormProps
                     </div>
                     <div className="col-span-2">
                       <div className="relative">
-                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-text-tertiary">{currencySymbol}</span>
+                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-text-tertiary">{currencySymbol(currency)}</span>
                         <input
                           type="number"
                           min="0"
@@ -317,7 +316,7 @@ export default function QuoteForm({ initialData, mode, quoteId }: QuoteFormProps
                       />
                     </div>
                     <div className="col-span-1 flex items-center pt-1.5 text-sm text-text-secondary font-medium text-right">
-                      {currencySymbol}{(item.quantity * item.unitPrice * (1 + item.taxRate / 100)).toFixed(2)}
+                      {formatCurrency(item.quantity * item.unitPrice * (1 + item.taxRate / 100), currency)}
                     </div>
                   </div>
                   <button
@@ -334,15 +333,15 @@ export default function QuoteForm({ initialData, mode, quoteId }: QuoteFormProps
             <div className="border-t border-border-default pt-3 space-y-1 text-right">
               <div className="flex justify-end gap-8 text-sm">
                 <span className="text-text-secondary">Subtotal</span>
-                <span className="text-text-primary font-medium w-24 text-right">{currencySymbol}{computedSubtotal.toFixed(2)}</span>
+                <span className="text-text-primary font-medium w-24 text-right">{formatCurrency(computedSubtotal, currency)}</span>
               </div>
               <div className="flex justify-end gap-8 text-sm">
                 <span className="text-text-secondary">Tax</span>
-                <span className="text-text-primary w-24 text-right">{currencySymbol}{computedTax.toFixed(2)}</span>
+                <span className="text-text-primary w-24 text-right">{formatCurrency(computedTax, currency)}</span>
               </div>
               <div className="flex justify-end gap-8 text-base font-semibold border-t border-border-default pt-1">
                 <span className="text-text-primary">Total</span>
-                <span className="text-text-primary w-24 text-right">{currencySymbol}{computedTotal.toFixed(2)}</span>
+                <span className="text-text-primary w-24 text-right">{formatCurrency(computedTotal, currency)}</span>
               </div>
             </div>
           </div>
@@ -398,8 +397,8 @@ export default function QuoteForm({ initialData, mode, quoteId }: QuoteFormProps
                     <tr key={item.id} className="border-b border-gray-100">
                       <td className="py-1.5 text-gray-900">{item.description || "—"}</td>
                       <td className="py-1.5 text-right text-gray-700">{item.quantity}</td>
-                      <td className="py-1.5 text-right text-gray-700">{currencySymbol}{item.unitPrice.toFixed(2)}</td>
-                      <td className="py-1.5 text-right text-gray-900">{currencySymbol}{(item.quantity * item.unitPrice).toFixed(2)}</td>
+                      <td className="py-1.5 text-right text-gray-700">{formatCurrency(item.unitPrice, currency)}</td>
+                      <td className="py-1.5 text-right text-gray-900">{formatCurrency(item.quantity * item.unitPrice, currency)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -409,15 +408,15 @@ export default function QuoteForm({ initialData, mode, quoteId }: QuoteFormProps
                 <div className="w-40 space-y-0.5">
                   <div className="flex justify-between">
                     <span className="text-gray-500">Subtotal</span>
-                    <span className="text-gray-900 font-medium">{currencySymbol}{computedSubtotal.toFixed(2)}</span>
+                    <span className="text-gray-900 font-medium">{formatCurrency(computedSubtotal, currency)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500">Tax</span>
-                    <span className="text-gray-900">{currencySymbol}{computedTax.toFixed(2)}</span>
+                    <span className="text-gray-900">{formatCurrency(computedTax, currency)}</span>
                   </div>
                   <div className="flex justify-between border-t border-gray-300 pt-0.5 font-bold">
                     <span className="text-gray-900">Total</span>
-                    <span className="text-gray-900">{currencySymbol}{computedTotal.toFixed(2)}</span>
+                    <span className="text-gray-900">{formatCurrency(computedTotal, currency)}</span>
                   </div>
                 </div>
               </div>

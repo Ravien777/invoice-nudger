@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { canUseClientPortal } from "@/lib/subscriptions";
 import { createPortalToken, getPortalTokens } from "@/lib/portal";
+import { getOwnerIdForAccountant } from "@/lib/accountant-session";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -20,7 +21,10 @@ export async function GET() {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  const tokens = await getPortalTokens(user.id);
+  const accountantOwnerId = await getOwnerIdForAccountant(session.user.email);
+  const effectiveUserId = accountantOwnerId ?? user.id;
+
+  const tokens = await getPortalTokens(effectiveUserId);
 
   return NextResponse.json({ tokens });
 }
@@ -38,6 +42,11 @@ export async function POST(request: Request) {
 
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+
+  const accountantOwnerId = await getOwnerIdForAccountant(session.user.email);
+  if (accountantOwnerId) {
+    return NextResponse.json({ error: "Accountant access is read-only." }, { status: 403 });
   }
 
   const hasAccess = await canUseClientPortal(user.id);

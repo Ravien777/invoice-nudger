@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { quoteSchema } from "@/lib/validations";
+import { getOwnerIdForAccountant } from "@/lib/accountant-session";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -17,8 +18,11 @@ export async function GET() {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
+  const accountantOwnerId = await getOwnerIdForAccountant(session.user.email);
+  const effectiveUserId = accountantOwnerId ?? user.id;
+
   const quotes = await prisma.quote.findMany({
-    where: { userId: user.id },
+    where: { userId: effectiveUserId },
     orderBy: { createdAt: "desc" },
     include: { lineItems: { orderBy: { sortOrder: "asc" } } },
   });
@@ -37,6 +41,11 @@ export async function POST(req: NextRequest) {
   });
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+
+  const accountantOwnerId = await getOwnerIdForAccountant(session.user.email);
+  if (accountantOwnerId) {
+    return NextResponse.json({ error: "Accountant access is read-only." }, { status: 403 });
   }
 
   const body = await req.json();

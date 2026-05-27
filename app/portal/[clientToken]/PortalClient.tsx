@@ -1,6 +1,7 @@
 "use client";
 
 import { PortalBranding } from "@/lib/portal";
+import { formatCurrency } from "@/lib/format-currency";
 
 interface Invoice {
   id: string;
@@ -19,10 +20,6 @@ interface PortalClientProps {
   invoices: Invoice[];
   branding: PortalBranding;
   clientName: string | null;
-}
-
-function formatCurrency(amount: number, currency: string): string {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount);
 }
 
 function formatDate(dateStr: string): string {
@@ -236,7 +233,7 @@ export default function PortalClient({ invoices, branding, clientName }: PortalC
 
       <footer className="border-t border-border bg-surface py-6">
         <div className="mx-auto max-w-5xl px-6 text-center text-xs text-muted">
-          Powered by <span className="font-medium">Invoice Nudger</span>
+          Powered by <span className="font-medium">Maroni</span>
         </div>
       </footer>
     </div>

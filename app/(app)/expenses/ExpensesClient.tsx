@@ -7,6 +7,7 @@ import { Button } from "@/app/components/ui/Button";
 import { Table, TableHead, TableBody, TableRow, TableCell } from "@/app/components/ui/Table";
 import { EmptyState } from "@/app/components/ui/EmptyState";
 import toast from "react-hot-toast";
+import { formatCurrency, SUPPORTED_CURRENCIES, currenciesWithSymbol } from "@/lib/format-currency";
 
 interface Category {
   id: string;
@@ -54,6 +55,7 @@ export default function ExpensesClient({
   const [form, setForm] = useState({
     description: "",
     amount: "",
+    currency: "USD",
     date: new Date().toISOString().split("T")[0],
     vendor: "",
     categoryId: "",
@@ -65,6 +67,7 @@ export default function ExpensesClient({
     setForm({
       description: "",
       amount: "",
+      currency: "USD",
       date: new Date().toISOString().split("T")[0],
       vendor: "",
       categoryId: "",
@@ -90,6 +93,7 @@ export default function ExpensesClient({
     const payload = {
       ...form,
       amount: parseFloat(form.amount),
+      currency: form.currency,
       vendor: form.vendor || undefined,
       categoryId: form.categoryId || undefined,
       notes: form.notes || undefined,
@@ -124,6 +128,7 @@ export default function ExpensesClient({
     setForm({
       description: expense.description,
       amount: expense.amount.toString(),
+      currency: expense.currency,
       date: expense.date,
       vendor: expense.vendor || "",
       categoryId: expense.categoryId || "",
@@ -168,14 +173,6 @@ export default function ExpensesClient({
       </select>
     </div>
   );
-
-  const currencySymbol = (currency: string) => {
-    const symbols: Record<string, string> = {
-      USD: "$", EUR: "€", GBP: "£", AUD: "A$", CAD: "C$",
-      SGD: "S$", ZAR: "R", INR: "₹", JPY: "¥", CHF: "Fr",
-    };
-    return symbols[currency] || currency;
-  };
 
   return (
     <div className="space-y-6">
@@ -222,7 +219,7 @@ export default function ExpensesClient({
               <label className="block text-xs text-text-secondary mb-1">Amount *</label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-text-tertiary">
-                  {currencySymbol("USD")}
+                  {formatCurrency(0, form.currency).charAt(0)}
                 </span>
                 <input
                   required
@@ -235,6 +232,18 @@ export default function ExpensesClient({
                   placeholder="0.00"
                 />
               </div>
+            </div>
+            <div>
+              <label className="block text-xs text-text-secondary mb-1">Currency</label>
+              <select
+                value={form.currency}
+                onChange={(e) => setForm((f) => ({ ...f, currency: e.target.value }))}
+                className="w-full rounded-lg border border-border-default bg-surface-secondary px-3 py-2 text-sm text-text-primary"
+              >
+                {currenciesWithSymbol().map((c) => (
+                  <option key={c.code} value={c.code}>{c.label}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-xs text-text-secondary mb-1">Date *</label>
@@ -338,8 +347,7 @@ export default function ExpensesClient({
                     )}
                   </TableCell>
                   <TableCell className="font-medium text-text-primary">
-                    {currencySymbol(expense.currency)}
-                    {expense.amount.toFixed(2)}
+                    {formatCurrency(expense.amount, expense.currency)}
                   </TableCell>
                   <TableCell>
                     {expense.taxDeductible ? (

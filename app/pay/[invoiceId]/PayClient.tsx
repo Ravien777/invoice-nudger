@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { formatCurrency } from "@/lib/format-currency";
 
 interface InvoiceData {
   id: string;
@@ -17,12 +18,6 @@ interface InvoiceData {
 
 interface PayClientProps {
   invoice: InvoiceData;
-}
-
-function formatCurrency(amount: number, currency: string): string {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(
-    amount,
-  );
 }
 
 function formatDate(dateStr: string): string {

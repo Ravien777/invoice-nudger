@@ -1,8 +1,8 @@
-# MEMORY.md — Invoice Nudger Decision Log
+# MEMORY.md — Maroni Decision Log
 
 ## Project Identity
 
-- **Product:** Invoice Nudger — automated accounts-receivable platform for freelancers, indie hackers, and micro-agencies.
+- **Product:** Maroni — automated accounts-receivable platform for freelancers, indie hackers, and micro-agencies.
 - **Founder:** Ravien Sewpal
 - **Goal:** Eliminate the need for users to ever chase a late payment. Then become indispensable by surfacing insights no other simple tool provides.
 - **Stack:** Next.js (App Router) + TypeScript + Tailwind CSS + Prisma + PostgreSQL + NextAuth.js + Resend + Stripe + Twilio + OpenAI + date-fns + Recharts.

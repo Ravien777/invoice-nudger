@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { Button } from "@/app/components/ui/Button";
 import { EmptyState } from "@/app/components/ui/EmptyState";
 import { Modal } from "@/app/components/ui/Modal";
+import { formatCurrency } from "@/lib/format-currency";
 
 interface QueueItem {
   id: string;
@@ -108,13 +109,6 @@ export default function AIQueueClient() {
       month: "short",
       day: "numeric",
     });
-  }
-
-  function formatCurrency(amount: number, currency: string): string {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency,
-    }).format(amount);
   }
 
   const previewItem = items.find((item) => item.id === previewId);

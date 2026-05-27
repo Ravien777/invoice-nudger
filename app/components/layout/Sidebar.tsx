@@ -70,12 +70,12 @@ export default function Sidebar() {
       <div className="flex items-center justify-between px-3 py-4 border-b border-border-default h-14">
         {!collapsed && (
           <Link href="/dashboard" className="text-sm font-semibold text-text-primary tracking-tight">
-            Invoice Nudger
+            Maroni
           </Link>
         )}
         {collapsed && (
           <Link href="/dashboard" className="mx-auto">
-            <span className="text-lg font-bold text-accent">IN</span>
+            <span className="text-lg font-bold text-accent">M</span>
           </Link>
         )}
         <button

@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { recurringSchema } from "@/lib/validations";
 import { computeNextRunDate } from "@/lib/date-utils";
+import { getOwnerIdForAccountant } from "@/lib/accountant-session";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -18,8 +19,11 @@ export async function GET() {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
+  const accountantOwnerId = await getOwnerIdForAccountant(session.user.email);
+  const effectiveUserId = accountantOwnerId ?? user.id;
+
   const recurring = await prisma.recurringInvoice.findMany({
-    where: { userId: user.id },
+    where: { userId: effectiveUserId },
     orderBy: { createdAt: "desc" },
   });
 
@@ -37,6 +41,11 @@ export async function POST(request: Request) {
   });
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+
+  const accountantOwnerId = await getOwnerIdForAccountant(session.user.email);
+  if (accountantOwnerId) {
+    return NextResponse.json({ error: "Accountant access is read-only." }, { status: 403 });
   }
 
   const body = await request.json();

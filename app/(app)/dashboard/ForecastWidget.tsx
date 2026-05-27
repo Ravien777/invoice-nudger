@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import type { ForecastResult } from "@/lib/forecast";
 import { Button } from "@/app/components/ui/Button";
+import { formatCurrency } from "@/lib/format-currency";
 
 interface ForecastWidgetProps {
   forecast: ForecastResult | null;
@@ -20,11 +21,6 @@ interface ForecastWidgetProps {
 }
 
 const HORIZONS = [30, 60, 90] as const;
-
-function formatCurrency(val: number): string {
-  if (val >= 1000) return `$${(val / 1000).toFixed(1)}k`;
-  return `$${val.toFixed(0)}`;
-}
 
 function formatShortDate(iso: string): string {
   const d = new Date(iso + "T00:00:00");
@@ -124,7 +120,7 @@ export default function ForecastWidget({ forecast, hasAccess }: ForecastWidgetPr
             />
             <YAxis
               tick={{ fontSize: 10, fill: "var(--muted)" }}
-              tickFormatter={formatCurrency}
+              tickFormatter={(val: number) => formatCurrency(val)}
               tickMargin={4}
             />
             <Tooltip

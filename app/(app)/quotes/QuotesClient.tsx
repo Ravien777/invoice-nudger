@@ -9,6 +9,7 @@ import { Badge } from "@/app/components/ui/Badge";
 import { Table, TableHead, TableBody, TableRow, TableCell } from "@/app/components/ui/Table";
 import { EmptyState } from "@/app/components/ui/EmptyState";
 import toast from "react-hot-toast";
+import { formatCurrency } from "@/lib/format-currency";
 
 interface Quote {
   id: string;
@@ -21,14 +22,6 @@ interface Quote {
   issueDate: string;
   expiryDate: string | null;
   convertedToInvoiceId: string | null;
-}
-
-function formatAmount(amount: number, currency: string) {
-  const symbols: Record<string, string> = {
-    USD: "$", EUR: "€", GBP: "£", AUD: "A$", CAD: "C$",
-    SGD: "S$", ZAR: "R", INR: "₹", JPY: "¥", CHF: "Fr",
-  };
-  return `${symbols[currency] || currency}${amount.toFixed(2)}`;
 }
 
 export default function QuotesClient({ quotes: initialQuotes }: { quotes: Quote[] }) {
@@ -140,7 +133,7 @@ export default function QuotesClient({ quotes: initialQuotes }: { quotes: Quote[
                   </TableCell>
                   <TableCell>{quote.clientName}</TableCell>
                   <TableCell className="font-medium text-text-primary">
-                    {formatAmount(quote.amount, quote.currency)}
+                    {formatCurrency(quote.amount, quote.currency)}
                   </TableCell>
                   <TableCell>
                     {quote.convertedToInvoiceId ? (

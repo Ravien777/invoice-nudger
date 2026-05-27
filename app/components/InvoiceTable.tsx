@@ -5,6 +5,7 @@ import Link from "next/link";
 import toast from "react-hot-toast";
 import { Table, TableHead, TableBody, TableRow, TableCell } from "@/app/components/ui/Table";
 import { Badge, type BadgeVariant } from "@/app/components/ui/Badge";
+import { formatCurrency } from "@/lib/format-currency";
 import { Button } from "@/app/components/ui/Button";
 
 interface Invoice {
@@ -53,13 +54,6 @@ interface InvoiceTableProps {
   userPlan?: string;
   selectedIds?: Set<string>;
   onSelectionChange?: (ids: Set<string>) => void;
-}
-
-function formatCurrency(amount: number, currency: string): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency,
-  }).format(amount);
 }
 
 function formatDate(dateStr: string): string {

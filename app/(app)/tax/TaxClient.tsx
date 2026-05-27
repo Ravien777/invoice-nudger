@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Download, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/app/components/ui/Button";
 import toast from "react-hot-toast";
+import { formatCurrency, formatCurrencyCompact } from "@/lib/format-currency";
 
 interface TaxEstimate {
   year: number;
@@ -48,15 +49,6 @@ const MONTH_NAMES: Record<string, string> = {
   "09": "September", "10": "October", "11": "November", "12": "December",
 };
 
-function formatUSD(amount: number) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
-
 function formatMonth(month: string) {
   const [, m] = month.split("-");
   return MONTH_NAMES[m] || month;
@@ -68,12 +60,14 @@ export default function TaxClient({
   fiscalYearStart,
   plan,
   initialTaxSavings,
+  baseCurrency = "USD",
 }: {
   initialYear: number;
   taxRate: number;
   fiscalYearStart: number;
   plan: string;
   initialTaxSavings: number;
+  baseCurrency?: string;
 }) {
   const [year, setYear] = useState(initialYear);
   const [data, setData] = useState<TaxEstimate | null>(null);
@@ -189,37 +183,37 @@ export default function TaxClient({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="rounded-xl border border-border-default bg-surface p-6">
               <p className="text-sm text-text-secondary mb-1">Total Earned</p>
-              <p className="text-3xl font-bold text-text-primary">{formatUSD(data.grossIncome)}</p>
+              <p className="text-3xl font-bold text-text-primary">{formatCurrencyCompact(data.grossIncome, baseCurrency)}</p>
             </div>
             <div className="rounded-xl border border-border-default bg-surface p-6">
               <p className="text-sm text-text-secondary mb-1">Tax-Deductible Expenses</p>
-              <p className="text-3xl font-bold text-text-primary">{formatUSD(data.totalExpenses)}</p>
+              <p className="text-3xl font-bold text-text-primary">{formatCurrencyCompact(data.totalExpenses, baseCurrency)}</p>
             </div>
             <div className="rounded-xl border border-l-2 border-l-accent bg-surface p-6 shadow-sm">
               <p className="text-sm text-text-secondary mb-1">Taxable Income</p>
-              <p className="text-3xl font-bold text-text-primary">{formatUSD(data.taxableIncome)}</p>
+              <p className="text-3xl font-bold text-text-primary">{formatCurrencyCompact(data.taxableIncome, baseCurrency)}</p>
             </div>
             <div className="rounded-xl border border-l-2 border-l-[var(--warning)] bg-surface p-6 shadow-sm">
               <p className="text-sm text-text-secondary mb-1">Set Aside</p>
-              <p className="text-3xl font-bold text-[var(--warning)]">{formatUSD(data.estimatedTax)}</p>
+              <p className="text-3xl font-bold text-[var(--warning)]">{formatCurrencyCompact(data.estimatedTax, baseCurrency)}</p>
             </div>
           </div>
 
           {/* Formula breakdown */}
           <div className="rounded-xl border border-border-default bg-surface p-5">
             <div className="flex flex-wrap items-center gap-2 text-sm font-mono text-text-primary">
-              <span className="font-semibold">{formatUSD(data.grossIncome)}</span>
+              <span className="font-semibold">{formatCurrencyCompact(data.grossIncome, baseCurrency)}</span>
               <span className="text-text-tertiary">Earned</span>
               <span className="text-text-tertiary">−</span>
-              <span className="font-semibold">{formatUSD(data.totalExpenses)}</span>
+              <span className="font-semibold">{formatCurrencyCompact(data.totalExpenses, baseCurrency)}</span>
               <span className="text-text-tertiary">Expenses</span>
               <span className="text-text-tertiary">=</span>
-              <span className="font-semibold">{formatUSD(data.taxableIncome)}</span>
+              <span className="font-semibold">{formatCurrencyCompact(data.taxableIncome, baseCurrency)}</span>
               <span className="text-text-tertiary">Taxable</span>
               <span className="text-text-tertiary">×</span>
               <span className="font-semibold">{(data.taxRate * 100).toFixed(0)}%</span>
               <span className="text-text-tertiary">=</span>
-              <span className="font-bold text-[var(--warning)]">{formatUSD(data.estimatedTax)}</span>
+              <span className="font-bold text-[var(--warning)]">{formatCurrencyCompact(data.estimatedTax, baseCurrency)}</span>
               <span className="text-text-tertiary">Set Aside</span>
             </div>
           </div>
@@ -231,9 +225,9 @@ export default function TaxClient({
               <p className="text-sm text-text-secondary mb-3">
                 You&apos;ve set aside:{" "}
                 <span className="font-semibold text-text-primary">
-                  {formatUSD(data.taxSavingsAmount)}
+                  {formatCurrencyCompact(data.taxSavingsAmount, baseCurrency)}
                 </span>{" "}
-                of {formatUSD(data.estimatedTax)}
+                of {formatCurrencyCompact(data.estimatedTax, baseCurrency)}
               </p>
               <div className="flex items-center gap-2 max-w-xs">
                 <input
@@ -312,13 +306,13 @@ export default function TaxClient({
                         <tr key={row.month} className="border-b border-border-default/50">
                           <td className="py-2 text-text-primary">{formatMonth(row.month)}</td>
                           <td className="py-2 text-right text-text-secondary">{row.invoices}</td>
-                          <td className="py-2 text-right font-medium text-text-primary">{formatUSD(row.total)}</td>
+                          <td className="py-2 text-right font-medium text-text-primary">{formatCurrencyCompact(row.total, baseCurrency)}</td>
                         </tr>
                       ))}
                       <tr className="font-semibold">
                         <td className="py-2 text-text-primary">TOTAL INCOME</td>
                         <td className="py-2 text-right text-text-secondary" />
-                        <td className="py-2 text-right text-text-primary">{formatUSD(pnl.summary.totalIncome)}</td>
+                        <td className="py-2 text-right text-text-primary">{formatCurrencyCompact(pnl.summary.totalIncome, baseCurrency)}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -340,13 +334,13 @@ export default function TaxClient({
                         <tr key={row.category} className="border-b border-border-default/50">
                           <td className="py-2 text-text-primary">{row.category}</td>
                           <td className="py-2 text-right text-text-secondary">{row.items}</td>
-                          <td className="py-2 text-right text-text-primary">{formatUSD(row.total)}</td>
+                          <td className="py-2 text-right text-text-primary">{formatCurrencyCompact(row.total, baseCurrency)}</td>
                         </tr>
                       ))}
                       <tr className="font-semibold">
                         <td className="py-2 text-text-primary">TOTAL EXPENSES</td>
                         <td className="py-2 text-right text-text-secondary" />
-                        <td className="py-2 text-right text-text-primary">{formatUSD(pnl.summary.totalExpenses)}</td>
+                        <td className="py-2 text-right text-text-primary">{formatCurrencyCompact(pnl.summary.totalExpenses, baseCurrency)}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -356,11 +350,11 @@ export default function TaxClient({
                 <div className="border-t border-border-default pt-4 space-y-1">
                   <div className="flex justify-between text-sm">
                     <span className="text-text-secondary">Net Profit</span>
-                    <span className="font-semibold text-text-primary">{formatUSD(pnl.summary.netProfit)}</span>
+                    <span className="font-semibold text-text-primary">{formatCurrencyCompact(pnl.summary.netProfit, baseCurrency)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-text-secondary">Estimated Tax ({(pnl.summary.taxRate * 100).toFixed(0)}%)</span>
-                    <span className="font-semibold text-[var(--warning)]">{formatUSD(pnl.summary.estimatedTax)}</span>
+                    <span className="font-semibold text-[var(--warning)]">{formatCurrencyCompact(pnl.summary.estimatedTax)}</span>
                   </div>
                 </div>
               </div>

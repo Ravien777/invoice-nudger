@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { seedDefaultSchedule } from "@/lib/seed";
+import { seedDefaultSchedule, seedSampleInvoices } from "@/lib/seed";
 
 export async function GET() {
   if (process.env.NODE_ENV === "production") {
@@ -33,6 +33,7 @@ export async function POST(request: Request) {
       data: { email, name: email.split("@")[0], plan: "agency" },
     });
     await seedDefaultSchedule(user.id);
+    await seedSampleInvoices(user.id);
   }
 
   const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);

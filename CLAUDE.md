@@ -1,16 +1,16 @@
-# CLAUDE.md — Invoice Nudger
+# CLAUDE.md — Maroni
 
 ## Who I Am & What I Know
 
 - **Name:** Ravien Sewpal
-- **Role:** Solo founder / Entrepreneur / full-stack developer building Invoice Nudger
+- **Role:** Solo founder / Entrepreneur / full-stack developer building Maroni
 - **Background in:** JavaScript, Next.js, TypeScript, PostgreSQL, Tailwind CSS, Vercel
 - **Strong in:** Full-stack SaaS architecture, API design, database modelling, Stripe integration, cron-based automation
 - **Still learning:** Advanced AI/ML, React Server Components deep internals, WebSocket real-time patterns
 
 ## Current Project Context
 
-- **Project:** Invoice Nudger — automated invoice reminder SaaS
+- **Project:** Maroni — automated invoice reminder SaaS
 - **Goal:** Build an indispensable AR (accounts receivable) platform for freelancers, indie hackers, and micro-agencies. Phase 1 (core SaaS) and Phase 2 (advanced features) are complete. Strategy 2 (Insights-to-Expert Flywheel) is in progress.
 - **Audience:** Freelancers, small agencies, indie hackers who hate chasing late payments
 - **Stack:** Next.js (App Router) + TypeScript + Tailwind CSS + Prisma + PostgreSQL (Supabase/Neon) + NextAuth.js + Resend + Vercel Cron Jobs + Stripe + PapaParse + date-fns + react-hot-toast
