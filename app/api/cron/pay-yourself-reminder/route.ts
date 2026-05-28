@@ -21,7 +21,7 @@ export async function GET(request: Request) {
         { lastPayYourselfDate: { lte: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000) } },
       ],
     },
-    select: { id: true, name: true, baseCurrency: true },
+    select: { id: true, name: true, businessProfile: { select: { baseCurrency: true } } },
   });
 
   const results: Array<{ userId: string; available: number; notified: boolean }> = [];
@@ -29,6 +29,7 @@ export async function GET(request: Request) {
   for (const user of proUsers) {
     try {
       const { available } = await calculatePayYourselfAmount(user.id);
+      const currency = user.businessProfile?.baseCurrency ?? "USD";
 
       if (available > 0) {
         await prisma.notification.create({
@@ -36,7 +37,7 @@ export async function GET(request: Request) {
             userId: user.id,
             type: "pay_yourself",
             title: "Time to pay yourself",
-            message: `You have ${formatCurrency(available, user.baseCurrency)} available to pay yourself this month.`,
+            message: `You have ${formatCurrency(available, currency)} available to pay yourself this month.`,
             metadata: { available, type: "pay_yourself" },
           },
         });

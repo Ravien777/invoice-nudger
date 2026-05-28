@@ -20,7 +20,10 @@ export default async function EditInvoicePage({
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
+    include: { businessProfile: true },
   });
+
+  const bp = user?.businessProfile ?? { baseCurrency: "USD" };
 
   const invoice = await prisma.invoice.findUnique({
     where: { id },
@@ -44,7 +47,7 @@ export default async function EditInvoicePage({
       <InvoiceForm
         mode="edit"
         schedules={schedules}
-        baseCurrency={user.baseCurrency}
+        baseCurrency={bp.baseCurrency}
         initialData={{
           id: invoice.id,
           clientName: invoice.clientName,

@@ -31,7 +31,10 @@ export default async function DashboardPage() {
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
+    include: { businessProfile: true },
   });
+
+  const bp = user!.businessProfile ?? { baseCurrency: "USD" };
 
   const monthStart = startOfMonth(new Date());
   const monthEnd = endOfMonth(new Date());
@@ -262,7 +265,7 @@ export default async function DashboardPage() {
           {expenseAgg._count > 0 && (
             <StatCard
               label="Expenses This Month"
-              value={formatCurrency(expenseAgg._sum.amount ?? 0, user!.baseCurrency)}
+              value={formatCurrency(expenseAgg._sum.amount ?? 0, bp.baseCurrency)}
               variant="default"
               href="/expenses"
             >
@@ -364,7 +367,7 @@ export default async function DashboardPage() {
         <div className="mb-8 max-w-sm">
           <PayYourselfWidget
             available={payYourself.available}
-            baseCurrency={user!.baseCurrency}
+            baseCurrency={bp.baseCurrency}
             hasAccess={tier.features.includes("cash_flow_forecast")}
           />
         </div>

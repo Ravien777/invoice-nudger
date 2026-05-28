@@ -9,7 +9,10 @@ export default async function NewInvoicePage() {
 
   const user = await prisma.user.findUnique({
     where: { email: session!.user!.email! },
+    include: { businessProfile: true },
   });
+
+  const bp = user!.businessProfile ?? { baseCurrency: "USD" };
 
   const schedules = await prisma.reminderSchedule.findMany({
     where: { userId: user!.id },
@@ -22,7 +25,7 @@ export default async function NewInvoicePage() {
       title="New Invoice"
       subtitle="Create a new invoice for your client"
     >
-      <InvoiceForm mode="create" schedules={schedules} baseCurrency={user!.baseCurrency} />
+      <InvoiceForm mode="create" schedules={schedules} baseCurrency={bp.baseCurrency} />
     </PageShell>
   );
 }

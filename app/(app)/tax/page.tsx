@@ -4,12 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { PageShell } from "@/app/components/layout/PageShell";
 import TaxClient from "./TaxClient";
-
-function currentTaxYear(fiscalYearStart: number) {
-  const now = new Date();
-  const startMonth = fiscalYearStart - 1;
-  return now.getMonth() >= startMonth ? now.getFullYear() : now.getFullYear() - 1;
-}
+import { currentTaxYear } from "@/lib/tax-utils";
 
 export default async function TaxPage() {
   const session = await getServerSession(authOptions);
@@ -17,11 +12,12 @@ export default async function TaxPage() {
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
-    select: { id: true, plan: true, taxRate: true, fiscalYearStart: true, taxSavingsAmount: true, baseCurrency: true },
+    include: { businessProfile: true },
   });
   if (!user) redirect("/");
 
-  const year = currentTaxYear(user.fiscalYearStart);
+  const bp = user.businessProfile ?? { taxRate: 0.25, fiscalYearStart: 1, taxSavingsAmount: 0, baseCurrency: "USD" };
+  const year = currentTaxYear(bp.fiscalYearStart);
 
   return (
     <PageShell
@@ -30,11 +26,11 @@ export default async function TaxPage() {
     >
       <TaxClient
         initialYear={year}
-        taxRate={user.taxRate}
-        fiscalYearStart={user.fiscalYearStart}
+        taxRate={bp.taxRate}
+        fiscalYearStart={bp.fiscalYearStart}
         plan={user.plan}
-        initialTaxSavings={user.taxSavingsAmount}
-        baseCurrency={user.baseCurrency}
+        initialTaxSavings={bp.taxSavingsAmount}
+        baseCurrency={bp.baseCurrency}
       />
     </PageShell>
   );

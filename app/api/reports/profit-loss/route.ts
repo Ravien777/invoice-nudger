@@ -3,13 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getOwnerIdForAccountant } from "@/lib/accountant-session";
-
-function getTaxYearRange(user: { fiscalYearStart: number }, year: number) {
-  const startMonth = user.fiscalYearStart - 1;
-  const start = new Date(year, startMonth, 1);
-  const end = new Date(year + 1, startMonth, 1);
-  return { start, end };
-}
+import { getTaxYearRange } from "@/lib/tax-utils";
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -24,14 +18,24 @@ export async function GET(req: NextRequest) {
 
   const user = await prisma.user.findUnique({
     where: { email: lookupEmail ?? session.user.email },
-    select: { id: true, taxRate: true, fiscalYearStart: true },
+    include: { businessProfile: true },
   });
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
+  const bp = user.businessProfile ?? { taxRate: 0.25, fiscalYearStart: 1 };
+
   const year = parseInt(req.nextUrl.searchParams.get("year") ?? String(new Date().getFullYear()), 10);
-  const { start, end } = getTaxYearRange(user, year);
+  let { start, end } = getTaxYearRange(bp.fiscalYearStart, year);
+  const month = req.nextUrl.searchParams.get("month");
+  if (month) {
+    const [y, m] = month.split("-").map(Number);
+    if (y && m && m >= 1 && m <= 12) {
+      start = new Date(y, m - 1, 1);
+      end = new Date(y, m, 1);
+    }
+  }
 
   const effectiveUserId = accountantOwnerId ?? user.id;
 
@@ -84,7 +88,7 @@ export async function GET(req: NextRequest) {
   const totalIncome = incomeEntries.reduce((s, e) => s + e.total, 0);
   const totalExpenses = expenseEntries.reduce((s, e) => s + e.total, 0);
   const netProfit = totalIncome - totalExpenses;
-  const estimatedTax = Math.max(0, netProfit) * user.taxRate;
+  const estimatedTax = Math.max(0, netProfit) * bp.taxRate;
 
   return NextResponse.json({
     year,
@@ -95,7 +99,7 @@ export async function GET(req: NextRequest) {
       totalExpenses,
       netProfit,
       estimatedTax,
-      taxRate: user.taxRate,
+      taxRate: bp.taxRate,
     },
   });
 }

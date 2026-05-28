@@ -13,7 +13,7 @@ export async function calculatePayYourselfAmount(
 ): Promise<PayYourselfResult> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { lastPayYourselfDate: true, taxRate: true },
+    select: { lastPayYourselfDate: true },
   });
 
   if (!user) {

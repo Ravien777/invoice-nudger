@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useReactToPrint } from "react-to-print";
 import Link from "next/link";
 import { Download, ChevronDown, ChevronRight } from "lucide-react";
+import Papa from "papaparse";
 import { Button } from "@/app/components/ui/Button";
 import toast from "react-hot-toast";
 import { formatCurrency, formatCurrencyCompact } from "@/lib/format-currency";
@@ -78,6 +80,8 @@ export default function TaxClient({
   const [savingSavings, setSavingSavings] = useState(false);
 
   const isPro = plan === "pro" || plan === "agency";
+  const printableRef = useRef<HTMLDivElement>(null);
+  const handlePrintPdf = useReactToPrint({ contentRef: printableRef, documentTitle: `profit-loss-${year}` });
 
   const fetchData = useCallback(async (y: number) => {
     setLoading(true);
@@ -126,22 +130,21 @@ export default function TaxClient({
   const downloadCSV = () => {
     if (!pnl) return;
 
-    const rows: string[] = ["INCOME,Invoices,Amount"];
-    for (const row of pnl.income) {
-      rows.push(`${formatMonth(row.month)},${row.invoices},${row.total.toFixed(2)}`);
-    }
-    rows.push(`TOTAL INCOME,,${pnl.summary.totalIncome.toFixed(2)}`);
-    rows.push("");
-    rows.push("EXPENSES BY CATEGORY,Items,Amount,Tax Deductible");
-    for (const row of pnl.expenses) {
-      rows.push(`${row.category},${row.items},${row.total.toFixed(2)},${row.taxDeductible.toFixed(2)}`);
-    }
-    rows.push(`TOTAL EXPENSES,,${pnl.summary.totalExpenses.toFixed(2)},`);
-    rows.push("");
-    rows.push(`NET PROFIT,,${pnl.summary.netProfit.toFixed(2)},`);
-    rows.push(`ESTIMATED TAX (${(pnl.summary.taxRate * 100).toFixed(0)}%),,${pnl.summary.estimatedTax.toFixed(2)},`);
+    const incomeRows = pnl.income.map((r) => ({ Section: "INCOME", Month: formatMonth(r.month), Invoices: r.invoices, Amount: r.total }));
+    const expenseRows = pnl.expenses.map((r) => ({ Section: "EXPENSES", Category: r.category, Items: r.items, Amount: r.total, "Tax Deductible": r.taxDeductible }));
+    const csv = Papa.unparse([
+      ...incomeRows,
+      { Section: "TOTAL INCOME", Month: "", Invoices: "", Amount: pnl.summary.totalIncome },
+      {},
+      { Section: "EXPENSES", Category: "Items", Items: "Amount", "Tax Deductible": "Tax Deductible" },
+      ...expenseRows,
+      { Section: "TOTAL EXPENSES", Category: "", Items: "", Amount: pnl.summary.totalExpenses, "Tax Deductible": "" },
+      {},
+      { Section: "NET PROFIT", Category: "", Items: "", Amount: pnl.summary.netProfit },
+      { Section: `ESTIMATED TAX (${(pnl.summary.taxRate * 100).toFixed(0)}%)`, Category: "", Items: "", Amount: pnl.summary.estimatedTax },
+    ]);
 
-    const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -280,6 +283,19 @@ export default function TaxClient({
                   <Download className="h-3.5 w-3.5" />
                   CSV
                 </Button>
+                {isPro && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePrintPdf();
+                    }}
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    PDF
+                  </Button>
+                )}
                 {showPnL ? (
                   <ChevronDown className="h-4 w-4 text-text-tertiary" />
                 ) : (
@@ -290,6 +306,7 @@ export default function TaxClient({
 
             {showPnL && pnl && (
               <div className="border-t border-border-default p-5 space-y-6">
+                <div ref={printableRef} className="space-y-6">
                 {/* Income section */}
                 <div>
                   <h4 className="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-2">Income</h4>
@@ -356,6 +373,7 @@ export default function TaxClient({
                     <span className="text-text-secondary">Estimated Tax ({(pnl.summary.taxRate * 100).toFixed(0)}%)</span>
                     <span className="font-semibold text-[var(--warning)]">{formatCurrencyCompact(pnl.summary.estimatedTax)}</span>
                   </div>
+                </div>
                 </div>
               </div>
             )}

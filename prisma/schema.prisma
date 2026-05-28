@@ -34,6 +34,7 @@ model User {
   fiscalYearStart   Int              @default(1)
   taxSavingsAmount  Float            @default(0)
   baseCurrency      String           @default("USD")
+  businessProfile   BusinessProfile?
   lastPayYourselfDate DateTime?
   alertPreferences  Json?
   accounts         Account[]
@@ -58,6 +59,17 @@ model User {
   quotes           Quote[]
   recurringInvoices RecurringInvoice[]
   accountantAccess  AccountantAccess[] @relation("OwnerAccess")
+}
+
+model BusinessProfile {
+  id                String  @id @default(cuid())
+  userId            String  @unique
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taxRate           Float   @default(0.25)
+  fiscalYearStart   Int     @default(1)
+  taxSavingsAmount  Float   @default(0)
+  baseCurrency      String  @default("USD")
+  defaultHourlyRate Float?
 }
 
 model Account {

@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { prisma } from "@/lib/prisma";
 import { validatePortalToken, getClientInvoices } from "@/lib/portal";
 import PortalClient from "./PortalClient";
 
@@ -66,14 +67,31 @@ export default async function PortalPage({
     );
   }
 
-  const invoices = await getClientInvoices(validated.userId, validated.clientEmail);
+  const [invoices, quotes] = await Promise.all([
+    getClientInvoices(validated.userId, validated.clientEmail),
+    prisma.quote.findMany({
+      where: { userId: validated.userId, clientEmail: validated.clientEmail },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
 
   return (
     <PortalClient
       invoices={invoices.map((inv) => ({
         ...inv,
         dueDate: inv.dueDate.toISOString(),
+        paidAt: inv.paidAt?.toISOString() ?? null,
         createdAt: inv.createdAt.toISOString(),
+      }))}
+      quotes={quotes.map((q) => ({
+        id: q.id,
+        quoteNumber: q.quoteNumber,
+        clientName: q.clientName,
+        amount: q.amount,
+        currency: q.currency,
+        status: q.status,
+        issueDate: q.issueDate.toISOString(),
+        expiryDate: q.expiryDate?.toISOString() ?? null,
       }))}
       branding={validated.branding}
       clientName={validated.clientName}

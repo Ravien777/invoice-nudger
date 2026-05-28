@@ -31,6 +31,7 @@ export async function PUT(request: Request) {
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
+    include: { businessProfile: true },
   });
 
   if (!user) {
@@ -40,6 +41,7 @@ export async function PUT(request: Request) {
   const body = await request.json();
 
   const data: Record<string, unknown> = {};
+  const bpData: Record<string, unknown> = {};
 
   if (body.name !== undefined) {
     if (typeof body.name !== "string") {
@@ -53,7 +55,7 @@ export async function PUT(request: Request) {
     if (isNaN(rate) || rate < 0 || rate > 100) {
       return NextResponse.json({ error: "taxRate must be between 0 and 100" }, { status: 400 });
     }
-    data.taxRate = rate / 100;
+    bpData.taxRate = rate / 100;
   }
 
   if (body.fiscalYearStart !== undefined) {
@@ -61,7 +63,7 @@ export async function PUT(request: Request) {
     if (!Number.isInteger(month) || month < 1 || month > 12) {
       return NextResponse.json({ error: "fiscalYearStart must be 1-12" }, { status: 400 });
     }
-    data.fiscalYearStart = month;
+    bpData.fiscalYearStart = month;
   }
 
   if (body.taxSavingsAmount !== undefined) {
@@ -69,7 +71,7 @@ export async function PUT(request: Request) {
     if (isNaN(amount) || amount < 0) {
       return NextResponse.json({ error: "taxSavingsAmount must be a non-negative number" }, { status: 400 });
     }
-    data.taxSavingsAmount = amount;
+    bpData.taxSavingsAmount = amount;
   }
 
   if (body.baseCurrency !== undefined) {
@@ -77,13 +79,23 @@ export async function PUT(request: Request) {
     if (currency.length !== 3) {
       return NextResponse.json({ error: "baseCurrency must be a 3-letter ISO code" }, { status: 400 });
     }
-    data.baseCurrency = currency;
+    bpData.baseCurrency = currency;
   }
 
-  await prisma.user.update({
-    where: { id: user.id },
-    data,
-  });
+  if (Object.keys(data).length > 0) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data,
+    });
+  }
+
+  if (Object.keys(bpData).length > 0) {
+    await prisma.businessProfile.upsert({
+      where: { userId: user.id },
+      create: { userId: user.id, ...bpData },
+      update: bpData,
+    });
+  }
 
   return NextResponse.json({ success: true });
 }

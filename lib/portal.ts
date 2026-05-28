@@ -13,6 +13,10 @@ export function generatePortalToken(): string {
   return randomBytes(32).toString("base64url");
 }
 
+export function getPortalUrl(token: string): string {
+  return `${process.env.NEXTAUTH_URL ?? "http://localhost:3000"}/portal/${token}`;
+}
+
 export async function createPortalToken(
   userId: string,
   clientEmail: string,
@@ -142,6 +146,7 @@ export async function getClientInvoices(userId: string, clientEmail: string) {
     status: inv.status,
     notes: inv.notes,
     paymentLink: inv.paymentLink,
+    paidAt: inv.paidAt,
     createdAt: inv.createdAt,
   }));
 }

@@ -14,6 +14,7 @@ export default async function SettingsPage() {
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
+    include: { businessProfile: true },
   });
 
   const schedule = await prisma.reminderSchedule.findFirst({
@@ -120,10 +121,10 @@ export default async function SettingsPage() {
         name: user!.name,
         email: user!.email,
         alertPreferences: parsedAlertPrefs,
-        taxRate: user!.taxRate,
-        fiscalYearStart: user!.fiscalYearStart,
-        taxSavingsAmount: user!.taxSavingsAmount,
-        baseCurrency: user!.baseCurrency,
+        taxRate: user!.businessProfile?.taxRate ?? 0.25,
+        fiscalYearStart: user!.businessProfile?.fiscalYearStart ?? 1,
+        taxSavingsAmount: user!.businessProfile?.taxSavingsAmount ?? 0,
+        baseCurrency: user!.businessProfile?.baseCurrency ?? "USD",
       }}
     />
   );
