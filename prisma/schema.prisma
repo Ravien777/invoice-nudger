@@ -39,6 +39,8 @@ model User {
   alertPreferences  Json?
   allocationProfile    AllocationProfile?
   allocationRecords    AllocationRecord[]
+  contracts            Contract[]
+  contractTemplates    ContractTemplate[]
   accounts         Account[]
   sessions         Session[]
   invoices         Invoice[]
@@ -495,4 +497,39 @@ model AllocationRecord {
 
   @@index([userId])
   @@index([userId, createdAt])
+}
+
+model ContractTemplate {
+  id        String     @id @default(cuid())
+  userId    String?    // null = system default template
+  user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  body      String     @db.Text  // HTML with {{variables}}
+  isDefault Boolean    @default(false)
+  contracts Contract[]
+  createdAt DateTime   @default(now())
+}
+
+model Contract {
+  id           String            @id @default(cuid())
+  userId       String
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  templateId   String?
+  template     ContractTemplate? @relation(fields: [templateId], references: [id])
+  quoteId      String?           @unique
+  invoiceId    String?
+  clientName   String
+  clientEmail  String
+  title        String
+  body         String            @db.Text   // final rendered content
+  status       String            @default("draft") // draft | sent | signed | declined
+  signingToken String            @unique @default(cuid())
+  signedAt     DateTime?
+  signedByName String?
+  signedByIp   String?
+  pdfUrl       String?
+  sentAt       DateTime?
+  expiresAt    DateTime?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
 }

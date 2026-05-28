@@ -41,7 +41,9 @@ export default async function DashboardPage() {
   const lastMonthStart = startOfMonth(subMonths(new Date(), 1));
   const lastMonthEnd = endOfMonth(subMonths(new Date(), 1));
 
-  const [unpaidCount, overdueCount, paidThisMonth, totalInvoices, monthlyInvoiceCount, reconciledCount, discrepancyCount, outstandingByCurrency, recentInvoices, paidLastMonth, expenseAgg, latestAllocation] =
+  const twoWeeksAgo = subDays(new Date(), 14);
+
+  const [unpaidCount, overdueCount, paidThisMonth, totalInvoices, monthlyInvoiceCount, reconciledCount, discrepancyCount, outstandingByCurrency, recentInvoices, paidLastMonth, expenseAgg, latestAllocation, recentSignedContracts] =
     await Promise.all([
       prisma.invoice.count({
         where: { userId: user!.id, status: "unpaid" },
@@ -98,6 +100,16 @@ export default async function DashboardPage() {
         where: { userId: user!.id },
         orderBy: { createdAt: "desc" },
         select: { ownerPayAmount: true, totalReceived: true, currency: true },
+      }),
+      prisma.contract.findMany({
+        where: {
+          userId: user!.id,
+          status: "signed",
+          signedAt: { gte: twoWeeksAgo },
+        },
+        orderBy: { signedAt: "desc" },
+        take: 3,
+        select: { id: true, clientName: true, title: true, signedAt: true },
       }),
     ]);
 
@@ -352,6 +364,25 @@ export default async function DashboardPage() {
                 Monthly Invoice Usage ({tier.name})
               </h2>
               <span className="text-sm font-medium text-[var(--success)]">Unlimited</span>
+            </div>
+          </div>
+        )}
+
+        {recentSignedContracts.length > 0 && (
+          <div className="mb-8 rounded-xl border border-border-default bg-surface p-6 shadow-sm">
+            <h2 className="text-sm font-medium text-text-primary mb-3">Recently Signed Contracts</h2>
+            <div className="space-y-3">
+              {recentSignedContracts.map((c) => (
+                <div key={c.id} className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-text-primary">{c.clientName}</p>
+                    <p className="text-xs text-text-tertiary">{c.title}</p>
+                  </div>
+                  <p className="text-xs text-text-tertiary">
+                    {c.signedAt && format(c.signedAt, "MMM d")}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         )}

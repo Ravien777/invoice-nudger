@@ -36,6 +36,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Invoices", icon: FileText, href: "/invoices", zone: 1 },
   { label: "Recurring", icon: Repeat, href: "/recurring", zone: 1 },
   { label: "Quotes", icon: ScrollText, href: "/quotes", zone: 1 },
+  { label: "Contracts", icon: FileText, href: "/contracts", zone: 1 },
   { label: "Clients", icon: Users, href: "/clients", zone: 1 },
   { label: "Expenses", icon: Receipt, href: "/expenses", zone: 1 },
   { label: "My Money", icon: Wallet, href: "/money", zone: 1 },
