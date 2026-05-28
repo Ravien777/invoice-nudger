@@ -33,10 +33,12 @@ model User {
   taxRate           Float            @default(0.25)
   fiscalYearStart   Int              @default(1)
   taxSavingsAmount  Float            @default(0)
-  baseCurrency      String           @default("USD")
+  baseCurrency      String     @default("USD")
   businessProfile   BusinessProfile?
   lastPayYourselfDate DateTime?
   alertPreferences  Json?
+  allocationProfile    AllocationProfile?
+  allocationRecords    AllocationRecord[]
   accounts         Account[]
   sessions         Session[]
   invoices         Invoice[]
@@ -463,4 +465,34 @@ model AccountantAccess {
   revokedAt       DateTime?
 
   @@unique([ownerId, accountantEmail])
+}
+
+model AllocationProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taxPercent      Float    @default(25)
+  operatingPercent Float   @default(30)
+  profitPercent   Float    @default(5)
+  ownerPayPercent Float    @default(40)
+  currency        String   @default("USD")
+  updatedAt       DateTime @updatedAt
+}
+
+model AllocationRecord {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invoiceId       String?
+  totalReceived   Float
+  taxAmount       Float
+  operatingAmount Float
+  profitAmount    Float
+  ownerPayAmount  Float
+  currency        String   @default("USD")
+  note            String?
+  createdAt       DateTime @default(now())
+
+  @@index([userId])
+  @@index([userId, createdAt])
 }

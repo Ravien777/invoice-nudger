@@ -41,7 +41,7 @@ export default async function DashboardPage() {
   const lastMonthStart = startOfMonth(subMonths(new Date(), 1));
   const lastMonthEnd = endOfMonth(subMonths(new Date(), 1));
 
-  const [unpaidCount, overdueCount, paidThisMonth, totalInvoices, monthlyInvoiceCount, reconciledCount, discrepancyCount, outstandingByCurrency, recentInvoices, paidLastMonth, expenseAgg] =
+  const [unpaidCount, overdueCount, paidThisMonth, totalInvoices, monthlyInvoiceCount, reconciledCount, discrepancyCount, outstandingByCurrency, recentInvoices, paidLastMonth, expenseAgg, latestAllocation] =
     await Promise.all([
       prisma.invoice.count({
         where: { userId: user!.id, status: "unpaid" },
@@ -93,6 +93,11 @@ export default async function DashboardPage() {
         where: { userId: user!.id, date: { gte: monthStart, lte: monthEnd } },
         _sum: { amount: true },
         _count: true,
+      }),
+      prisma.allocationRecord.findFirst({
+        where: { userId: user!.id },
+        orderBy: { createdAt: "desc" },
+        select: { ownerPayAmount: true, totalReceived: true, currency: true },
       }),
     ]);
 
@@ -364,12 +369,25 @@ export default async function DashboardPage() {
           <EfficiencyWidget metrics={efficiencyMetrics} plan={user!.plan} />
         </div>
 
-        <div className="mb-8 max-w-sm">
+        <div className="mb-8 grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
           <PayYourselfWidget
             available={payYourself.available}
             baseCurrency={bp.baseCurrency}
             hasAccess={tier.features.includes("cash_flow_forecast")}
           />
+          {latestAllocation && (
+            <div className="rounded-xl border border-border-default bg-surface-secondary p-6 shadow-sm">
+              <h2 className="text-sm font-medium text-text-secondary mb-1">
+                Your Next Pay Yourself Amount
+              </h2>
+              <p className="text-2xl font-bold text-text-primary mt-2">
+                {formatCurrency(latestAllocation.ownerPayAmount, latestAllocation.currency)}
+              </p>
+              <p className="text-xs text-text-tertiary mt-1">
+                from {formatCurrency(latestAllocation.totalReceived, latestAllocation.currency)} received
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="mb-8">

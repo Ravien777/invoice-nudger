@@ -1,0 +1,70 @@
+// @vitest-environment jsdom
+import { describe, it, expect } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { PageShell } from "@/app/components/layout/PageShell";
+import { SidebarProvider } from "@/app/components/layout/SidebarProvider";
+
+function renderWithProvider(ui: React.ReactElement) {
+  return render(<SidebarProvider>{ui}</SidebarProvider>);
+}
+
+describe("PageShell", () => {
+  it("renders the title", () => {
+    renderWithProvider(
+      <PageShell title="Test Title">
+        <p>content</p>
+      </PageShell>,
+    );
+    expect(screen.getByText("Test Title")).toBeInTheDocument();
+  });
+
+  it("renders the subtitle when provided", () => {
+    renderWithProvider(
+      <PageShell title="Title" subtitle="A subtitle">
+        <p>content</p>
+      </PageShell>,
+    );
+    expect(screen.getByText("A subtitle")).toBeInTheDocument();
+  });
+
+  it("does not render subtitle when not provided", () => {
+    renderWithProvider(
+      <PageShell title="Title">
+        <p>content</p>
+      </PageShell>,
+    );
+    expect(screen.queryByText("A subtitle")).not.toBeInTheDocument();
+  });
+
+  it("renders actions when provided", () => {
+    renderWithProvider(
+      <PageShell title="Title" actions={<button>Action</button>}>
+        <p>content</p>
+      </PageShell>,
+    );
+    expect(screen.getByText("Action")).toBeInTheDocument();
+  });
+
+  it("renders a mobile hamburger button with md:hidden", () => {
+    renderWithProvider(
+      <PageShell title="Title">
+        <p>content</p>
+      </PageShell>,
+    );
+    const buttons = screen.getAllByRole("button");
+    const hamburger = buttons.find(
+      (b) => b.classList.contains("md:hidden"),
+    );
+    expect(hamburger).toBeTruthy();
+    expect(hamburger?.querySelector("svg")).toBeTruthy();
+  });
+
+  it("renders children content", () => {
+    renderWithProvider(
+      <PageShell title="Title">
+        <p>child content</p>
+      </PageShell>,
+    );
+    expect(screen.getByText("child content")).toBeInTheDocument();
+  });
+});

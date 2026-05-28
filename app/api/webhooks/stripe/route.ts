@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
 import { createPaymentRecord } from "@/lib/reconciliation";
+import { createAllocationRecord } from "@/lib/allocation";
 
 function getStripe(): Stripe {
   return new Stripe(process.env.STRIPE_SECRET_KEY || "");
@@ -98,6 +99,13 @@ export async function POST(request: Request) {
               stepName: "auto_paid",
             },
           });
+
+          await createAllocationRecord(
+            invoice.userId,
+            invoice.amount,
+            invoice.currency,
+            invoice.id,
+          );
         }
       }
     }

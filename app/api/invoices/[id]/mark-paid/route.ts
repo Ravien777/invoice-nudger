@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createPaymentRecord } from "@/lib/reconciliation";
+import { createAllocationRecord } from "@/lib/allocation";
 import { computeClientProfilesForUser, recomputePaymentProbabilitiesForClient } from "@/lib/analytics";
 
 export async function POST(
@@ -54,6 +55,8 @@ export async function POST(
     paidAt: new Date(),
     notes: "Manually marked as paid",
   });
+
+  await createAllocationRecord(user.id, invoice.amount, invoice.currency, invoice.id);
 
   await prisma.reminderLog.create({
     data: {

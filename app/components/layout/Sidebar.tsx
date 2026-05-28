@@ -21,6 +21,7 @@ import {
   Receipt,
   Calculator,
   ScrollText,
+  Wallet,
 } from "lucide-react";
 
 interface NavItem {
@@ -37,6 +38,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Quotes", icon: ScrollText, href: "/quotes", zone: 1 },
   { label: "Clients", icon: Users, href: "/clients", zone: 1 },
   { label: "Expenses", icon: Receipt, href: "/expenses", zone: 1 },
+  { label: "My Money", icon: Wallet, href: "/money", zone: 1 },
   { label: "Tax", icon: Calculator, href: "/tax", zone: 1 },
   { label: "Benchmarks", icon: BarChart3, href: "/benchmarks", zone: 2 },
   { label: "Promises", icon: Handshake, href: "/promises", zone: 2 },

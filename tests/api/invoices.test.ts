@@ -8,6 +8,7 @@ import { GET as ItemGET, PUT as ItemPUT, DELETE as ItemDELETE } from "@/app/api/
 import { POST as MarkPaidPOST } from "@/app/api/invoices/[id]/mark-paid/route";
 
 vi.mock("@/lib/reconciliation");
+vi.mock("@/lib/allocation");
 vi.mock("@/lib/accountant-session");
 vi.mock("@/lib/subscriptions");
 
