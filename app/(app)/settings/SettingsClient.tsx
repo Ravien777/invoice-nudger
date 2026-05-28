@@ -119,6 +119,7 @@ interface UserProfile {
   fiscalYearStart: number;
   taxSavingsAmount: number;
   baseCurrency: string;
+  defaultHourlyRate: number;
 }
 
 interface SettingsClientProps {
@@ -219,6 +220,7 @@ export default function SettingsClient({
   const [fiscalYearStart, setFiscalYearStart] = useState(userProfile.fiscalYearStart);
   const [taxSavingsAmount, setTaxSavingsAmount] = useState(userProfile.taxSavingsAmount);
   const [baseCurrency, setBaseCurrency] = useState(userProfile.baseCurrency);
+  const [defaultHourlyRate, setDefaultHourlyRate] = useState(userProfile.defaultHourlyRate ?? 0);
   const [savingTax, setSavingTax] = useState(false);
 
   // Notifications tab
@@ -343,7 +345,7 @@ export default function SettingsClient({
       const res = await fetch("/api/settings/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ taxRate, fiscalYearStart, taxSavingsAmount, baseCurrency }),
+        body: JSON.stringify({ taxRate, fiscalYearStart, taxSavingsAmount, baseCurrency, defaultHourlyRate }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -778,6 +780,14 @@ export default function SettingsClient({
                     <option key={c.code} value={c.code}>{c.label}</option>
                   ))}
                 </Select>
+              </FormField>
+              <FormField label="Default hourly rate ($)" hint="Used when creating invoices from time entries">
+                <Input
+                  type="number"
+                  min="0"
+                  value={defaultHourlyRate}
+                  onChange={(e) => setDefaultHourlyRate(Number(e.target.value) || 0)}
+                />
               </FormField>
               <div className="pt-2">
                 <Button onClick={handleSaveTax} loading={savingTax} size="sm">

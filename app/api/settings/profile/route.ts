@@ -82,6 +82,14 @@ export async function PUT(request: Request) {
     bpData.baseCurrency = currency;
   }
 
+  if (body.defaultHourlyRate !== undefined) {
+    const rate = Number(body.defaultHourlyRate);
+    if (isNaN(rate) || rate < 0) {
+      return NextResponse.json({ error: "defaultHourlyRate must be a non-negative number" }, { status: 400 });
+    }
+    bpData.defaultHourlyRate = rate;
+  }
+
   if (Object.keys(data).length > 0) {
     await prisma.user.update({
       where: { id: user.id },

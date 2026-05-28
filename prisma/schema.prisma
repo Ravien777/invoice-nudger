@@ -60,8 +60,11 @@ model User {
   notifications    Notification[]
   expenses         Expense[]
   expenseCategories ExpenseCategory[]
+  timeEntries      TimeEntry[]
   quotes           Quote[]
   recurringInvoices RecurringInvoice[]
+  bankConnections   BankConnection[]
+  bankTransactions  BankTransaction[]
   accountantAccess  AccountantAccess[] @relation("OwnerAccess")
 }
 
@@ -380,6 +383,56 @@ model Expense {
   notes         String?
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
+}
+
+model TimeEntry {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clientEmail     String
+  clientName      String?
+  description     String?
+  startTime       DateTime
+  endTime         DateTime?
+  durationMinutes Int?
+  hourlyRate      Float?
+  invoiced        Boolean   @default(false)
+  invoiceId       String?
+  createdAt       DateTime  @default(now())
+}
+
+model BankConnection {
+  id              String            @id @default(cuid())
+  userId          String
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider        String            @default("plaid")
+  accessToken     String
+  itemId          String?
+  institutionName String?
+  accountName     String?
+  accountMask     String?
+  status          String            @default("active")
+  lastSyncAt      DateTime?
+  createdAt       DateTime          @default(now())
+  transactions    BankTransaction[]
+}
+
+model BankTransaction {
+  id               String          @id @default(cuid())
+  userId           String
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  connectionId     String
+  connection       BankConnection  @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  externalId       String          @unique
+  date             DateTime        @db.Date
+  description      String
+  amount           Float
+  currency         String          @default("USD")
+  category         String?
+  matchedInvoiceId String?
+  matchedExpenseId String?
+  status           String          @default("unmatched")
+  createdAt        DateTime        @default(now())
 }
 
 model Quote {

@@ -125,6 +125,7 @@ export default async function SettingsPage() {
         fiscalYearStart: user!.businessProfile?.fiscalYearStart ?? 1,
         taxSavingsAmount: user!.businessProfile?.taxSavingsAmount ?? 0,
         baseCurrency: user!.businessProfile?.baseCurrency ?? "USD",
+        defaultHourlyRate: user!.businessProfile?.defaultHourlyRate ?? 0,
       }}
     />
   );

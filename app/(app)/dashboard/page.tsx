@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
-import { startOfMonth, endOfMonth, subMonths, differenceInCalendarDays, subDays, format } from "date-fns";
+import { startOfMonth, endOfMonth, subMonths, differenceInCalendarDays, subDays, startOfWeek, format } from "date-fns";
 import Link from "next/link";
 import { Plus, FileText, AlertCircle, CheckCircle, Receipt } from "lucide-react";
 import DashboardClient from "./DashboardClient";
@@ -42,8 +42,9 @@ export default async function DashboardPage() {
   const lastMonthEnd = endOfMonth(subMonths(new Date(), 1));
 
   const twoWeeksAgo = subDays(new Date(), 14);
+  const thisWeekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
 
-  const [unpaidCount, overdueCount, paidThisMonth, totalInvoices, monthlyInvoiceCount, reconciledCount, discrepancyCount, outstandingByCurrency, recentInvoices, paidLastMonth, expenseAgg, latestAllocation, recentSignedContracts] =
+  const [unpaidCount, overdueCount, paidThisMonth, totalInvoices, monthlyInvoiceCount, reconciledCount, discrepancyCount, outstandingByCurrency, recentInvoices, paidLastMonth, expenseAgg, latestAllocation, recentSignedContracts, timeThisWeek] =
     await Promise.all([
       prisma.invoice.count({
         where: { userId: user!.id, status: "unpaid" },
@@ -110,6 +111,11 @@ export default async function DashboardPage() {
         orderBy: { signedAt: "desc" },
         take: 3,
         select: { id: true, clientName: true, title: true, signedAt: true },
+      }),
+      prisma.timeEntry.aggregate({
+        where: { userId: user!.id, startTime: { gte: thisWeekStart }, endTime: { not: null } },
+        _sum: { durationMinutes: true },
+        _count: true,
       }),
     ]);
 
@@ -420,6 +426,22 @@ export default async function DashboardPage() {
             </div>
           )}
         </div>
+
+        {timeThisWeek._count > 0 && (
+          <div className="mb-8 rounded-xl border border-border-default bg-surface p-6 shadow-sm max-w-sm">
+            <h2 className="text-sm font-medium text-text-secondary mb-1">
+              Time Tracked This Week
+            </h2>
+            <p className="text-2xl font-bold text-text-primary mt-2">
+              {timeThisWeek._sum.durationMinutes
+                ? `${Math.floor(timeThisWeek._sum.durationMinutes / 60)}h ${Math.round(timeThisWeek._sum.durationMinutes % 60)}m`
+                : "0h"}
+            </p>
+            <p className="text-xs text-text-tertiary mt-1">
+              {timeThisWeek._count} entr{timeThisWeek._count === 1 ? "y" : "ies"}
+            </p>
+          </div>
+        )}
 
         <div className="mb-8">
           <ForecastWidget forecast={forecast} hasAccess={hasForecastAccess} />
