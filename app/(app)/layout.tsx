@@ -19,8 +19,7 @@ export default async function AppLayout({
     <div className="flex min-h-screen bg-surface-primary">
       <Sidebar />
       <div
-        className="flex-1 flex flex-col min-w-0 transition-all duration-300"
-        style={{ marginLeft: "var(--sidebar-current-width, 220px)" }}
+        className="flex-1 flex flex-col min-w-0 transition-all duration-300 ml-0 md:ml-[var(--sidebar-current-width,220px)]"
       >
         <header className="h-14 flex items-center justify-end gap-2 px-6 border-b border-border-default bg-surface-primary shrink-0">
           <HeaderActions />

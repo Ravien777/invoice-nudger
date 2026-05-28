@@ -147,8 +147,8 @@ export default function ClientsClient({
               Client Email{sortArrow("clientEmail")}
             </TableCell>
             <TableCell>Total Invoices</TableCell>
-            <TableCell>On-Time %</TableCell>
-            <TableCell>Avg Days Late</TableCell>
+            <TableCell hideBelow="md">On-Time %</TableCell>
+            <TableCell hideBelow="md">Avg Days Late</TableCell>
             <TableCell
               onClick={() => toggleSort("riskScore")}
               className="cursor-pointer hover:text-text-primary"
@@ -164,6 +164,7 @@ export default function ClientsClient({
             <TableCell
               onClick={() => toggleSort("lastPaymentDate")}
               className="cursor-pointer hover:text-text-primary"
+              hideBelow="sm"
             >
               Last Payment{sortArrow("lastPaymentDate")}
             </TableCell>
@@ -184,10 +185,10 @@ export default function ClientsClient({
                   {p.clientEmail}
                 </TableCell>
                 <TableCell>{p.totalInvoices}</TableCell>
-                <TableCell>
+                <TableCell hideBelow="md">
                   {onTimePercent(p.paidInvoices, p.onTimePayments)}
                 </TableCell>
-                <TableCell>
+                <TableCell hideBelow="md">
                   {p.avgDaysLate !== null
                     ? `${p.avgDaysLate.toFixed(1)} days`
                     : "-"}
@@ -202,7 +203,7 @@ export default function ClientsClient({
                 <TableCell className="font-medium text-text-primary">
                   {formatCurrency(p.totalAmount)}
                 </TableCell>
-                <TableCell>{formatDate(p.lastPaymentDate)}</TableCell>
+                <TableCell hideBelow="sm">{formatDate(p.lastPaymentDate)}</TableCell>
               </TableRow>
             );
           })}

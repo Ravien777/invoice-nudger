@@ -405,11 +405,11 @@ export default function ExpensesClient({
               <TableRow>
                 <TableCell>Date</TableCell>
                 <TableCell>Description</TableCell>
-                <TableCell>Vendor</TableCell>
-                <TableCell>Category</TableCell>
+                <TableCell hideBelow="sm">Vendor</TableCell>
+                <TableCell hideBelow="sm">Category</TableCell>
                 <TableCell className="text-center">Recpt</TableCell>
                 <TableCell>Amount</TableCell>
-                <TableCell>Tax Deductible</TableCell>
+                <TableCell hideBelow="md">Tax Deductible</TableCell>
                 <TableCell className="text-right">Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -422,10 +422,10 @@ export default function ExpensesClient({
                   <TableCell className="font-medium text-text-primary">
                     {expense.description}
                   </TableCell>
-                  <TableCell className="text-sm text-text-secondary">
+                  <TableCell className="text-sm text-text-secondary" hideBelow="sm">
                     {expense.vendor || "-"}
                   </TableCell>
-                  <TableCell>
+                  <TableCell hideBelow="sm">
                     {expense.category ? (
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-tertiary px-2.5 py-0.5 text-xs text-text-secondary">
                         {expense.category.name}
@@ -451,7 +451,7 @@ export default function ExpensesClient({
                   <TableCell className="font-medium text-text-primary">
                     {formatCurrency(expense.amount, expense.currency)}
                   </TableCell>
-                  <TableCell>
+                  <TableCell hideBelow="md">
                     {expense.taxDeductible ? (
                       <span className="text-xs text-[var(--success)]">Yes</span>
                     ) : (

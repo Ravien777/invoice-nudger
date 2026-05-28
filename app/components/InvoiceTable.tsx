@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { Pencil, Link as LinkIcon, Check, Sparkles, Bell, Trash2 } from "lucide-react";
 import { Table, TableHead, TableBody, TableRow, TableCell } from "@/app/components/ui/Table";
 import { Badge, type BadgeVariant } from "@/app/components/ui/Badge";
 import { formatCurrency } from "@/lib/format-currency";
@@ -307,9 +308,9 @@ export default function InvoiceTable({
           <TableCell>Invoice #</TableCell>
           <TableCell>Client</TableCell>
           <TableCell>Amount</TableCell>
-          <TableCell>Due Date</TableCell>
+          <TableCell hideBelow="sm">Due Date</TableCell>
           <TableCell>Status</TableCell>
-          {PROBABILITY_PLAN.includes(userPlan) && <TableCell>Prob.</TableCell>}
+          {PROBABILITY_PLAN.includes(userPlan) && <TableCell hideBelow="md">Prob.</TableCell>}
           <TableCell>Actions</TableCell>
         </TableRow>
       </TableHead>
@@ -372,7 +373,7 @@ export default function InvoiceTable({
                   </div>
                 )}
               </TableCell>
-              <TableCell className="text-text-secondary">
+              <TableCell className="text-text-secondary" hideBelow="sm">
                 {formatDate(inv.dueDate)}
               </TableCell>
               <TableCell>
@@ -430,7 +431,7 @@ export default function InvoiceTable({
                 </div>
               </TableCell>
               {PROBABILITY_PLAN.includes(userPlan) && (
-                <TableCell>
+                <TableCell hideBelow="md">
                   {inv.status !== "paid" && inv.status !== "cancelled"
                     ? probabilityBadge(probabilities[inv.id], userPlan)
                     : <span className="text-xs text-text-secondary">—</span>}
@@ -452,30 +453,31 @@ export default function InvoiceTable({
                       variant="ghost"
                       size="sm"
                       className="text-accent"
+                      title="Payment Link"
                       onClick={() => handleCreatePaymentLink(inv.id)}
                       disabled={creatingLink === inv.id}
                       loading={creatingLink === inv.id}
-                    >
-                      {creatingLink === inv.id ? "Creating..." : "Payment Link"}
-                    </Button>
+                      icon={LinkIcon}
+                    />
                   ) : null}
                   <Link
                     href={`/invoices/${inv.id}/edit`}
-                    className="rounded-md px-2 py-1 text-xs font-medium text-accent transition hover:bg-surface-tertiary"
+                    className="rounded-md p-1.5 text-accent hover:bg-surface-tertiary transition-colors"
+                    title="Edit"
                   >
-                    Edit
+                    <Pencil className="h-4 w-4" />
                   </Link>
                   {inv.status !== "paid" && inv.status !== "cancelled" && (
                     <Button
                       variant="ghost"
                       size="sm"
                       className="text-success"
+                      title="Mark Paid"
                       onClick={() => handleMarkPaid(inv.id)}
                       disabled={markingPaid === inv.id}
                       loading={markingPaid === inv.id}
-                    >
-                      {markingPaid === inv.id ? "Marking..." : "Mark Paid"}
-                    </Button>
+                      icon={Check}
+                    />
                   )}
                   {inv.status !== "paid" &&
                     inv.status !== "cancelled" &&
@@ -487,10 +489,10 @@ export default function InvoiceTable({
                             variant="ghost"
                             size="sm"
                             className="text-purple-500"
+                            title="Generate AI"
                             onClick={() => onGenerateAI(inv.id)}
-                          >
-                            Generate AI
-                          </Button>
+                            icon={Sparkles}
+                          />
                         )}
                         <div
                         className="relative"
@@ -500,6 +502,7 @@ export default function InvoiceTable({
                           variant="ghost"
                           size="sm"
                           className="text-accent"
+                          title="Send Reminder"
                           onClick={() =>
                             setOpenDropdown(
                               openDropdown === inv.id ? null : inv.id,
@@ -507,9 +510,8 @@ export default function InvoiceTable({
                           }
                           disabled={sending === inv.id}
                           loading={sending === inv.id}
-                        >
-                          {sending === inv.id ? "Sending..." : "Send Reminder"}
-                        </Button>
+                          icon={Bell}
+                        />
                         {openDropdown === inv.id && (
                           <div className="absolute right-0 z-10 mt-1 w-64 rounded-lg border border-border-default bg-surface-secondary shadow-lg">
                             <div className="py-1">
@@ -574,12 +576,12 @@ export default function InvoiceTable({
                     variant="ghost"
                     size="sm"
                     className="text-danger"
+                    title="Delete"
                     onClick={() => handleDelete(inv.id)}
                     disabled={deleting === inv.id}
                     loading={deleting === inv.id}
-                  >
-                    {deleting === inv.id ? "Deleting..." : "Delete"}
-                  </Button>
+                    icon={Trash2}
+                  />
                 </div>
               </TableCell>
             </TableRow>

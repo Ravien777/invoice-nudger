@@ -298,9 +298,9 @@ export default function InvoicesClient({
               setDateFrom(e.target.value);
               setCurrentPage(1);
             }}
-            className="w-36"
+            className="min-w-0 flex-1"
           />
-          <span className="text-text-tertiary text-sm">—</span>
+          <span className="text-text-tertiary text-sm shrink-0">—</span>
           <Input
             type="date"
             value={dateTo}
@@ -308,7 +308,7 @@ export default function InvoicesClient({
               setDateTo(e.target.value);
               setCurrentPage(1);
             }}
-            className="w-36"
+            className="min-w-0 flex-1"
           />
         </div>
 

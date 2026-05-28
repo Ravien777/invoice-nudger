@@ -58,16 +58,24 @@ interface TableCellProps {
   className?: string;
   colSpan?: number;
   onClick?: (e: React.MouseEvent) => void;
+  hideBelow?: "sm" | "md" | "lg";
 }
 
-export function TableCell({ children, className = "", colSpan, onClick }: TableCellProps) {
+const HIDE_CLASSES: Record<string, string> = {
+  sm: "hidden sm:table-cell",
+  md: "hidden md:table-cell",
+  lg: "hidden lg:table-cell",
+};
+
+export function TableCell({ children, className = "", colSpan, onClick, hideBelow }: TableCellProps) {
   const isHeader = useContext(TableHeadContext);
   const Tag = isHeader ? "th" : "td";
+  const hideClass = hideBelow ? HIDE_CLASSES[hideBelow] : "";
   const base = isHeader
     ? "px-4 py-3 text-xs font-medium text-text-secondary uppercase tracking-wider text-left"
     : "px-4 py-3 text-sm text-text-secondary";
   return (
-    <Tag className={`${base} ${className}`} colSpan={colSpan} onClick={onClick}>
+    <Tag className={`${base} ${hideClass} ${className}`} colSpan={colSpan} onClick={onClick}>
       {children}
     </Tag>
   );

@@ -1122,12 +1122,12 @@ export default function SettingsClient({
                 {steps.map((step, index) => (
                   <div
                     key={step.id ?? index}
-                    className="flex items-center gap-3 rounded-lg border border-border bg-surface-muted p-3"
+                    className="flex items-start gap-3 rounded-lg border border-border bg-surface-muted p-3 sm:items-center"
                   >
-                    <span className="w-6 text-center text-sm font-medium text-muted">
+                    <span className="w-6 text-center text-sm font-medium text-muted mt-1.5 sm:mt-0">
                       {index + 1}
                     </span>
-                    <div className="flex-1 grid grid-cols-2 gap-3">
+                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <FormField label="Days offset">
                         <Input
                           type="number"
