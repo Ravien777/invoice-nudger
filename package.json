@@ -23,6 +23,7 @@
     "nodemailer": "^7.0.13",
     "openai": "^6.38.0",
     "papaparse": "^5.5.3",
+    "pdf-parse": "^2.4.5",
     "plaid": "^42.2.0",
     "prisma": "^4.16.0",
     "react": "19.2.4",

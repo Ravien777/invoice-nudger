@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
-import { Trash2, Mail, UserX } from "lucide-react";
+import { Trash2, Mail, UserX, Users } from "lucide-react";
 
 import { currenciesWithSymbol } from "@/lib/format-currency";
 
@@ -111,6 +111,22 @@ interface AccountantAccessItem {
   revokedAt: string | null;
 }
 
+interface TeamMemberItem {
+  id: string;
+  memberEmail: string;
+  role: string;
+  status: string;
+  invitedAt: string;
+  acceptedAt: string | null;
+  removedAt: string | null;
+}
+
+interface TeamSettings {
+  members: TeamMemberItem[];
+  hasAccess: boolean;
+  tier: { name: string; teamSeats: number };
+}
+
 interface UserProfile {
   name: string | null;
   email: string;
@@ -120,6 +136,7 @@ interface UserProfile {
   taxSavingsAmount: number;
   baseCurrency: string;
   defaultHourlyRate: number;
+  receiptEmail: string | null;
 }
 
 interface SettingsClientProps {
@@ -134,6 +151,7 @@ interface SettingsClientProps {
   industrySettings: IndustrySettings;
   userProfile: UserProfile;
   accountantAccess: AccountantAccessItem[];
+  teamSettings: TeamSettings;
 }
 
 // ---------------------------------------------------------------------------
@@ -151,7 +169,7 @@ const platformConfig: Record<string, { label: string; color: string; icon: strin
   quickbooks: { label: "QuickBooks", color: "#2CA01C", icon: "QB" },
 };
 
-type Tab = "profile" | "business" | "notifications" | "accountant" | "billing" | "danger";
+type Tab = "profile" | "business" | "notifications" | "accountant" | "team" | "billing" | "danger";
 
 // ---------------------------------------------------------------------------
 // Sub-components
@@ -204,6 +222,7 @@ export default function SettingsClient({
   industrySettings,
   userProfile,
   accountantAccess: initialAccountantAccess,
+  teamSettings,
 }: SettingsClientProps) {
   const [activeTab, setActiveTab] = useState<Tab>("profile");
 
@@ -250,6 +269,12 @@ export default function SettingsClient({
   const [accountantAccess, setAccountantAccess] = useState(initialAccountantAccess);
   const [inviteEmail, setInviteEmail] = useState("");
   const [sendingInvite, setSendingInvite] = useState(false);
+
+  // Team tab
+  const [teamMembers, setTeamMembers] = useState(teamSettings.members);
+  const [teamInviteEmail, setTeamInviteEmail] = useState("");
+  const [teamInviteRole, setTeamInviteRole] = useState("member");
+  const [sendingTeamInvite, setSendingTeamInvite] = useState(false);
 
   // Danger Zone
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -610,6 +635,71 @@ export default function SettingsClient({
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // Team handlers
+  // ---------------------------------------------------------------------------
+
+  async function handleInviteTeamMember() {
+    if (!teamInviteEmail || !teamInviteEmail.includes("@")) {
+      toast.error("Enter a valid email address");
+      return;
+    }
+
+    setSendingTeamInvite(true);
+    try {
+      const res = await fetch("/api/team/invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: teamInviteEmail, role: teamInviteRole }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Failed to send invitation");
+        return;
+      }
+
+      toast.success("Team invitation sent");
+      setTeamInviteEmail("");
+      setTeamMembers((prev) => [
+        ...prev,
+        {
+          id: data.id || crypto.randomUUID(),
+          memberEmail: teamInviteEmail,
+          role: teamInviteRole,
+          status: "pending",
+          invitedAt: new Date().toISOString(),
+          acceptedAt: null,
+          removedAt: null,
+        },
+      ]);
+    } catch {
+      toast.error("Network error");
+    } finally {
+      setSendingTeamInvite(false);
+    }
+  }
+
+  async function handleRemoveTeamMember(id: string) {
+    if (!confirm("Remove this team member?")) return;
+    try {
+      const res = await fetch(`/api/team/${id}/remove`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        toast.error(data.error || "Failed to remove team member");
+        return;
+      }
+      toast.success("Team member removed");
+      setTeamMembers((prev) =>
+        prev.map((tm) => (tm.id === id ? { ...tm, status: "removed", removedAt: new Date().toISOString() } : tm)),
+      );
+    } catch {
+      toast.error("Network error");
+    }
+  }
+
   // -----------------------------------------------------------------------
   // Render
   // -----------------------------------------------------------------------
@@ -621,6 +711,7 @@ export default function SettingsClient({
         <TabBtn onClick={() => setActiveTab("business")} active={activeTab === "business"}>Business</TabBtn>
         <TabBtn onClick={() => setActiveTab("notifications")} active={activeTab === "notifications"}>Notifications</TabBtn>
         <TabBtn onClick={() => setActiveTab("accountant")} active={activeTab === "accountant"}>Accountant</TabBtn>
+        <TabBtn onClick={() => setActiveTab("team")} active={activeTab === "team"}>Team</TabBtn>
         <TabBtn onClick={() => setActiveTab("billing")} active={activeTab === "billing"}>Billing</TabBtn>
         <TabBtn onClick={() => setActiveTab("danger")} active={activeTab === "danger"}>Danger Zone</TabBtn>
       </div>
@@ -795,6 +886,36 @@ export default function SettingsClient({
                 </Button>
               </div>
             </div>
+          </div>
+
+          {/* Receipt Email */}
+          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+            <h2 className="mb-4 text-lg font-semibold text-foreground">Receipt Email</h2>
+            <p className="text-sm text-muted mb-4">
+              Forward any receipt email to your unique address. We'll log it as an expense automatically.
+            </p>
+            {userProfile.receiptEmail ? (
+              <div className="space-y-3 max-w-md">
+                <div className="flex items-center gap-2">
+                  <Input value={userProfile.receiptEmail} readOnly className="flex-1" />
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => {
+                      navigator.clipboard.writeText(userProfile.receiptEmail ?? "");
+                      toast.success("Email address copied");
+                    }}
+                  >
+                    Copy
+                  </Button>
+                </div>
+                <p className="text-xs text-muted">
+                  Send or forward receipt emails to this address. We'll extract the amount, vendor, and date, then create an expense record.
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-muted">Generating your receipt email address...</p>
+            )}
           </div>
         </div>
       )}
@@ -1381,6 +1502,132 @@ TWILIO_WHATSAPP_NUMBER=+14155238886`}
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ================================================================= */}
+      {/* TEAM TAB */}
+      {/* ================================================================= */}
+      {activeTab === "team" && (
+        <div className="space-y-6">
+          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+            <h2 className="mb-4 text-lg font-semibold text-foreground">Team Members</h2>
+
+            {teamSettings.hasAccess ? (
+              <>
+                <p className="text-sm text-muted mb-6">
+                  Invite team members to your account. Members can create and edit invoices,
+                  expenses, and time entries. Viewers have read-only access.
+                </p>
+
+                {/* Seat count */}
+                <p className="text-xs text-muted mb-4">
+                  {teamMembers.filter((m) => m.status !== "removed").length + 1} of{" "}
+                  {teamSettings.tier.teamSeats} seats used (you count as 1)
+                </p>
+
+                {/* Invite form */}
+                <div className="mb-6 max-w-md space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-muted mb-2">Email address</label>
+                    <div className="flex gap-2">
+                      <Input
+                        type="email"
+                        value={teamInviteEmail}
+                        onChange={(e) => setTeamInviteEmail(e.target.value)}
+                        placeholder="teammate@example.com"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-end gap-2">
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-muted mb-2">Role</label>
+                      <select
+                        value={teamInviteRole}
+                        onChange={(e) => setTeamInviteRole(e.target.value)}
+                        className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground"
+                      >
+                        <option value="member">Member (can create & edit)</option>
+                        <option value="viewer">Viewer (read-only)</option>
+                      </select>
+                    </div>
+                    <Button onClick={handleInviteTeamMember} loading={sendingTeamInvite} size="sm">
+                      Send Invite
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Member list */}
+                {teamMembers.length === 0 ? (
+                  <div className="rounded-lg bg-surface-muted p-6 text-center">
+                    <Users className="mx-auto h-8 w-8 text-muted mb-3" />
+                    <p className="text-sm text-muted">No team members yet.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {teamMembers.map((member) => (
+                      <div
+                        key={member.id}
+                        className="flex items-center justify-between rounded-lg border border-border bg-surface-muted p-4"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="h-8 w-8 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
+                            <Users className="h-4 w-4 text-accent" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">{member.memberEmail}</p>
+                            <p className="text-xs text-muted">
+                              Role: <span className="capitalize">{member.role}</span>
+                              {" — "}
+                              {member.status === "active" && "Active"}
+                              {member.status === "pending" && "Invitation sent"}
+                              {member.status === "removed" && `Removed${member.removedAt ? ` on ${new Date(member.removedAt).toLocaleDateString()}` : ""}`}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span
+                            className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
+                              member.status === "active"
+                                ? "bg-[var(--success-muted)] text-[var(--success)]"
+                                : member.status === "pending"
+                                ? "bg-[var(--warning-muted)] text-[var(--warning)]"
+                                : "bg-surface-muted text-muted"
+                            }`}
+                          >
+                            {member.status}
+                          </span>
+                          {member.status !== "removed" && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="p-1.5"
+                              onClick={() => handleRemoveTeamMember(member.id)}
+                              icon={UserX}
+                              title="Remove member"
+                            />
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="rounded-lg bg-surface-muted p-6 text-center">
+                <Users className="mx-auto h-8 w-8 text-muted mb-3" />
+                <p className="text-sm text-muted mb-4">
+                  Team members are available on the Agency plan.
+                </p>
+                <Link href="/settings/billing">
+                  <Button variant="primary" size="sm">
+                    Upgrade to Agency
+                  </Button>
+                </Link>
               </div>
             )}
           </div>

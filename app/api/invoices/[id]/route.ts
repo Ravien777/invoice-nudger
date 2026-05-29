@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { invoiceSchema } from "@/lib/validations";
 import { computePaymentProbabilityForInvoice } from "@/lib/analytics";
 import { getOwnerIdForAccountant } from "@/lib/accountant-session";
+import { getTeamContext } from "@/lib/team-session";
 
 async function getInvoiceAndVerify(id: string, userId: string) {
   const invoice = await prisma.invoice.findUnique({
@@ -41,8 +42,9 @@ export async function GET(
   }
 
   const { id } = await params;
-  const accountantOwnerId = await getOwnerIdForAccountant(session.user.email);
-  const effectiveUserId = accountantOwnerId ?? user.id;
+  const teamCtx = await getTeamContext(session);
+  const accountantOwnerId = teamCtx ? null : await getOwnerIdForAccountant(session.user.email);
+  const effectiveUserId = teamCtx?.ownerId ?? accountantOwnerId ?? user.id;
   const result = await getInvoiceAndVerify(id, effectiveUserId);
 
   if (result === "unauthorized") {
@@ -75,12 +77,17 @@ export async function PUT(
   }
 
   const { id } = await params;
-  const accountantOwnerId = await getOwnerIdForAccountant(session.user.email);
+  const teamCtx = await getTeamContext(session);
+  if (teamCtx?.role === "viewer") {
+    return NextResponse.json({ error: "Read-only access." }, { status: 403 });
+  }
+  const accountantOwnerId = teamCtx ? null : await getOwnerIdForAccountant(session.user.email);
   if (accountantOwnerId) {
     return NextResponse.json({ error: "Accountant access is read-only." }, { status: 403 });
   }
 
-  const result = await getInvoiceAndVerify(id, user.id);
+  const effectiveUserId = teamCtx?.ownerId ?? user.id;
+  const result = await getInvoiceAndVerify(id, effectiveUserId);
 
   if (result === "unauthorized") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -106,7 +113,7 @@ export async function PUT(
   let scheduleId: string | null = null;
   if (reminderScheduleId) {
     const schedule = await prisma.reminderSchedule.findFirst({
-      where: { id: reminderScheduleId, userId: user.id },
+      where: { id: reminderScheduleId, userId: effectiveUserId },
     });
     if (schedule) {
       scheduleId = schedule.id;
@@ -177,6 +184,10 @@ export async function DELETE(
   }
 
   const { id } = await params;
+  const teamCtx = await getTeamContext(session);
+  if (teamCtx) {
+    return NextResponse.json({ error: "Only the account owner can delete invoices." }, { status: 403 });
+  }
   const accountantOwnerId = await getOwnerIdForAccountant(session.user.email);
   if (accountantOwnerId) {
     return NextResponse.json({ error: "Accountant access is read-only." }, { status: 403 });

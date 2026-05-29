@@ -50,6 +50,7 @@ export default async function InvoicesPage() {
     createdAt: inv.createdAt.toISOString(),
     updatedAt: inv.updatedAt.toISOString(),
     paidAt: inv.paidAt?.toISOString() ?? null,
+    paidOutAt: inv.paidOutAt?.toISOString() ?? null,
     promisedDate: inv.promisedDate?.toISOString() ?? null,
   }));
 

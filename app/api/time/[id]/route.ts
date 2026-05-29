@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { getTeamContext } from "@/lib/team-session";
 
 const updateSchema = z.object({
   clientEmail: z.string().email().optional(),
@@ -30,9 +31,12 @@ export async function GET(
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
+  const teamCtx = await getTeamContext(session);
+  const effectiveUserId = teamCtx?.ownerId ?? user.id;
+
   const { id } = await params;
   const entry = await prisma.timeEntry.findFirst({
-    where: { id, userId: user.id },
+    where: { id, userId: effectiveUserId },
   });
   if (!entry) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -57,9 +61,16 @@ export async function PUT(
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
+  const teamCtx = await getTeamContext(session);
+  if (teamCtx?.role === "viewer") {
+    return NextResponse.json({ error: "Read-only access." }, { status: 403 });
+  }
+
+  const effectiveUserId = teamCtx?.ownerId ?? user.id;
+
   const { id } = await params;
   const existing = await prisma.timeEntry.findFirst({
-    where: { id, userId: user.id },
+    where: { id, userId: effectiveUserId },
   });
   if (!existing) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -103,6 +114,11 @@ export async function DELETE(
   });
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+
+  const teamCtx = await getTeamContext(session);
+  if (teamCtx) {
+    return NextResponse.json({ error: "Only the account owner can delete time entries." }, { status: 403 });
   }
 
   const { id } = await params;

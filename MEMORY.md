@@ -215,27 +215,48 @@ All authenticated pages now use a unified dark theme with collapsible sidebar, `
 
 ---
 
+## Phase P — Contractor Payroll (Micro-Teams) (Complete)
+
+| Feature | Decision | Rationale | Rejected alternatives |
+|---|---|---|---|
+| Contractor schema | `Contractor` + `ContractorPayment` Prisma models with `businessName`/`businessAddress` on `BusinessProfile` | Clean separation; BusinessProfile already exists for company info | Adding fields to User (mixes personal with business) |
+| Pay endpoint | `POST /api/contractors/[id]/pay` — creates `ContractorPayment` + `Expense` + payslip PDF + email | Single request does everything — user clicks "Pay" and it's done | Separate create-expense + generate-pdf + send-email steps (more API calls, more failure modes) |
+| Payslip PDF | React-PDF component in `lib/payslip-pdf.tsx`, generated inline via `@react-pdf/renderer` | Follows existing contract-pdf pattern; no new PDF library | Puppeteer (heavy, slow cold start), PDFKit (different API, new dependency) |
+| Payslip storage | Uploaded to Vercel Blob at `payslips/[userId]/[paymentId].pdf` | Matches receipt upload pattern; no custom storage infra | Local filesystem (doesn't scale), S3 directly (more boilerplate) |
+| Expense auto-creation | `ContractorPayment` creation auto-creates linked `Expense` with "Professional Services" category | Tax deduction recorded automatically — user doesn't need a separate step | Manual expense entry (forgotten, inaccurate records) |
+| Category fallback | Finds or creates "Professional Services" category on pay | Works for users who skipped seed or deleted defaults | Requiring pre-seeded category (fragile) |
+| Contractor deletion | Blocked if any payment records exist (`_count.payments > 0`) | Data integrity — orphan payments would break expense links | Cascade delete (loses financial records) |
+| Payroll UI | Two-tab layout: "Contractors" + "Payment History" | Clean separation of management vs history | Single list (too noisy), separate pages (more nav) |
+| Agency gating | Only Agency plan users see full UI; Free/Pro see upgrade prompt | Contractor payroll is a high-value team feature | Free tier access (no monetisation lever) |
+| Sidebar placement | "Payroll" in Zone 1 (main features) after Tax | Primary financial feature, not a setting | Zone 3 / Settings (logically incorrect despite spec wording) |
+
 ## Current State
 
-**All phases complete.** The product now covers:
+**Phase P complete.** The product now covers:
 1. Core invoice management + automated reminders
 2. Monetisation (Stripe subscriptions, payment links)
 3. Advanced features (accounting integrations, AI reminders, client portal, promise detection, multi-channel, late fees, reconciliation)
 4. Insights flywheel (analytics data layer, client risk profiles, payment probability, industry benchmarks, cash flow forecasting, collection efficiency, predictive alerts)
-5. Expense tracking (categories, CRUD, dashboard card)
-6. Tax estimation & financial reports (estimate, P&L, CSV download, Pro-gated set aside tracker)
-7. Quotes & proposals (CRUD, convert-to-invoice, public accept/decline)
-
----
+5. Expense tracking (categories, CRUD, dashboard card) — Phase B
+6. Tax estimation & financial reports (estimate, P&L, CSV download, Pro-gated set aside tracker) — Phase C
+7. Quotes & proposals (CRUD, convert-to-invoice, public accept/decline) — Phase D
+8. Time tracking (start/stop timer, manual log, create invoice from hours) — Phase E (pending tests)
+9. Multi-currency (per-record currency, format utility, base currency in profile) — Phase G
+10. Mobile-first PWA (manifest, service worker, mobile layout audit) — Phase J
+11. Contracts & e-signature (templates, CRUD, public signing page, PDF generation) — Phase K
+12. Income Allocation / Profit First (allocation profile, allocation records, dashboard widget) — Phase L
+13. Bank Import (Plaid integration, PlaidLinkButton component) — Phase M
+14. Email Receipts to Account (inbound receipt parsing, assign-receipt-emails) — Phase N
+15. Instant Payouts (Stripe Connect, payout API) — Phase O
+16. Contractor Payroll (micro-teams, payslip PDF, contractor CRUD, pay + expense + email) — Phase P
 
 ## Next Priorities
 
-- Deploy the `Notification` and `alertPreferences` schema changes to production via `prisma db push`
-- Set up Vercel Cron Jobs for the new cron endpoints (`/api/cron/compute-analytics`, `/api/cron/generate-alerts`)
-- Monitor analytics cron execution to ensure no timeouts with large datasets
-- Consider a "benchmark seeding" script to populate `IndustryBenchmark` with realistic defaults until enough real users exist
-- Front-optimise dashboard query: the efficiency metrics query fetches all reminders + paid invoices — add pagination or caching if slow at scale
-- Token migration cleanup: replace remaining old token names (`bg-surface`, `text-foreground`, `text-muted`, `border-border`) with modern equivalents across the codebase
-- Add test coverage for quote CRUD, convert, and respond workflows
-- Implement quote email sending on "Send" action
-- Extract `BusinessProfile` model from User fields before Phase E
+- Add test coverage for time tracking (Phase E), recurring invoices (Phase F), client portal (Phase H), accounting (Phase I), quotes (Phase D), contracts (Phase K)
+- Implement recurring invoice processing cron (Phase F)
+- Implement accounting overview page (Phase I)
+- Implement team/agency tier with roles and seats (Phase R)
+- Implement business credit score & client health dashboard (Phase S)
+- Implement cash flow forecast & pay yourself widget (Phase T)
+- Implement accountant/bookkeeper access (Phase Q)
+- Commit and push pending Phase E–S work

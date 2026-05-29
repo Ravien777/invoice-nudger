@@ -28,6 +28,8 @@ const mockInvoice = {
   accruedFees: 0,
   feeCap: 0,
   paymentProbability: null,
+  instantPayoutId: null,
+  paidOutAt: null,
   createdAt: "2026-05-01",
   updatedAt: "2026-05-01",
 };

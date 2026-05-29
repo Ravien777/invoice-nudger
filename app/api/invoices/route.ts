@@ -6,6 +6,7 @@ import { invoiceSchema } from "@/lib/validations";
 import { canCreateInvoice } from "@/lib/subscriptions";
 import { computePaymentProbabilityForInvoice } from "@/lib/analytics";
 import { getOwnerIdForAccountant } from "@/lib/accountant-session";
+import { getTeamContext } from "@/lib/team-session";
 
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
@@ -22,8 +23,9 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  const accountantOwnerId = await getOwnerIdForAccountant(session.user.email);
-  const effectiveUserId = accountantOwnerId ?? user.id;
+  const teamCtx = await getTeamContext(session);
+  const accountantOwnerId = teamCtx ? null : await getOwnerIdForAccountant(session.user.email);
+  const effectiveUserId = teamCtx?.ownerId ?? accountantOwnerId ?? user.id;
 
   const { searchParams } = new URL(request.url);
   const statusFilter = searchParams.get("status");
@@ -56,10 +58,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  const accountantOwnerId = await getOwnerIdForAccountant(session.user.email);
+  const teamCtx = await getTeamContext(session);
+  if (teamCtx?.role === "viewer") {
+    return NextResponse.json({ error: "Read-only access." }, { status: 403 });
+  }
+  const accountantOwnerId = teamCtx ? null : await getOwnerIdForAccountant(session.user.email);
   if (accountantOwnerId) {
     return NextResponse.json({ error: "Accountant access is read-only." }, { status: 403 });
   }
+
+  const effectiveUserId = teamCtx?.ownerId ?? user.id;
 
   const body = await request.json();
   const validation = invoiceSchema.safeParse(body);
@@ -74,7 +82,7 @@ export async function POST(request: Request) {
   const { clientName, clientEmail, clientPhone, projectName, amount, currency, dueDate, invoiceNumber, notes, reminderScheduleId } =
     validation.data;
 
-  const limitCheck = await canCreateInvoice(user.id, 1);
+  const limitCheck = await canCreateInvoice(effectiveUserId, 1);
   if (!limitCheck.allowed) {
     return NextResponse.json(
       { error: `Invoice limit reached. You've created ${limitCheck.current}/${limitCheck.limit} invoices this month. Upgrade your plan to create more.` },
@@ -108,7 +116,7 @@ export async function POST(request: Request) {
       dueDate: new Date(dueDate),
       invoiceNumber: invoiceNumber || null,
       notes: notes || null,
-      userId: user.id,
+      userId: effectiveUserId,
       reminderScheduleId: scheduleId,
       lateFeeEnabled: user.lateFeeEnabled,
       lateFeeAmount,

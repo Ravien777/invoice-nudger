@@ -34,6 +34,8 @@ interface Invoice {
   accruedFees: number;
   feeCap: number;
   paymentProbability: number | null;
+  instantPayoutId: string | null;
+  paidOutAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -48,6 +50,7 @@ interface InvoiceTableProps {
   onUploadCsv?: () => void;
   scheduleSteps?: ScheduleStep[];
   onMarkPaid?: (id: string) => Promise<{ success: boolean; error?: string }>;
+  onPayout?: (id: string) => Promise<{ success: boolean; error?: string }>;
   onDelete?: (id: string) => Promise<{ success: boolean }>;
   onGenerateAI?: (id: string) => void;
   riskScores?: Record<string, number>;
@@ -110,6 +113,7 @@ export default function InvoiceTable({
   onUploadCsv,
   scheduleSteps,
   onMarkPaid,
+  onPayout,
   onDelete,
   onGenerateAI,
   riskScores = {},
@@ -120,6 +124,7 @@ export default function InvoiceTable({
 }: InvoiceTableProps) {
   const [sending, setSending] = useState<string | null>(null);
   const [markingPaid, setMarkingPaid] = useState<string | null>(null);
+  const [payouting, setPayouting] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [creatingLink, setCreatingLink] = useState<string | null>(null);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -223,6 +228,35 @@ export default function InvoiceTable({
       toast.error("Network error. Please try again.");
     } finally {
       setMarkingPaid(null);
+    }
+  }
+
+  const PLAN_WITH_PAYOUT = ["pro", "agency"];
+
+  async function handlePayout(id: string) {
+    const inv = invoices.find((i) => i.id === id);
+    if (!inv) return;
+
+    if (!PLAN_WITH_PAYOUT.includes(userPlan)) {
+      toast.error("Upgrade to Pro to use Instant Payouts.");
+      return;
+    }
+
+    if (!confirm(`Request an instant payout of ${formatCurrency(inv.amount, inv.currency)}?\nFunds will arrive in minutes (1% Stripe fee applies).`)) return;
+
+    setPayouting(id);
+
+    try {
+      const result = await onPayout?.(id);
+      if (!result?.success) {
+        toast.error(result?.error || "Failed to request payout");
+      } else {
+        toast.success("Instant payout requested successfully");
+      }
+    } catch {
+      toast.error("Network error. Please try again.");
+    } finally {
+      setPayouting(null);
     }
   }
 
@@ -478,6 +512,28 @@ export default function InvoiceTable({
                       loading={markingPaid === inv.id}
                       icon={Check}
                     />
+                  )}
+                  {inv.status === "paid" && !inv.instantPayoutId && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={PLAN_WITH_PAYOUT.includes(userPlan) ? "text-amber-500" : "text-text-tertiary opacity-50 cursor-not-allowed"}
+                      title={
+                        PLAN_WITH_PAYOUT.includes(userPlan)
+                          ? "Get Paid Now — funds arrive in minutes"
+                          : "Upgrade to Pro to use Instant Payouts."
+                      }
+                      onClick={() => PLAN_WITH_PAYOUT.includes(userPlan) && handlePayout(inv.id)}
+                      disabled={payouting === inv.id || !PLAN_WITH_PAYOUT.includes(userPlan)}
+                      loading={payouting === inv.id}
+                    >
+                      {PLAN_WITH_PAYOUT.includes(userPlan) ? "Get Paid Now" : "Pro"}
+                    </Button>
+                  )}
+                  {inv.status === "paid" && inv.instantPayoutId && (
+                    <span className="inline-flex items-center gap-0.5 rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-medium text-success ring-1 ring-success/20">
+                      Paid Out
+                    </span>
                   )}
                   {inv.status !== "paid" &&
                     inv.status !== "cancelled" &&

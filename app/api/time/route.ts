@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { getTeamContext } from "@/lib/team-session";
 
 const startTimerSchema = z.object({
   clientEmail: z.string().email(),
@@ -25,13 +26,16 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
+  const teamCtx = await getTeamContext(session);
+  const effectiveUserId = teamCtx?.ownerId ?? user.id;
+
   const { searchParams } = new URL(req.url);
   const clientEmail = searchParams.get("clientEmail");
   const invoiced = searchParams.get("invoiced");
   const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
   const pageSize = 50;
 
-  const where: Record<string, unknown> = { userId: user.id };
+  const where: Record<string, unknown> = { userId: effectiveUserId };
   if (clientEmail) where.clientEmail = clientEmail;
   if (invoiced === "true") where.invoiced = true;
   if (invoiced === "false") where.invoiced = false;
@@ -51,7 +55,10 @@ export async function GET(req: NextRequest) {
     durationLabel: formatDuration(e.durationMinutes),
   }));
 
-  const defaultHourlyRate = user.businessProfile?.defaultHourlyRate ?? null;
+  const owner = teamCtx
+    ? await prisma.user.findUnique({ where: { id: effectiveUserId }, include: { businessProfile: true } })
+    : user;
+  const defaultHourlyRate = owner?.businessProfile?.defaultHourlyRate ?? null;
 
   return NextResponse.json({ entries: formatted, total, page, defaultHourlyRate });
 }
@@ -69,6 +76,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
+  const teamCtx = await getTeamContext(session);
+  if (teamCtx?.role === "viewer") {
+    return NextResponse.json({ error: "Read-only access." }, { status: 403 });
+  }
+
+  const effectiveUserId = teamCtx?.ownerId ?? user.id;
+
   const body = await req.json();
   const parsed = startTimerSchema.safeParse(body);
   if (!parsed.success) {
@@ -82,7 +96,7 @@ export async function POST(req: NextRequest) {
     data: {
       ...parsed.data,
       startTime: new Date(),
-      userId: user.id,
+      userId: effectiveUserId,
     },
   });
 

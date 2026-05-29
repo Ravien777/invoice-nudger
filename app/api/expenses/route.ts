@@ -6,6 +6,7 @@ import { expenseSchema } from "@/lib/validations";
 import { startOfMonth, endOfMonth, parse } from "date-fns";
 import { seedDefaultExpenseCategories } from "@/lib/expense-categories";
 import { getOwnerIdForAccountant } from "@/lib/accountant-session";
+import { getTeamContext } from "@/lib/team-session";
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -20,10 +21,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  const accountantOwnerId = await getOwnerIdForAccountant(session.user.email);
-  const effectiveUserId = accountantOwnerId ?? user.id;
+  const teamCtx = await getTeamContext(session);
+  const accountantOwnerId = teamCtx ? null : await getOwnerIdForAccountant(session.user.email);
+  const effectiveUserId = teamCtx?.ownerId ?? accountantOwnerId ?? user.id;
 
-  if (!accountantOwnerId) {
+  if (!teamCtx && !accountantOwnerId) {
     await seedDefaultExpenseCategories(user.id);
   }
 
@@ -80,10 +82,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  const accountantOwnerId = await getOwnerIdForAccountant(session.user.email);
+  const teamCtx = await getTeamContext(session);
+  if (teamCtx?.role === "viewer") {
+    return NextResponse.json({ error: "Read-only access." }, { status: 403 });
+  }
+  const accountantOwnerId = teamCtx ? null : await getOwnerIdForAccountant(session.user.email);
   if (accountantOwnerId) {
     return NextResponse.json({ error: "Accountant access is read-only." }, { status: 403 });
   }
+
+  const effectiveUserId = teamCtx?.ownerId ?? user.id;
 
   const body = await req.json();
   const parsed = expenseSchema.safeParse(body);
@@ -101,7 +109,7 @@ export async function POST(req: NextRequest) {
       ...data,
       date: new Date(data.date),
       categoryId: categoryId || null,
-      userId: user.id,
+      userId: effectiveUserId,
     },
     include: { category: { select: { id: true, name: true, color: true } } },
   });

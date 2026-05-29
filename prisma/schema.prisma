@@ -34,6 +34,7 @@ model User {
   fiscalYearStart   Int              @default(1)
   taxSavingsAmount  Float            @default(0)
   baseCurrency      String     @default("USD")
+  receiptEmail       String?    @unique
   businessProfile   BusinessProfile?
   lastPayYourselfDate DateTime?
   alertPreferences  Json?
@@ -61,11 +62,14 @@ model User {
   expenses         Expense[]
   expenseCategories ExpenseCategory[]
   timeEntries      TimeEntry[]
+  contractors      Contractor[]
+  contractorPayments ContractorPayment[]
   quotes           Quote[]
   recurringInvoices RecurringInvoice[]
   bankConnections   BankConnection[]
   bankTransactions  BankTransaction[]
   accountantAccess  AccountantAccess[] @relation("OwnerAccess")
+  teamMembers       TeamMember[] @relation("TeamOwner")
 }
 
 model BusinessProfile {
@@ -77,6 +81,8 @@ model BusinessProfile {
   taxSavingsAmount  Float   @default(0)
   baseCurrency      String  @default("USD")
   defaultHourlyRate Float?
+  businessName      String?
+  businessAddress   String?
 }
 
 model Account {
@@ -136,6 +142,8 @@ model Invoice {
   lastSyncedAt         DateTime?
   paymentLink          String?
   paidAt               DateTime?
+  instantPayoutId      String?
+  paidOutAt            DateTime?
   reconciliationStatus String?
   lastReconciledAt     DateTime?
   payments             PaymentRecord[]
@@ -381,6 +389,7 @@ model Expense {
   receiptUrl    String?
   taxDeductible Boolean          @default(true)
   notes         String?
+  status        String           @default("confirmed") // confirmed | draft
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
 }
@@ -520,6 +529,51 @@ model AccountantAccess {
   revokedAt       DateTime?
 
   @@unique([ownerId, accountantEmail])
+}
+
+model TeamMember {
+  id           String    @id @default(cuid())
+  ownerId      String
+  owner        User      @relation("TeamOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  memberEmail  String
+  memberUserId String?
+  role         String    @default("member") // "member" | "viewer"
+  status       String    @default("pending") // "pending" | "active" | "removed"
+  inviteToken  String    @unique @default(cuid())
+  invitedAt    DateTime  @default(now())
+  acceptedAt   DateTime?
+  removedAt    DateTime?
+
+  @@unique([ownerId, memberEmail])
+}
+
+model Contractor {
+  id        String              @id @default(cuid())
+  userId    String
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  email     String
+  role      String?
+  rate      Float?
+  rateType  String?
+  taxId     String?
+  payments  ContractorPayment[]
+  createdAt DateTime            @default(now())
+}
+
+model ContractorPayment {
+  id            String      @id @default(cuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contractorId  String
+  contractor    Contractor  @relation(fields: [contractorId], references: [id])
+  amount        Float
+  currency      String      @default("USD")
+  description   String
+  paymentDate   DateTime    @db.Date
+  payslipUrl    String?
+  expenseId     String?     @unique
+  createdAt     DateTime    @default(now())
 }
 
 model AllocationProfile {

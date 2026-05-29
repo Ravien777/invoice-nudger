@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getTeamContext } from "@/lib/team-session";
 
 export async function POST(
   _req: NextRequest,
@@ -19,9 +20,16 @@ export async function POST(
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
+  const teamCtx = await getTeamContext(session);
+  if (teamCtx?.role === "viewer") {
+    return NextResponse.json({ error: "Read-only access." }, { status: 403 });
+  }
+
+  const effectiveUserId = teamCtx?.ownerId ?? user.id;
+
   const { id } = await params;
   const entry = await prisma.timeEntry.findFirst({
-    where: { id, userId: user.id },
+    where: { id, userId: effectiveUserId },
   });
   if (!entry) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });

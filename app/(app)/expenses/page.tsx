@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { startOfMonth, endOfMonth, format } from "date-fns";
 import { PageShell } from "@/app/components/layout/PageShell";
 import { seedDefaultExpenseCategories } from "@/lib/expense-categories";
+import { assignReceiptEmail } from "@/lib/assign-receipt-emails";
 import ExpensesClient from "./ExpensesClient";
 
 export default async function ExpensesPage() {
@@ -17,6 +18,11 @@ export default async function ExpensesPage() {
   if (!user) redirect("/");
 
   await seedDefaultExpenseCategories(user.id);
+
+  let receiptEmail = user.receiptEmail;
+  if (!receiptEmail) {
+    receiptEmail = await assignReceiptEmail(user.id);
+  }
 
   const now = new Date();
   const monthStart = startOfMonth(now);
@@ -58,6 +64,7 @@ export default async function ExpensesPage() {
           color: c.color,
         }))}
         currentMonth={format(now, "yyyy-MM")}
+        receiptEmail={receiptEmail}
       />
     </PageShell>
   );

@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { expenseSchema } from "@/lib/validations";
 import { getOwnerIdForAccountant } from "@/lib/accountant-session";
+import { getTeamContext } from "@/lib/team-session";
 
 export async function GET(
   req: NextRequest,
@@ -31,8 +32,9 @@ export async function GET(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const accountantOwnerId = await getOwnerIdForAccountant(session.user.email);
-  const effectiveUserId = accountantOwnerId ?? user.id;
+  const teamCtx = await getTeamContext(session);
+  const accountantOwnerId = teamCtx ? null : await getOwnerIdForAccountant(session.user.email);
+  const effectiveUserId = teamCtx?.ownerId ?? accountantOwnerId ?? user.id;
   if (expense.userId !== effectiveUserId) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
@@ -57,13 +59,18 @@ export async function PUT(
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  const accountantOwnerId = await getOwnerIdForAccountant(session.user.email);
+  const teamCtx = await getTeamContext(session);
+  if (teamCtx?.role === "viewer") {
+    return NextResponse.json({ error: "Read-only access." }, { status: 403 });
+  }
+  const accountantOwnerId = teamCtx ? null : await getOwnerIdForAccountant(session.user.email);
   if (accountantOwnerId) {
     return NextResponse.json({ error: "Accountant access is read-only." }, { status: 403 });
   }
 
+  const effectiveUserId = teamCtx?.ownerId ?? user.id;
   const expense = await prisma.expense.findFirst({
-    where: { id, userId: user.id },
+    where: { id, userId: effectiveUserId },
   });
   if (!expense) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -110,6 +117,10 @@ export async function DELETE(
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
+  const teamCtx = await getTeamContext(session);
+  if (teamCtx) {
+    return NextResponse.json({ error: "Only the account owner can delete expenses." }, { status: 403 });
+  }
   const accountantOwnerId = await getOwnerIdForAccountant(session.user.email);
   if (accountantOwnerId) {
     return NextResponse.json({ error: "Accountant access is read-only." }, { status: 403 });

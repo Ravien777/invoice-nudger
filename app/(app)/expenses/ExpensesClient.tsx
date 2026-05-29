@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Pencil, Trash2, Receipt, X, Paperclip, Upload, Loader2 } from "lucide-react";
 import { Button } from "@/app/components/ui/Button";
@@ -39,11 +39,13 @@ export default function ExpensesClient({
   total,
   categories,
   currentMonth,
+  receiptEmail,
 }: {
   expenses: Expense[];
   total: number;
   categories: Category[];
   currentMonth: string;
+  receiptEmail: string;
 }) {
   const router = useRouter();
   const [expenses, setExpenses] = useState(initialExpenses);
@@ -64,6 +66,18 @@ export default function ExpensesClient({
   });
   const [receiptUrl, setReceiptUrl] = useState("");
   const [receiptUploading, setReceiptUploading] = useState(false);
+  const [receiptBannerDismissed, setReceiptBannerDismissed] = useState(true);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setReceiptBannerDismissed(localStorage.getItem("receipt-banner-dismissed") === "true");
+    }
+  }, []);
+
+  const dismissReceiptBanner = () => {
+    setReceiptBannerDismissed(true);
+    localStorage.setItem("receipt-banner-dismissed", "true");
+  };
 
   const resetForm = () => {
     setForm({
@@ -388,6 +402,27 @@ export default function ExpensesClient({
             </Button>
           </div>
         </form>
+      )}
+
+      {!receiptBannerDismissed && expenses.length === 0 && (
+        <div className="mb-6 rounded-lg border border-border bg-surface p-4 shadow-sm">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <Receipt className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
+              <div>
+                <p className="text-sm font-medium text-foreground">Email your receipts</p>
+                <p className="mt-1 text-sm text-muted">
+                  Forward any receipt to{" "}
+                  <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">{receiptEmail}</code>{" "}
+                  and we'll automatically create an expense for you.
+                </p>
+              </div>
+            </div>
+            <button onClick={dismissReceiptBanner} className="shrink-0 p-1 text-muted hover:text-foreground">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
       )}
 
       {expenses.length === 0 ? (

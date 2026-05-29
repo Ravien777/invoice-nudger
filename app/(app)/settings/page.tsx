@@ -3,7 +3,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import SettingsClient from "./SettingsClient";
-import { getMonthlyInvoiceCount, getTier, getAIMonthlyUsage, canUseClientPortal, getMonthlyNotificationUsage } from "@/lib/subscriptions";
+import { getMonthlyInvoiceCount, getTier, getAIMonthlyUsage, canUseClientPortal, getMonthlyNotificationUsage, canAddTeamMembers } from "@/lib/subscriptions";
+import { assignReceiptEmail } from "@/lib/assign-receipt-emails";
 
 export default async function SettingsPage() {
   const session = await getServerSession(authOptions);
@@ -16,6 +17,12 @@ export default async function SettingsPage() {
     where: { email: session.user.email },
     include: { businessProfile: true },
   });
+  if (!user) redirect("/");
+
+  let receiptEmail = user!.receiptEmail;
+  if (!receiptEmail) {
+    receiptEmail = await assignReceiptEmail(user!.id);
+  }
 
   const schedule = await prisma.reminderSchedule.findFirst({
     where: { userId: user!.id, isDefault: true },
@@ -52,6 +59,13 @@ export default async function SettingsPage() {
     where: { ownerId: user!.id },
     orderBy: { invitedAt: "desc" },
   });
+
+  const teamMembers = await prisma.teamMember.findMany({
+    where: { ownerId: user!.id },
+    orderBy: { invitedAt: "desc" },
+  });
+
+  const hasTeamAccess = await canAddTeamMembers(user!.id);
 
   const parsedAlertPrefs = user!.alertPreferences
     ? JSON.parse(JSON.stringify(user!.alertPreferences))
@@ -102,6 +116,19 @@ export default async function SettingsPage() {
         sms: { enabled: tier.smsLimit > 0, limit: tier.smsLimit, used: smsUsage },
         whatsapp: { enabled: tier.whatsappLimit > 0, limit: tier.whatsappLimit, used: whatsappUsage },
       }}
+      teamSettings={{
+        members: teamMembers.map((tm) => ({
+          id: tm.id,
+          memberEmail: tm.memberEmail,
+          role: tm.role,
+          status: tm.status,
+          invitedAt: tm.invitedAt.toISOString(),
+          acceptedAt: tm.acceptedAt?.toISOString() ?? null,
+          removedAt: tm.removedAt?.toISOString() ?? null,
+        })),
+        hasAccess: hasTeamAccess,
+        tier,
+      }}
       lateFeeSettings={{
         enabled: user!.lateFeeEnabled,
         type: user!.lateFeeType,
@@ -126,6 +153,7 @@ export default async function SettingsPage() {
         taxSavingsAmount: user!.businessProfile?.taxSavingsAmount ?? 0,
         baseCurrency: user!.businessProfile?.baseCurrency ?? "USD",
         defaultHourlyRate: user!.businessProfile?.defaultHourlyRate ?? 0,
+        receiptEmail,
       }}
     />
   );

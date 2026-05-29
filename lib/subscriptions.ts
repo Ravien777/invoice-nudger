@@ -113,6 +113,16 @@ export async function canUseClientPortal(userId: string): Promise<boolean> {
   return tier.clientPortal;
 }
 
+export async function canAddTeamMembers(userId: string): Promise<boolean> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { plan: true },
+  });
+
+  const tier = getTier(user?.plan ?? "free");
+  return tier.teamMembers;
+}
+
 export async function getMonthlyNotificationUsage(userId: string, channel: string): Promise<number> {
   const now = new Date();
   const usage = await prisma.notificationUsage.findUnique({

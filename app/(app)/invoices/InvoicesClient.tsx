@@ -38,6 +38,8 @@ interface Invoice {
   accruedFees: number;
   feeCap: number;
   paymentProbability: number | null;
+  instantPayoutId: string | null;
+  paidOutAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -135,6 +137,30 @@ export default function InvoicesClient({
       return { success: true };
     } catch {
       return { success: false };
+    }
+  }, []);
+
+  const handlePayout = useCallback(async (id: string) => {
+    try {
+      const res = await fetch("/api/payouts/instant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ invoiceId: id }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        return { success: false, error: data.error };
+      }
+      setInvoices((prev) =>
+        prev.map((inv) =>
+          inv.id === id
+            ? { ...inv, instantPayoutId: data.payoutId, paidOutAt: new Date().toISOString() }
+            : inv,
+        ),
+      );
+      return { success: true };
+    } catch {
+      return { success: false, error: "Network error" };
     }
   }, []);
 
@@ -371,6 +397,7 @@ export default function InvoicesClient({
         onUploadCsv={() => setCsvModalOpen(true)}
         scheduleSteps={scheduleSteps}
         onMarkPaid={handleMarkPaid}
+        onPayout={handlePayout}
         onDelete={handleDelete}
         onGenerateAI={handleGenerateAI}
         riskScores={riskScores}
