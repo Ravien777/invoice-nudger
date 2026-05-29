@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Plus,
@@ -42,13 +42,13 @@ interface TemplateItem {
 
 export default function ContractsClient({
   contracts: initialContracts,
-  templates,
 }: {
   contracts: ContractItem[];
-  templates: TemplateItem[];
 }) {
   const router = useRouter();
   const [contracts, setContracts] = useState(initialContracts);
+  const [templates, setTemplates] = useState<TemplateItem[]>([]);
+  const [templatesLoading, setTemplatesLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [step, setStep] = useState<"pick" | "fill" | "preview">("pick");
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateItem | null>(null);
@@ -57,6 +57,16 @@ export default function ContractsClient({
   const [clientEmail, setClientEmail] = useState("");
   const [title, setTitle] = useState("");
   const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    if (!showForm || templates.length > 0) return;
+    setTemplatesLoading(true);
+    fetch("/api/contracts/templates")
+      .then((r) => r.json())
+      .then((data) => setTemplates(data.templates))
+      .catch(() => toast.error("Failed to load templates"))
+      .finally(() => setTemplatesLoading(false));
+  }, [showForm, templates.length]);
 
   const statusLabel = (status: string) => {
     const labels: Record<string, string> = {
@@ -84,7 +94,7 @@ export default function ContractsClient({
     setStep("fill");
   };
 
-  const handleCreate = async () => {
+  const handleCreate = async (sendAfterCreate = true) => {
     if (!selectedTemplate || !clientName || !clientEmail || !title) {
       toast.error("Please fill in all required fields");
       return;
@@ -111,11 +121,16 @@ export default function ContractsClient({
       }
 
       const contract = await res.json();
-      toast.success("Contract created");
 
-      const sendRes = await fetch(`/api/contracts/${contract.id}/send`, { method: "POST" });
-      if (sendRes.ok) {
-        toast.success("Contract sent to client");
+      if (sendAfterCreate) {
+        const sendRes = await fetch(`/api/contracts/${contract.id}/send`, { method: "POST" });
+        if (sendRes.ok) {
+          toast.success("Contract sent to client");
+        } else {
+          toast.error("Contract created but failed to send");
+        }
+      } else {
+        toast.success("Contract saved as draft");
       }
 
       resetForm();
@@ -178,19 +193,23 @@ export default function ContractsClient({
           {step === "pick" && (
             <div>
               <h3 className="text-sm font-medium text-text-primary mb-4">Choose a template</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {templates.map((tmpl) => (
-                  <button
-                    key={tmpl.id}
-                    onClick={() => pickTemplate(tmpl)}
-                    className="rounded-lg border border-border-default bg-surface-secondary p-4 text-left hover:border-accent transition-colors"
-                  >
-                    <FileText className="h-5 w-5 text-accent mb-2" />
-                    <p className="text-sm font-medium text-text-primary">{tmpl.name}</p>
-                    <p className="text-xs text-text-tertiary mt-1">Use this template</p>
-                  </button>
-                ))}
-              </div>
+              {templatesLoading ? (
+                <p className="text-sm text-text-tertiary">Loading templates...</p>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {templates.map((tmpl) => (
+                    <button
+                      key={tmpl.id}
+                      onClick={() => pickTemplate(tmpl)}
+                      className="rounded-lg border border-border-default bg-surface-secondary p-4 text-left hover:border-accent transition-colors"
+                    >
+                      <FileText className="h-5 w-5 text-accent mb-2" />
+                      <p className="text-sm font-medium text-text-primary">{tmpl.name}</p>
+                      <p className="text-xs text-text-tertiary mt-1">Use this template</p>
+                    </button>
+                  ))}
+                </div>
+              )}
               <button
                 onClick={resetForm}
                 className="mt-4 text-sm text-text-tertiary hover:text-text-primary"
@@ -284,7 +303,14 @@ export default function ContractsClient({
                     <Button variant="ghost" size="sm" onClick={resetForm}>
                       Cancel
                     </Button>
-                    <Button size="sm" onClick={handleCreate} disabled={sending}>
+                    <Button variant="secondary" size="sm" onClick={() => handleCreate(false)} disabled={sending}>
+                      {sending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        "Save as Draft"
+                      )}
+                    </Button>
+                    <Button size="sm" onClick={() => handleCreate(true)} disabled={sending}>
                       {sending ? (
                         <>
                           <Loader2 className="h-4 w-4 animate-spin" />

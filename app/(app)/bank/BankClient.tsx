@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { formatCurrency } from "@/lib/format-currency";
 import { Plus, RefreshCw, ExternalLink, Check, X, Banknote, Loader2 } from "lucide-react";
 import { usePlaidLink } from "react-plaid-link";
 import { Button } from "@/app/components/ui/Button";
@@ -333,7 +334,7 @@ export default function BankClient({
                     }`}
                   >
                     {tx.amount > 0 ? "+" : ""}
-                    {tx.amount.toFixed(2)} {tx.currency}
+                    {formatCurrency(tx.amount, tx.currency)}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">

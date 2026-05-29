@@ -1,5 +1,15 @@
 import { z } from "zod";
 
+export const invoiceLineItemSchema = z.object({
+  description: z.string().min(1, "Description is required"),
+  quantity: z.coerce.number().positive("Quantity must be greater than 0"),
+  unitPrice: z.coerce.number().min(0, "Unit price must be 0 or more"),
+  taxRate: z.coerce.number().min(0).optional(),
+  taxAmount: z.coerce.number().min(0).optional(),
+  total: z.coerce.number().min(0),
+  sortOrder: z.coerce.number().int().default(0),
+});
+
 export const invoiceSchema = z.object({
   clientName: z.string().min(1, "Client name is required"),
   clientEmail: z.string().email("Invalid email address"),
@@ -14,6 +24,7 @@ export const invoiceSchema = z.object({
   invoiceNumber: z.string().optional().or(z.literal("")),
   notes: z.string().optional().or(z.literal("")),
   reminderScheduleId: z.string().optional().or(z.literal("")),
+  lineItems: z.array(invoiceLineItemSchema).optional().default([]),
 });
 
 export type InvoiceFormData = z.infer<typeof invoiceSchema>;
@@ -78,6 +89,8 @@ export const recurringSchema = z.object({
   endDate: z.string().refine((val) => !isNaN(new Date(val).getTime()), "Invalid date").optional().or(z.literal("")),
   description: z.string().optional().or(z.literal("")),
   autoSend: z.boolean().default(true),
+  reminderScheduleId: z.string().optional().or(z.literal("")),
+  lineItems: z.array(invoiceLineItemSchema).optional().default([]),
 });
 
 export type RecurringFormData = z.infer<typeof recurringSchema>;

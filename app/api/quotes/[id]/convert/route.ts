@@ -48,6 +48,17 @@ export async function POST(
       dueDate: addDays(new Date(), 30),
       status: "unpaid",
       notes: quote.notes || undefined,
+      lineItems: {
+        create: quote.lineItems.map((li) => ({
+          description: li.description,
+          quantity: li.quantity,
+          unitPrice: li.unitPrice,
+          taxRate: li.taxRate,
+          taxAmount: li.taxAmount,
+          total: li.total,
+          sortOrder: li.sortOrder,
+        })),
+      },
     },
   });
 

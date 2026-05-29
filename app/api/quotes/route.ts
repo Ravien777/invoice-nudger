@@ -21,6 +21,15 @@ export async function GET() {
   const accountantOwnerId = await getOwnerIdForAccountant(session.user.email);
   const effectiveUserId = accountantOwnerId ?? user.id;
 
+  await prisma.quote.updateMany({
+    where: {
+      userId: effectiveUserId,
+      status: "sent",
+      expiryDate: { lte: new Date() },
+    },
+    data: { status: "expired" },
+  });
+
   const quotes = await prisma.quote.findMany({
     where: { userId: effectiveUserId },
     orderBy: { createdAt: "desc" },

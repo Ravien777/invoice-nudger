@@ -232,31 +232,44 @@ All authenticated pages now use a unified dark theme with collapsible sidebar, `
 
 ## Current State
 
-**Phase P complete.** The product now covers:
+**Phases B–P core complete. Phases G, I, J, K fully complete (all audit items resolved).** The product now covers:
 1. Core invoice management + automated reminders
 2. Monetisation (Stripe subscriptions, payment links)
 3. Advanced features (accounting integrations, AI reminders, client portal, promise detection, multi-channel, late fees, reconciliation)
 4. Insights flywheel (analytics data layer, client risk profiles, payment probability, industry benchmarks, cash flow forecasting, collection efficiency, predictive alerts)
 5. Expense tracking (categories, CRUD, dashboard card) — Phase B
 6. Tax estimation & financial reports (estimate, P&L, CSV download, Pro-gated set aside tracker) — Phase C
-7. Quotes & proposals (CRUD, convert-to-invoice, public accept/decline) — Phase D
-8. Time tracking (start/stop timer, manual log, create invoice from hours) — Phase E (pending tests)
-9. Multi-currency (per-record currency, format utility, base currency in profile) — Phase G
-10. Mobile-first PWA (manifest, service worker, mobile layout audit) — Phase J
-11. Contracts & e-signature (templates, CRUD, public signing page, PDF generation) — Phase K
-12. Income Allocation / Profit First (allocation profile, allocation records, dashboard widget) — Phase L
-13. Bank Import (Plaid integration, PlaidLinkButton component) — Phase M
-14. Email Receipts to Account (inbound receipt parsing, assign-receipt-emails) — Phase N
-15. Instant Payouts (Stripe Connect, payout API) — Phase O
-16. Contractor Payroll (micro-teams, payslip PDF, contractor CRUD, pay + expense + email) — Phase P
+7. Quotes & proposals (CRUD, convert-to-invoice, public accept/decline, email on send) — Phase D
+8. Time tracking (start/stop timer, manual log, create invoice from hours) — Phase E (audit items remain)
+9. Recurring invoices (cron auto-generate, email on send, line items, plan limits, reminder schedule, date handling) — Phase F
+10. **Multi-currency** (per-record currency, base currency in BusinessProfile, `formatCurrency` hygiene pass across ForecastWidget/TimeClient/BankClient/PayrollClient/quotes/pay) — **Phase G ✅**
+11. Client Portal 2.0 — Phase H ✅ (no issues)
+12. **Accounting overview page** (stat cards, income/expense bar chart, cash flow area chart, CSV export) — **Phase I ✅**
+13. Mobile-first PWA (service worker, manifest, mobile layout audit, 390px QA pass) — **Phase J ✅**
+14. **Contracts & e-signature** (3 system templates auto-seeded, CRUD, public signing page, PDF generated + uploaded to Blob, email on send/sign, 30-day expiry default, save as draft) — **Phase K ✅**
+15. Income Allocation / Profit First (allocation profile, allocation records, dashboard widget) — Phase L
+16. Bank Import (Plaid integration, PlaidLinkButton component) — Phase M
+17. Email Receipts to Account (inbound receipt parsing, assign-receipt-emails) — Phase N
+18. Instant Payouts (Stripe Connect, payout API) — Phase O
+19. Contractor Payroll (micro-teams, payslip PDF, contractor CRUD, pay + expense + email) — Phase P
 
 ## Next Priorities
 
-- Add test coverage for time tracking (Phase E), recurring invoices (Phase F), client portal (Phase H), accounting (Phase I), quotes (Phase D), contracts (Phase K)
-- Implement recurring invoice processing cron (Phase F)
-- Implement accounting overview page (Phase I)
-- Implement team/agency tier with roles and seats (Phase R)
-- Implement business credit score & client health dashboard (Phase S)
-- Implement cash flow forecast & pay yourself widget (Phase T)
-- Implement accountant/bookkeeper access (Phase Q)
-- Commit and push pending Phase E–S work
+### Remaining phases (in execution order)
+
+| Step | Phase | Summary |
+|------|-------|---------|
+| 1 | **E** | Time tracking audit fixes (team context, line items, client dropdown, edit action) |
+| 2 | **L** | Income allocation fixes (notification detail, Stripe event, invoice resolution) |
+| 3 | **M** | Bank import fixes (cron schedule, matched/ignored status, add-as-expense, Plaid env, notifications, sidebar gating, UX polish) |
+| 4 | **N** | Email receipts (banner visibility, OCR optional, attachment parsing) |
+| 5 | **O** | Instant payouts (cents bug, fee display, confirmation modal, invoice detail page, allocation logging) |
+| 6 | **P** | Contractor payroll audit fixes (sender email, timezone, plan gating, sidebar placement) |
+| 7 | **R** | Team & agency (accept GET handler, role change UI) |
+| 8 | **S** | Credit score & client health (PDF certificate, avgDaysLate fix, missing stats, table population, score algorithm) |
+| 9 | **T** | Cash flow forecast & pay yourself (unify forecast engines, accounting chart, field moves, notification content, tests, sidebar cleanup) |
+| 10 | **Q** | Accountant/bookkeeper access (full feature: model, invite/accept/revoke APIs, session context, read-only dashboard, plan gate) |
+
+### Meta
+- Add test coverage where missing (each phase verification step).
+- Commit and push pending work after each phase.

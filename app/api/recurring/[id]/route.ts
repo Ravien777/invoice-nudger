@@ -82,12 +82,12 @@ export async function PUT(
     );
   }
 
-  const { clientName, clientEmail, clientPhone, amount, currency, frequency, dayOfMonth, nextRunDate, endDate, description, autoSend } = validation.data;
+  const { clientName, clientEmail, clientPhone, amount, currency, frequency, dayOfMonth, nextRunDate, endDate, description, autoSend, reminderScheduleId, lineItems } = validation.data;
 
   const parsedNextRun = new Date(nextRunDate);
   let finalNextRun = parsedNextRun;
 
-  if (frequency === "monthly" && dayOfMonth) {
+  if ((frequency === "monthly" || frequency === "quarterly") && dayOfMonth) {
     finalNextRun = computeNextRunDate(frequency, dayOfMonth, parsedNextRun);
   }
 
@@ -105,6 +105,8 @@ export async function PUT(
       endDate: endDate ? new Date(endDate) : null,
       description: description || null,
       autoSend,
+      reminderScheduleId: reminderScheduleId || null,
+      lineItems: lineItems && lineItems.length > 0 ? lineItems : undefined,
     },
   });
 

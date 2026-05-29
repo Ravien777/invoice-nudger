@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { formatCurrency } from "@/lib/format-currency";
 
 export async function POST(
   req: NextRequest,
@@ -36,7 +37,7 @@ export async function POST(
       userId: quote.userId,
       type: "quote_response",
       title: action === "accepted" ? "Quote accepted" : "Quote declined",
-      message: `${quote.clientName} has ${action === "accepted" ? "accepted" : "declined"} your quote for ${quote.currency} ${quote.amount.toFixed(2)}.`,
+      message: `${quote.clientName} has ${action === "accepted" ? "accepted" : "declined"} your quote for ${formatCurrency(quote.amount, quote.currency)}.`,
       metadata: { quoteId: id, clientEmail: quote.clientEmail },
     },
   });

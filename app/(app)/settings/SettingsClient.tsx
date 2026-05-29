@@ -1030,7 +1030,7 @@ export default function SettingsClient({
               const connected = isConnected(platform);
               const integration = integrations.find((i) => i.platform === platform);
               return (
-                <div key={platform} className="flex items-center justify-between py-4 border-b border-border last:border-0">
+                <div key={platform} className="flex items-center justify-between py-4 border-b border-border last:border-0 flex-wrap gap-2">
                   <div className="flex items-center gap-4">
                     <div
                       className="flex h-10 w-10 items-center justify-center rounded-lg text-sm font-bold text-white"

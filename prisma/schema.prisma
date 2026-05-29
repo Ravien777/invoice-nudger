@@ -30,10 +30,6 @@ model User {
   interestRate      Float            @default(0)
   lateFeeGraceDays  Int              @default(0)
   feeCap            Float            @default(0)
-  taxRate           Float            @default(0.25)
-  fiscalYearStart   Int              @default(1)
-  taxSavingsAmount  Float            @default(0)
-  baseCurrency      String     @default("USD")
   receiptEmail       String?    @unique
   businessProfile   BusinessProfile?
   lastPayYourselfDate DateTime?
@@ -159,8 +155,22 @@ model Invoice {
   accruedFees          Float            @default(0)
   lastFeeCalculation   DateTime?
   feeCap               Float            @default(0)
+  lineItems            InvoiceLineItem[]
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
+}
+
+model InvoiceLineItem {
+  id          String  @id @default(cuid())
+  invoiceId   String
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Float
+  unitPrice   Float
+  taxRate     Float?
+  taxAmount   Float?
+  total       Float
+  sortOrder   Int
 }
 
 model ReminderSchedule {
@@ -169,8 +179,9 @@ model ReminderSchedule {
   isDefault     Boolean        @default(false)
   userId        String
   user          User           @relation(fields: [userId], references: [id])
-  steps         ReminderStep[]
-  invoices      Invoice[]
+  steps             ReminderStep[]
+  invoices          Invoice[]
+  recurringInvoices RecurringInvoice[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 }
@@ -405,6 +416,7 @@ model TimeEntry {
   endTime         DateTime?
   durationMinutes Int?
   hourlyRate      Float?
+  currency        String    @default("USD")
   invoiced        Boolean   @default(false)
   invoiceId       String?
   createdAt       DateTime  @default(now())
@@ -484,25 +496,28 @@ model QuoteLineItem {
 }
 
 model RecurringInvoice {
-  id              String    @id @default(cuid())
-  userId          String
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  clientName      String
-  clientEmail     String
-  clientPhone     String?
-  amount          Float
-  currency        String    @default("USD")
-  frequency       String    // "weekly" | "biweekly" | "monthly" | "quarterly" | "annually"
-  dayOfMonth      Int?      // 1–28, for monthly/quarterly/annually
-  nextRunDate     DateTime
-  endDate         DateTime?
-  description     String?
-  status          String    @default("active") // "active" | "paused" | "cancelled"
-  autoSend        Boolean   @default(true)
-  invoicesCreated Int       @default(0)
-  lastRunDate     DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id                 String              @id @default(cuid())
+  userId             String
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clientName         String
+  clientEmail        String
+  clientPhone        String?
+  amount             Float
+  currency           String              @default("USD")
+  frequency          String              // "weekly" | "biweekly" | "monthly" | "quarterly" | "annually"
+  dayOfMonth         Int?                // 1–28, for monthly/quarterly/annually
+  nextRunDate        DateTime
+  endDate            DateTime?
+  description        String?
+  lineItems          Json?
+  status             String              @default("active") // "active" | "paused" | "cancelled"
+  autoSend           Boolean             @default(true)
+  reminderScheduleId String?
+  reminderSchedule   ReminderSchedule?   @relation(fields: [reminderScheduleId], references: [id])
+  invoicesCreated    Int                 @default(0)
+  lastRunDate        DateTime?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
 }
 
 model IndustryBenchmark {

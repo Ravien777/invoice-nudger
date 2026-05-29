@@ -44,6 +44,11 @@ export default function RootLayout({
         <link rel="icon" type="image/png" sizes="32x32" href="/icon-192.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if("serviceWorker" in navigator){navigator.serviceWorker.register("/sw.js");}`,
+          }}
+        />
       </head>
       <body className="min-h-screen bg-surface-primary text-text-primary">
         <Providers>

@@ -2,6 +2,7 @@
 
 import { useSidebar } from "./SidebarProvider";
 import { Menu } from "lucide-react";
+import { NotificationBell } from "./NotificationBell";
 import type { ReactNode } from "react";
 
 interface PageShellProps {
@@ -39,9 +40,12 @@ export function PageShell({
             )}
           </div>
         </div>
-        {actions && (
-          <div className="flex items-center gap-2">{actions}</div>
-        )}
+        <div className="flex items-center gap-2">
+          <div className="hidden md:block">
+            <NotificationBell />
+          </div>
+          {actions}
+        </div>
       </header>
       <main className="flex-1 overflow-y-auto px-6 py-8">{children}</main>
     </div>

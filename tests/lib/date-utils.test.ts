@@ -38,10 +38,18 @@ describe("computeNextRunDate", () => {
     expect(diff).toBeLessThanOrEqual(86400000);
   });
 
-  it("returns quarterly date 90 days from now", () => {
+  it("returns next calendar quarter start", () => {
     const from = new Date("2025-02-15");
     const result = computeNextRunDate("quarterly", 1, from);
-    const expected = new Date("2025-05-16");
+    const expected = new Date("2025-04-01");
+    const diff = Math.abs(result.getTime() - expected.getTime());
+    expect(diff).toBeLessThanOrEqual(86400000);
+  });
+
+  it("rolls quarterly from Q4 to Q1 next year", () => {
+    const from = new Date("2025-11-15");
+    const result = computeNextRunDate("quarterly", 1, from);
+    const expected = new Date("2026-01-01");
     const diff = Math.abs(result.getTime() - expected.getTime());
     expect(diff).toBeLessThanOrEqual(86400000);
   });

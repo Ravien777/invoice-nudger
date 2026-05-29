@@ -47,6 +47,7 @@ export default async function TimePage() {
         entries={serialized}
         activeEntry={activeEntry}
         defaultHourlyRate={user.businessProfile?.defaultHourlyRate ?? null}
+        baseCurrency={user.businessProfile?.baseCurrency ?? "USD"}
       />
     </PageShell>
   );

@@ -18,6 +18,7 @@ import { formatCurrency } from "@/lib/format-currency";
 interface ForecastWidgetProps {
   forecast: ForecastResult | null;
   hasAccess: boolean;
+  baseCurrency?: string;
 }
 
 const HORIZONS = [30, 60, 90] as const;
@@ -27,7 +28,7 @@ function formatShortDate(iso: string): string {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-export default function ForecastWidget({ forecast, hasAccess }: ForecastWidgetProps) {
+export default function ForecastWidget({ forecast, hasAccess, baseCurrency = "USD" }: ForecastWidgetProps) {
   const [horizon, setHorizon] = useState<number>(30);
 
   const chartData = useMemo(() => {
@@ -120,7 +121,7 @@ export default function ForecastWidget({ forecast, hasAccess }: ForecastWidgetPr
             />
             <YAxis
               tick={{ fontSize: 10, fill: "var(--muted)" }}
-              tickFormatter={(val: number) => formatCurrency(val)}
+              tickFormatter={(val: number) => formatCurrency(val, baseCurrency)}
               tickMargin={4}
             />
             <Tooltip
@@ -131,15 +132,15 @@ export default function ForecastWidget({ forecast, hasAccess }: ForecastWidgetPr
                 return (
                   <div className="rounded-lg border border-border-default bg-surface-secondary px-3 py-2 text-xs shadow-lg">
                     <p className="mb-1 font-medium text-text-primary">{data.date}</p>
-                    <p className="text-success">Best: {formatCurrency(data.best)}</p>
-                    <p className="text-accent">Expected: {formatCurrency(data.expected)}</p>
-                    <p className="text-danger">Worst: {formatCurrency(data.worst)}</p>
+                    <p className="text-success">Best: {formatCurrency(data.best, baseCurrency)}</p>
+                    <p className="text-accent">Expected: {formatCurrency(data.expected, baseCurrency)}</p>
+                    <p className="text-danger">Worst: {formatCurrency(data.worst, baseCurrency)}</p>
                     {data.invoices?.length > 0 && (
                       <>
                         <p className="mt-1.5 text-[10px] font-medium text-text-secondary">Top invoices:</p>
                         {data.invoices.map((inv: { clientName: string; amount: number; probability: number }, i: number) => (
                           <p key={i} className="text-text-secondary">
-                            {inv.clientName} — {formatCurrency(inv.amount)} ({(inv.probability * 100).toFixed(0)}%)
+                            {inv.clientName} — {formatCurrency(inv.amount, baseCurrency)} ({(inv.probability * 100).toFixed(0)}%)
                           </p>
                         ))}
                       </>
@@ -188,15 +189,15 @@ export default function ForecastWidget({ forecast, hasAccess }: ForecastWidgetPr
       <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
         <div>
           <p className="text-text-secondary">Expected</p>
-          <p className="font-semibold text-text-primary">{formatCurrency(visibleTotals.expected)}</p>
+          <p className="font-semibold text-text-primary">{formatCurrency(visibleTotals.expected, baseCurrency)}</p>
         </div>
         <div>
           <p className="text-text-secondary">Best Case</p>
-          <p className="font-semibold text-success">{formatCurrency(visibleTotals.best)}</p>
+          <p className="font-semibold text-success">{formatCurrency(visibleTotals.best, baseCurrency)}</p>
         </div>
         <div>
           <p className="text-text-secondary">Worst Case</p>
-          <p className="font-semibold text-danger">{formatCurrency(visibleTotals.worst)}</p>
+          <p className="font-semibold text-danger">{formatCurrency(visibleTotals.worst, baseCurrency)}</p>
         </div>
       </div>
 

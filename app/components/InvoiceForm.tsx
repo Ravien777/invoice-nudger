@@ -77,6 +77,7 @@ export default function InvoiceForm({
     invoiceNumber: initialData?.invoiceNumber ?? "",
     notes: initialData?.notes ?? "",
     reminderScheduleId: initialData?.reminderScheduleId ?? "",
+    lineItems: [],
   });
 
   const [promisedDate, setPromisedDate] = useState(
@@ -213,7 +214,17 @@ export default function InvoiceForm({
     setErrors({});
 
     const submitAmount = hasLineItems ? computedTotal : formData.amount;
-    const submitData = { ...formData, amount: submitAmount };
+    const submitLineItems = hasLineItems
+      ? lineItems.filter((li) => li.description).map((li, i) => ({
+          description: li.description,
+          quantity: li.quantity,
+          unitPrice: li.unitPrice,
+          taxRate: li.taxRate || undefined,
+          total: li.quantity * li.unitPrice,
+          sortOrder: i,
+        }))
+      : [];
+    const submitData = { ...formData, amount: submitAmount, lineItems: submitLineItems };
 
     const validation = invoiceSchema.safeParse(submitData);
     if (!validation.success) {

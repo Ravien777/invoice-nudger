@@ -10,7 +10,7 @@ import { Select } from "@/app/components/ui/Select";
 import { Modal } from "@/app/components/ui/Modal";
 import { Table, TableHead, TableBody, TableRow, TableCell } from "@/app/components/ui/Table";
 import { Badge } from "@/app/components/ui/Badge";
-import { formatCurrency } from "@/lib/format-currency";
+import { formatCurrency, currenciesWithSymbol } from "@/lib/format-currency";
 
 interface Contractor {
   id: string;
@@ -46,6 +46,7 @@ interface PayrollClientProps {
   payments: Payment[];
   businessProfile: BusinessProfile | null;
   userPlan: string;
+  baseCurrency?: string;
 }
 
 type Tab = "contractors" | "payments";
@@ -55,6 +56,7 @@ export default function PayrollClient({
   payments: initialPayments,
   businessProfile,
   userPlan,
+  baseCurrency = "USD",
 }: PayrollClientProps) {
   const [tab, setTab] = useState<Tab>("contractors");
   const [contractors, setContractors] = useState(initialContractors);
@@ -79,7 +81,7 @@ export default function PayrollClient({
   // Pay form
   const [payForm, setPayForm] = useState({
     amount: "",
-    currency: "USD",
+    currency: baseCurrency,
     description: "",
     paymentDate: new Date().toISOString().slice(0, 10),
   });
@@ -88,7 +90,7 @@ export default function PayrollClient({
     setNewContractor({ name: "", email: "", role: "", rate: "", rateType: "hourly", taxId: "" });
 
   const resetPayForm = () =>
-    setPayForm({ amount: "", currency: "USD", description: "", paymentDate: new Date().toISOString().slice(0, 10) });
+    setPayForm({ amount: "", currency: baseCurrency, description: "", paymentDate: new Date().toISOString().slice(0, 10) });
 
   const handleAddContractor = useCallback(async () => {
     if (!newContractor.name || !newContractor.email) {
@@ -228,7 +230,7 @@ export default function PayrollClient({
       title="Payroll"
       subtitle="Pay your contractors and keep a record. Simple payslips, no tax headaches."
     >
-      <div className="flex items-center gap-4 mb-4">
+      <div className="flex items-center gap-4 mb-4 flex-wrap">
         <button
           onClick={() => setTab("contractors")}
           className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${
@@ -251,7 +253,7 @@ export default function PayrollClient({
         </button>
         <div className="flex-1" />
         <span className="text-sm text-text-tertiary">
-          Total this year: {formatCurrency(thisYearTotal, "USD")}
+          Total this year: {formatCurrency(thisYearTotal, baseCurrency)}
         </span>
       </div>
 
@@ -282,7 +284,7 @@ export default function PayrollClient({
                   <TableCell className="text-text-secondary">{c.email}</TableCell>
                   <TableCell hideBelow="sm" className="text-text-secondary">{c.role ?? "—"}</TableCell>
                   <TableCell hideBelow="sm" className="text-text-secondary">
-                    {c.rate ? `${formatCurrency(c.rate, "USD")}${c.rateType === "hourly" ? "/hr" : c.rateType === "monthly" ? "/mo" : ""}` : "—"}
+                    {c.rate ? `${formatCurrency(c.rate, baseCurrency)}${c.rateType === "hourly" ? "/hr" : c.rateType === "monthly" ? "/mo" : ""}` : "—"}
                   </TableCell>
                   <TableCell>{c._count.payments}</TableCell>
                   <TableCell>
@@ -482,11 +484,9 @@ export default function PayrollClient({
               value={payForm.currency}
               onChange={(e) => setPayForm((p) => ({ ...p, currency: e.target.value }))}
             >
-              <option value="USD">USD ($)</option>
-              <option value="EUR">EUR (€)</option>
-              <option value="GBP">GBP (£)</option>
-              <option value="CAD">CAD (C$)</option>
-              <option value="AUD">AUD (A$)</option>
+              {currenciesWithSymbol().map((c) => (
+                <option key={c.code} value={c.code}>{c.label}</option>
+              ))}
             </Select>
           </div>
           <div>

@@ -7,6 +7,7 @@ import { Resend } from "resend";
 import { z } from "zod";
 import { generatePayslipPdf } from "@/lib/payslip-pdf";
 import { payslipEmail } from "@/lib/email-templates/payslip";
+import { formatCurrency } from "@/lib/format-currency";
 
 const resend = new Resend(process.env.RESEND_API_KEY || "re_");
 
@@ -129,7 +130,7 @@ export async function POST(
     businessName,
     contractorName: contractor.name,
     description,
-    amount: `${currency === "USD" ? "$" : ""}${amount.toFixed(2)} ${currency !== "USD" ? currency : ""}`,
+    amount: formatCurrency(amount, currency),
   });
 
   await resend.emails.send({

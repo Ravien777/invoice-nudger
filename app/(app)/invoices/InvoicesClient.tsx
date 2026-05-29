@@ -260,7 +260,7 @@ export default function InvoicesClient({
       title="Invoices"
       subtitle="Manage your invoices"
       actions={
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button
             variant="secondary"
             size="sm"
@@ -338,7 +338,7 @@ export default function InvoicesClient({
           />
         </div>
 
-        <div className="flex-1 min-w-[200px]">
+        <div className="flex-1 min-w-0">
           <Input
             icon={Search}
             type="text"

@@ -53,7 +53,7 @@ export default async function ExpensesPage() {
   return (
     <PageShell
       title="Expenses"
-      subtitle="Track what you spend so you know what you actually earned."
+      subtitle="What you've spent. Used automatically in your profit report."
     >
       <ExpensesClient
         expenses={serialized}

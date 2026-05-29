@@ -21,6 +21,18 @@ export async function uploadReceipt(file: File, userId: string): Promise<string>
   return blob.url;
 }
 
+export async function uploadPdf(buffer: Buffer, userId: string): Promise<string> {
+  const path = `contracts/${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.pdf`;
+
+  const blob = await put(path, buffer, {
+    access: "public",
+    addRandomSuffix: false,
+    contentType: "application/pdf",
+  });
+
+  return blob.url;
+}
+
 export async function deleteBlob(url: string): Promise<void> {
   await del(url);
 }

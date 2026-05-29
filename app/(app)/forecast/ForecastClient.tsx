@@ -156,7 +156,7 @@ export default function ForecastClient() {
       {/* Confidence badge + summary row */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <ConfidenceBadge confidence={data.confidence} reason={data.confidenceReason} />
-        <div className="flex gap-6 text-sm">
+        <div className="flex flex-wrap gap-6 text-sm">
           <div className="text-right">
             <p className="text-text-secondary">Expected Income</p>
             <p className="font-semibold text-green-600">

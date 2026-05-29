@@ -33,11 +33,6 @@ export default async function ContractsPage() {
     },
   });
 
-  const templates = await prisma.contractTemplate.findMany({
-    where: { userId: null },
-    select: { id: true, name: true, body: true },
-  });
-
   const serialized = contracts.map((c) => ({
     ...c,
     signedAt: c.signedAt?.toISOString() ?? null,
@@ -45,21 +40,12 @@ export default async function ContractsPage() {
     createdAt: c.createdAt.toISOString(),
   }));
 
-  const serializedTemplates = templates.map((t) => ({
-    id: t.id,
-    name: t.name,
-    body: t.body,
-  }));
-
   return (
     <PageShell
       title="Contracts"
       subtitle="Protect yourself before work starts. Send a contract, get it signed in minutes."
     >
-      <ContractsClient
-        contracts={serialized}
-        templates={serializedTemplates}
-      />
+      <ContractsClient contracts={serialized} />
     </PageShell>
   );
 }

@@ -74,7 +74,7 @@ export async function POST(request: Request) {
       title,
       body: renderedBody,
       quoteId: quoteId ?? null,
-      expiresAt: expiresAt ? new Date(expiresAt) : null,
+      expiresAt: expiresAt ? new Date(expiresAt) : new Date(Date.now() + 30 * 86400000),
     },
   });
 

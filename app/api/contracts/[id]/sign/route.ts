@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { Resend } from "resend";
 import { generateContractPdf } from "@/lib/contract-pdf";
+import { uploadPdf } from "@/lib/storage";
 
 const resend = new Resend(process.env.RESEND_API_KEY ?? "");
 
@@ -64,10 +65,9 @@ export async function POST(
       clientName: contract.clientName,
     });
 
-    const base64 = pdfBuffer.toString("base64");
-    pdfUrl = `data:application/pdf;base64,${base64}`;
+    pdfUrl = await uploadPdf(pdfBuffer, contract.userId);
   } catch (pdfError) {
-    console.error("PDF generation failed:", pdfError);
+    console.error("PDF generation or upload failed:", pdfError);
   }
 
   await prisma.contract.update({

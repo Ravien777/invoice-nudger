@@ -135,6 +135,10 @@ Make small-business finance so simple that a 15-year-old starting their first la
 
 [✅] **Predictive alerts & notifications** — Automatic in-app alerts for high-risk invoices (probability <30% and due within 7 days), client payment deterioration (20%+ drop in on-time rate), and cash flow gaps. Notification bell in header with badge count. Filterable notification history page.
 
+[✅] **Multi-currency** — Every record (invoice, expense, quote, time entry, recurring invoice, contractor payment) has its own currency field. The user sets a base currency in their Business Profile; `formatCurrency` is called with the correct currency throughout the app — ForecastWidget, TimeClient, BankClient, PayrollClient, quotes, and contractor pay.
+
+[✅] **Contracts & e-signature** — Three system templates (Freelance Service Agreement, Retainer Agreement, Project-Based Agreement) auto-seeded on first use. Contract CRUD with template picker, variable interpolation, public signing page, and PDF generation. Signed PDFs uploaded to Blob storage (not base64 in DB). "Save as Draft" and "Send to Client" options. Email notifications on send and sign.
+
 ---
 
 ## UI Component Library
@@ -176,20 +180,13 @@ Redesigned pages: Settings (5-tab), Benchmarks, Billing, Promises, Notifications
 
 See [NEXT.md](./NEXT.md) for the full roadmap. Highlights:
 
-- **Expense tracking** — Log what you spend. Know your true profit.
-- **Tax estimation** — (Income − expenses) × your tax rate. Know what to set aside.
-- **Quotes & proposals** — Send a price estimate. Client approves. One click converts to invoice.
-- **Time tracking** — Log hours. Generate invoices from unbilled time.
-- **Recurring invoices & retainers** — Set once, invoices send themselves.
-- **Bank & credit card feeds** (Plaid) — Expenses appear automatically. Just tag them.
-- **Invoice PDF generation** — Download invoices as professional PDFs.
 - **AI receipt scanning** — Snap a photo. Fields pre-fill. Save.
 - **Service catalog** — Save common line items. Add to invoices in one click.
-- **Multi-user & teams** — Add your bookkeeper or partner. Role-based access.
 - **Client activity timeline** — See every event with a client in one feed.
 - **PayPal & bank transfer** — Let clients pay how they want.
-- **Accounting overview** — P&L, cash flow, charts — in one page.
-- **Mobile-first PWA** — Install on your phone. Works offline.
+- **Team & agency tier** — Roles, seats, and permissions (Phase R).
+- **Business credit score & client health dashboard** — Track payment reliability (Phase S).
+- **Accountant/bookkeeper access** — Read-only access for your accountant (Phase Q).
 
 ---
 

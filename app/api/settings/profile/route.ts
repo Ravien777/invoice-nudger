@@ -12,14 +12,31 @@ export async function GET() {
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
-    select: { name: true, email: true },
+    include: { businessProfile: true },
   });
 
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  return NextResponse.json({ name: user.name, email: user.email });
+  let bp = user.businessProfile;
+  if (!bp) {
+    bp = await prisma.businessProfile.upsert({
+      where: { userId: user.id },
+      create: { userId: user.id },
+      update: {},
+    });
+  }
+
+  return NextResponse.json({
+    name: user.name,
+    email: user.email,
+    taxRate: bp.taxRate,
+    fiscalYearStart: bp.fiscalYearStart,
+    taxSavingsAmount: bp.taxSavingsAmount,
+    baseCurrency: bp.baseCurrency,
+    defaultHourlyRate: bp.defaultHourlyRate,
+  });
 }
 
 export async function PUT(request: Request) {

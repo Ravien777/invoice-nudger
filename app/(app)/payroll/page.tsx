@@ -41,11 +41,12 @@ export default async function PayrollPage() {
   }));
 
   return (
-    <PayrollClient
-      contractors={contractors}
-      payments={serializedPayments}
-      businessProfile={user.businessProfile}
-      userPlan={user.plan}
-    />
+      <PayrollClient
+        contractors={contractors}
+        payments={serializedPayments}
+        businessProfile={user.businessProfile}
+        userPlan={user.plan}
+        baseCurrency={user.businessProfile?.baseCurrency ?? "USD"}
+      />
   );
 }

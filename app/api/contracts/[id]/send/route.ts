@@ -57,6 +57,7 @@ export async function POST(
 
   if (emailError) {
     console.error("Failed to send contract email:", emailError);
+    return NextResponse.json({ error: "Failed to send email" }, { status: 500 });
   }
 
   await prisma.contract.update({

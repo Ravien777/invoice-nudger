@@ -252,7 +252,7 @@ export default async function DashboardPage() {
         {/* Hero — total outstanding */}
         <div className="mb-8">
           <p className="text-sm text-text-secondary mb-1">Total Outstanding</p>
-          <p className="text-5xl font-bold text-text-primary tracking-tight">
+          <p className="text-5xl font-bold text-text-primary tracking-tight break-all">
             {outstandingFormatted}
           </p>
           {hasMultiCurrency && (
@@ -289,6 +289,7 @@ export default async function DashboardPage() {
             <StatCard
               label="Expenses This Month"
               value={formatCurrency(expenseAgg._sum.amount ?? 0, bp.baseCurrency)}
+              subLabel={`${expenseAgg._count} items`}
               variant="default"
               href="/expenses"
             >
@@ -444,7 +445,7 @@ export default async function DashboardPage() {
         )}
 
         <div className="mb-8">
-          <ForecastWidget forecast={forecast} hasAccess={hasForecastAccess} />
+          <ForecastWidget forecast={forecast} hasAccess={hasForecastAccess} baseCurrency={bp.baseCurrency} />
         </div>
 
         {/* Recent invoices table */}
@@ -488,7 +489,7 @@ export default async function DashboardPage() {
           <p className="mb-4 text-sm text-muted">
             Manage your invoices and keep track of payments.
           </p>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <Button href="/invoices/new" size="sm">
               <Plus className="h-4 w-4" />
               New Invoice

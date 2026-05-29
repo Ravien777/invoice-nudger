@@ -53,10 +53,12 @@ export default function TimeClient({
   entries: initialEntries,
   activeEntry: initialActive,
   defaultHourlyRate,
+  baseCurrency = "USD",
 }: {
   entries: TimeEntry[];
   activeEntry: TimeEntry | null;
   defaultHourlyRate: number | null;
+  baseCurrency?: string;
 }) {
   const router = useRouter();
   const [entries, setEntries] = useState(initialEntries);
@@ -70,6 +72,7 @@ export default function TimeClient({
     clientName: "",
     description: "",
     hourlyRate: defaultHourlyRate ? String(defaultHourlyRate) : "",
+    currency: baseCurrency,
   });
 
   useEffect(() => {
@@ -87,6 +90,7 @@ export default function TimeClient({
       clientName: "",
       description: "",
       hourlyRate: defaultHourlyRate ? String(defaultHourlyRate) : "",
+      currency: baseCurrency,
     });
     setShowForm(false);
   };
@@ -103,6 +107,7 @@ export default function TimeClient({
           clientName: form.clientName || undefined,
           description: form.description || undefined,
           hourlyRate: form.hourlyRate ? Number(form.hourlyRate) : undefined,
+          currency: form.currency,
         }),
       });
       const data = await res.json();
@@ -209,7 +214,7 @@ export default function TimeClient({
     <div className="space-y-6">
       {activeEntry ? (
         <div className="rounded-xl border border-border-default bg-surface p-6 shadow-sm">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <div>
               <p className="text-sm font-medium text-text-primary">
                 {activeEntry.clientName ?? activeEntry.clientEmail}
@@ -238,7 +243,7 @@ export default function TimeClient({
             </Button>
           ) : (
             <div className="rounded-xl border border-border-default bg-surface p-6 shadow-sm space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-text-secondary mb-1">Client Email *</label>
                   <input
@@ -270,7 +275,7 @@ export default function TimeClient({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-text-secondary mb-1">Hourly Rate ($)</label>
+                  <label className="block text-xs font-medium text-text-secondary mb-1">Hourly Rate</label>
                   <input
                     type="number"
                     value={form.hourlyRate}
@@ -278,6 +283,22 @@ export default function TimeClient({
                     className="w-full rounded-lg border border-border-default bg-canvas px-3 py-2 text-sm text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-border-focus"
                     placeholder={String(defaultHourlyRate ?? "75")}
                   />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-text-secondary mb-1">Currency</label>
+                  <select
+                    value={form.currency}
+                    onChange={(e) => setForm({ ...form, currency: e.target.value })}
+                    className="w-full rounded-lg border border-border-default bg-canvas px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-border-focus"
+                  >
+                    <option value="USD">USD ($)</option>
+                    <option value="EUR">EUR (€)</option>
+                    <option value="GBP">GBP (£)</option>
+                    <option value="AUD">AUD (A$)</option>
+                    <option value="CAD">CAD (C$)</option>
+                    <option value="SGD">SGD (S$)</option>
+                    <option value="INR">INR (₹)</option>
+                  </select>
                 </div>
               </div>
               <div className="flex gap-2">
@@ -310,7 +331,7 @@ export default function TimeClient({
               <div className="text-right">
                 <p className="text-sm font-medium text-text-primary">{fmtDur(g.totalMinutes)}</p>
                 <p className="text-xs font-semibold text-text-primary">
-                  {formatCurrency(Math.round(g.totalValue * 100) / 100)}
+                  {formatCurrency(Math.round(g.totalValue * 100) / 100, baseCurrency)}
                 </p>
               </div>
             </div>
@@ -336,8 +357,8 @@ export default function TimeClient({
                       </TableCell>
                       <TableCell className="text-text-primary">{entry.description ?? "\u2014"}</TableCell>
                       <TableCell className="font-mono">{fmtDur(entry.durationMinutes)}</TableCell>
-                      <TableCell>{rate ? formatCurrency(rate) : "\u2014"}</TableCell>
-                      <TableCell>{formatCurrency(Math.round(value * 100) / 100)}</TableCell>
+                      <TableCell>{rate ? formatCurrency(rate, baseCurrency) : "\u2014"}</TableCell>
+                      <TableCell>{formatCurrency(Math.round(value * 100) / 100, baseCurrency)}</TableCell>
                       <TableCell>
                         <button
                           onClick={() => deleteEntry(entry.id)}

@@ -61,12 +61,15 @@ export async function POST(req: NextRequest) {
 
   const clientName = entries.find((e) => e.clientName)?.clientName ?? clientEmail;
 
+  const entryCurrencies = [...new Set(entries.map((e) => e.currency).filter(Boolean))];
+  const invoiceCurrency = entryCurrencies.length === 1 ? entryCurrencies[0] : (user.businessProfile?.baseCurrency ?? "USD");
+
   const invoice = await prisma.invoice.create({
     data: {
       clientName,
       clientEmail,
       amount,
-      currency: user.businessProfile?.baseCurrency ?? "USD",
+      currency: invoiceCurrency,
       dueDate: dueDate ? new Date(dueDate) : addDays(new Date(), 30),
       notes: `Created from ${entries.length} time entr${entries.length === 1 ? "y" : "ies"} (${Math.round(totalHours * 10) / 10} hours at $${hourlyRate}/hr)`,
       userId: user.id,

@@ -167,7 +167,7 @@ export default function NotificationsClient({
       </div>
 
       {/* Filter tabs */}
-      <div className="inline-flex gap-1 rounded-lg bg-surface-tertiary p-1">
+      <div className="flex flex-wrap gap-1 rounded-lg bg-surface-tertiary p-1 w-fit">
         {filterBtn(null, `All (${total})`)}
         {filterBtn("high_risk_invoice", "High Risk")}
         {filterBtn("client_deterioration", "Clients")}

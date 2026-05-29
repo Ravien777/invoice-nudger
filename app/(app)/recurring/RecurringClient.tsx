@@ -1,12 +1,28 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Pause, Play, Trash2 } from "lucide-react";
+import { Plus, Pause, Play, Trash2, Pencil } from "lucide-react";
 import { Button } from "@/app/components/ui/Button";
 import { Badge, type BadgeVariant } from "@/app/components/ui/Badge";
 import { Table, TableHead, TableBody, TableRow, TableCell } from "@/app/components/ui/Table";
+import { Select } from "@/app/components/ui/Select";
 import toast from "react-hot-toast";
-import { formatCurrency, currencySymbol } from "@/lib/format-currency";
+import { formatCurrency, currencySymbol, currenciesWithSymbol } from "@/lib/format-currency";
+
+interface Schedule {
+  id: string;
+  name: string;
+  isDefault: boolean;
+}
+
+export interface LineItemData {
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  taxRate?: number;
+  total: number;
+  sortOrder: number;
+}
 
 interface RecurringItem {
   id: string;
@@ -19,11 +35,21 @@ interface RecurringItem {
   nextRunDate: string;
   endDate: string | null;
   description: string | null;
+  lineItems: LineItemData[] | null;
   status: string;
   autoSend: boolean;
+  reminderScheduleId: string | null;
   invoicesCreated: number;
   lastRunDate: string | null;
   createdAt: string;
+}
+
+interface LineItemForm {
+  tempId: string;
+  description: string;
+  quantity: string;
+  unitPrice: string;
+  taxRate: string;
 }
 
 const FREQ_LABELS: Record<string, string> = {
@@ -95,25 +121,49 @@ function getDefaultNextRun(frequency: string, dayOfMonth?: number): string {
   }
 }
 
-export default function RecurringClient({ initial }: { initial: RecurringItem[] }) {
+export default function RecurringClient({ initial, schedules, baseCurrency = "USD" }: { initial: RecurringItem[]; schedules: Schedule[]; baseCurrency?: string }) {
   const [items, setItems] = useState<RecurringItem[]>(initial);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const [form, setForm] = useState({
     clientName: "",
     clientEmail: "",
     amount: "",
-    currency: "USD",
+    currency: baseCurrency,
     frequency: "monthly",
     dayOfMonth: "1",
     nextRunDate: getDefaultNextRun("monthly", 1),
     endDate: "",
     description: "",
     autoSend: true,
+    reminderScheduleId: "",
   });
 
-  const needsDay = form.frequency === "monthly" || form.frequency === "quarterly" || form.frequency === "annually";
+  const [lineItems, setLineItems] = useState<LineItemForm[]>([]);
+
+  const needsDay = form.frequency === "monthly" || form.frequency === "quarterly";
+
+  let lineItemIdx = 0;
+  const addLineItem = () => {
+    setLineItems([...lineItems, { tempId: `item_${++lineItemIdx}`, description: "", quantity: "", unitPrice: "", taxRate: "" }]);
+  };
+
+  const removeLineItem = (tempId: string) => {
+    setLineItems(lineItems.filter((li) => li.tempId !== tempId));
+  };
+
+  const updateLineItem = (tempId: string, field: keyof Omit<LineItemForm, "tempId">, value: string) => {
+    setLineItems(lineItems.map((li) => (li.tempId === tempId ? { ...li, [field]: value } : li)));
+  };
+
+  const computedLineItemTotal = lineItems.reduce((sum, li) => {
+    const qty = parseFloat(li.quantity) || 0;
+    const price = parseFloat(li.unitPrice) || 0;
+    const tax = (parseFloat(li.taxRate) || 0) / 100;
+    return sum + qty * price * (1 + tax);
+  }, 0);
 
   const handleFrequencyChange = (freq: string) => {
     const day = form.dayOfMonth || "1";
@@ -137,14 +187,17 @@ export default function RecurringClient({ initial }: { initial: RecurringItem[] 
       clientName: "",
       clientEmail: "",
       amount: "",
-      currency: "USD",
+      currency: baseCurrency,
       frequency: "monthly",
       dayOfMonth: "1",
       nextRunDate: getDefaultNextRun("monthly", 1),
       endDate: "",
       description: "",
       autoSend: true,
+      reminderScheduleId: "",
     });
+    setLineItems([]);
+    setEditingId(null);
     setShowForm(false);
   };
 
@@ -152,32 +205,51 @@ export default function RecurringClient({ initial }: { initial: RecurringItem[] 
     e.preventDefault();
     setSaving(true);
     try {
-      const res = await fetch("/api/recurring", {
-        method: "POST",
+      const url = editingId ? `/api/recurring/${editingId}` : "/api/recurring";
+      const method = editingId ? "PUT" : "POST";
+      const payloadLineItems = lineItems
+        .filter((li) => li.description.trim())
+        .map((li, i) => ({
+          description: li.description,
+          quantity: parseFloat(li.quantity) || 1,
+          unitPrice: parseFloat(li.unitPrice) || 0,
+          taxRate: parseFloat(li.taxRate) || undefined,
+          total: (parseFloat(li.quantity) || 1) * (parseFloat(li.unitPrice) || 0) * (1 + ((parseFloat(li.taxRate) || 0) / 100)),
+          sortOrder: i,
+        }));
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
           amount: Number(form.amount),
           dayOfMonth: needsDay ? Number(form.dayOfMonth) : undefined,
           endDate: form.endDate || undefined,
+          reminderScheduleId: form.reminderScheduleId || undefined,
+          lineItems: payloadLineItems,
         }),
       });
       if (!res.ok) {
         const err = await res.json();
-        toast.error(err.error?.fieldErrors ? Object.values(err.error.fieldErrors).flat().join(", ") : "Failed to create");
+        toast.error(err.error?.fieldErrors ? Object.values(err.error.fieldErrors).flat().join(", ") : "Failed to save");
         return;
       }
-      const created = await res.json();
-      setItems([created, ...items]);
+      const saved = await res.json();
+      if (editingId) {
+        setItems(items.map((i) => (i.id === editingId ? { ...i, ...saved } : i)));
+        toast.success("Recurring invoice updated");
+      } else {
+        setItems([saved, ...items]);
+        toast.success("Recurring invoice created");
+      }
       resetForm();
-      toast.success("Recurring invoice created");
     } finally {
       setSaving(false);
     }
   };
 
   const toggleStatus = async (item: RecurringItem, newStatus: string) => {
-    const res = await fetch(`/api/recurring/${item.id}`, {
+      const res = await fetch(`/api/recurring/${item.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -191,6 +263,7 @@ export default function RecurringClient({ initial }: { initial: RecurringItem[] 
         endDate: item.endDate || undefined,
         description: item.description || "",
         autoSend: item.autoSend,
+        reminderScheduleId: item.reminderScheduleId || undefined,
       }),
     });
     if (!res.ok) {
@@ -200,6 +273,35 @@ export default function RecurringClient({ initial }: { initial: RecurringItem[] 
     const updated = await res.json();
     setItems(items.map((i) => (i.id === item.id ? { ...i, status: newStatus } : i)));
     toast.success(newStatus === "active" ? "Resumed" : "Paused");
+  };
+
+  const handleEdit = (item: RecurringItem) => {
+    setForm({
+      clientName: item.clientName,
+      clientEmail: item.clientEmail,
+      amount: item.amount.toString(),
+      currency: item.currency,
+      frequency: item.frequency,
+      dayOfMonth: item.dayOfMonth?.toString() || "1",
+      nextRunDate: item.nextRunDate.split("T")[0],
+      endDate: item.endDate ? item.endDate.split("T")[0] : "",
+      description: item.description || "",
+      autoSend: item.autoSend,
+      reminderScheduleId: item.reminderScheduleId || "",
+    });
+    if (item.lineItems) {
+      setLineItems(item.lineItems.map((li) => ({
+        tempId: `item_${li.sortOrder}`,
+        description: li.description,
+        quantity: li.quantity.toString(),
+        unitPrice: li.unitPrice.toString(),
+        taxRate: li.taxRate?.toString() || "",
+      })));
+    } else {
+      setLineItems([]);
+    }
+    setEditingId(item.id);
+    setShowForm(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -216,7 +318,7 @@ export default function RecurringClient({ initial }: { initial: RecurringItem[] 
     <div className="space-y-6">
       {showForm ? (
         <form onSubmit={handleSubmit} className="rounded-xl border border-border-default bg-surface p-5 space-y-4">
-          <h3 className="text-sm font-medium text-text-primary">New Recurring Invoice</h3>
+          <h3 className="text-sm font-medium text-text-primary">{editingId ? "Edit Recurring Invoice" : "New Recurring Invoice"}</h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -258,13 +360,9 @@ export default function RecurringClient({ initial }: { initial: RecurringItem[] 
                 onChange={(e) => setForm({ ...form, currency: e.target.value })}
                 className="w-full rounded-lg border border-border-default bg-surface-secondary px-3 py-1.5 text-sm text-text-primary"
               >
-                <option value="USD">USD ($)</option>
-                <option value="EUR">EUR (€)</option>
-                <option value="GBP">GBP (£)</option>
-                <option value="AUD">AUD (A$)</option>
-                <option value="CAD">CAD (C$)</option>
-                <option value="SGD">SGD (S$)</option>
-                <option value="INR">INR (₹)</option>
+                {currenciesWithSymbol().map((c) => (
+                  <option key={c.code} value={c.code}>{c.label}</option>
+                ))}
               </select>
             </div>
             <div>
@@ -323,6 +421,80 @@ export default function RecurringClient({ initial }: { initial: RecurringItem[] 
             />
           </div>
 
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-medium text-text-secondary uppercase tracking-wider">Line Items</label>
+              <Button type="button" variant="ghost" size="sm" onClick={addLineItem}>
+                <Plus className="h-3.5 w-3.5" />
+                Add item
+              </Button>
+            </div>
+            {lineItems.length > 0 && (
+              <div className="space-y-2">
+                <div className="hidden sm:grid grid-cols-12 gap-2 text-xs text-text-tertiary uppercase tracking-wider px-1">
+                  <div className="col-span-5">Description</div>
+                  <div className="col-span-2">Qty</div>
+                  <div className="col-span-2">Price</div>
+                  <div className="col-span-2">Tax %</div>
+                  <div className="col-span-1" />
+                </div>
+                {lineItems.map((li) => (
+                  <div key={li.tempId} className="flex flex-col sm:grid sm:grid-cols-12 gap-2">
+                    <div className="sm:col-span-5">
+                      <input
+                        value={li.description}
+                        onChange={(e) => updateLineItem(li.tempId, "description", e.target.value)}
+                        placeholder="Description"
+                        className="w-full rounded-lg border border-border-default bg-surface-secondary px-2 py-1.5 text-sm text-text-primary placeholder-text-tertiary"
+                      />
+                    </div>
+                    <div className="flex gap-2 sm:col-span-6">
+                      <input
+                        type="number"
+                        step="1"
+                        min="1"
+                        value={li.quantity}
+                        onChange={(e) => updateLineItem(li.tempId, "quantity", e.target.value)}
+                        placeholder="Qty"
+                        className="flex-1 min-w-0 rounded-lg border border-border-default bg-surface-secondary px-2 py-1.5 text-sm text-text-primary placeholder-text-tertiary"
+                      />
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={li.unitPrice}
+                        onChange={(e) => updateLineItem(li.tempId, "unitPrice", e.target.value)}
+                        placeholder="Price"
+                        className="flex-1 min-w-0 rounded-lg border border-border-default bg-surface-secondary px-2 py-1.5 text-sm text-text-primary placeholder-text-tertiary"
+                      />
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        value={li.taxRate}
+                        onChange={(e) => updateLineItem(li.tempId, "taxRate", e.target.value)}
+                        placeholder="Tax %"
+                        className="flex-1 min-w-0 rounded-lg border border-border-default bg-surface-secondary px-2 py-1.5 text-sm text-text-primary placeholder-text-tertiary"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeLineItem(li.tempId)}
+                      className="self-start sm:self-auto p-1.5 rounded-md text-text-tertiary hover:text-[var(--danger)] hover:bg-surface-tertiary transition-colors"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {lineItems.length > 0 && lineItems.some((li) => li.description.trim()) && (
+              <div className="text-right text-sm text-text-secondary">
+                Line items total: {formatCurrency(computedLineItemTotal, form.currency)}
+              </div>
+            )}
+          </div>
+
           <label className="flex items-center gap-2 text-sm text-text-primary">
             <input
               type="checkbox"
@@ -332,6 +504,28 @@ export default function RecurringClient({ initial }: { initial: RecurringItem[] 
             />
             Send automatically (creates invoice as unpaid)
           </label>
+
+          {schedules.length > 0 && (
+            <div>
+              <label className="block text-xs text-text-secondary mb-1">Reminder Schedule</label>
+              <Select
+                value={form.reminderScheduleId}
+                onChange={(e) => setForm({ ...form, reminderScheduleId: e.target.value })}
+              >
+                <option value="">Default schedule</option>
+                {schedules
+                  .filter((s) => !s.isDefault)
+                  .map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+              </Select>
+              <p className="mt-1 text-xs text-text-tertiary">
+                Leave as &quot;Default schedule&quot; to use your standard reminder settings.
+              </p>
+            </div>
+          )}
 
           <div className="flex gap-2">
             <Button type="submit" loading={saving}>Create</Button>
@@ -383,6 +577,13 @@ export default function RecurringClient({ initial }: { initial: RecurringItem[] 
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
+                      <button
+                        onClick={() => handleEdit(item)}
+                        className="p-1.5 rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-tertiary transition-colors"
+                        title="Edit"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
                       {item.status === "active" ? (
                         <button
                           onClick={() => toggleStatus(item, "paused")}

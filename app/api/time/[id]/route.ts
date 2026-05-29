@@ -13,6 +13,7 @@ const updateSchema = z.object({
   endTime: z.string().optional(),
   durationMinutes: z.number().int().positive().optional(),
   hourlyRate: z.number().positive().optional(),
+  currency: z.string().optional(),
 });
 
 export async function GET(

@@ -10,6 +10,7 @@ const startTimerSchema = z.object({
   clientName: z.string().optional(),
   description: z.string().optional(),
   hourlyRate: z.number().positive().optional(),
+  currency: z.string().optional(),
 });
 
 export async function GET(req: NextRequest) {

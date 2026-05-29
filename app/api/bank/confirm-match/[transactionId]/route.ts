@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { formatCurrency } from "@/lib/format-currency";
 import { createPaymentRecord } from "@/lib/reconciliation";
 import { createAllocationRecord } from "@/lib/allocation";
 
@@ -67,7 +68,7 @@ export async function POST(
       userId: user.id,
       type: "payment_received",
       title: "Payment matched from bank",
-      message: `$${tx.amount.toFixed(2)} matched for invoice ${invoice.clientName} from bank import.`,
+      message: `${formatCurrency(tx.amount, tx.currency)} matched for invoice ${invoice.clientName} from bank import.`,
       metadata: { invoiceId: invoice.id, transactionId: tx.id },
     },
   });

@@ -148,7 +148,7 @@ export default function PromisesClient({
       )}
 
       {/* Filter tabs */}
-      <div className="inline-flex gap-1 rounded-lg bg-surface-tertiary p-1">
+      <div className="flex flex-wrap gap-1 rounded-lg bg-surface-tertiary p-1 w-fit">
         {filters.map((s) => (
           <Button
             key={s}
@@ -242,7 +242,7 @@ export default function PromisesClient({
 
               {/* pending_review actions */}
               {promise.status === "pending_review" && (
-                <div className="mt-4 flex items-center gap-3 border-t border-border-default pt-4">
+              <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-border-default pt-4">
                   <Button
                     variant="primary"
                     size="sm"
@@ -260,10 +260,11 @@ export default function PromisesClient({
                   >
                     Reject
                   </Button>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <Input
                       type="date"
                       value={overrideDate[promise.id] ?? ""}
+
                       onChange={(e) =>
                         setOverrideDate((prev) => ({
                           ...prev,
@@ -276,9 +277,7 @@ export default function PromisesClient({
                       variant="secondary"
                       size="sm"
                       onClick={() => handleAction(promise.id, "override")}
-                      disabled={
-                        processing === promise.id || !overrideDate[promise.id]
-                      }
+                      disabled={processing === promise.id}
                     >
                       Override Date
                     </Button>
@@ -288,8 +287,8 @@ export default function PromisesClient({
 
               {/* active actions */}
               {promise.status === "active" && (
-                <div className="mt-4 flex items-center gap-3 border-t border-border-default pt-4">
-                  <div className="flex items-center gap-2">
+                <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-border-default pt-4">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <Input
                       type="date"
                       value={overrideDate[promise.id] ?? ""}
