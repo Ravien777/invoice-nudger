@@ -381,3 +381,216 @@
 23. **F.1** — Email on auto-generate (medium, Resend call in cron)
 24. **F.3** — Invoice limit enforcement (low, check in cron)
 25. **F.6** — Calendar quarter alignment (low, date utility change)
+
+---
+
+# Audit Findings — Phase-by-Phase Gap Report
+
+Generated from systematic audit against `NEXT.md` (Phases E–S, excluding T). Each issue is tagged by severity.
+
+---
+
+## Phase E — Time Tracking
+
+| Severity | ID | Issue |
+|----------|----|-------|
+| **Medium** | E-1 | `POST /api/time/create-invoice` doesn't use `getTeamContext` — team members can't create invoices from time entries |
+| **Medium** | E-2 | `DELETE /api/time/[id]` blocks ALL team members (returns 403 for any teamCtx) instead of only `viewer` role — inconsistent with PUT/stop routes |
+| **Low** | E-3 | No `InvoiceLineItem` records created from time entries; invoice stores flat `amount` + text note in `notes` field |
+| **Low** | E-4 | Start timer form uses free-text email input; spec says dropdown of existing clients |
+| **Low** | E-5 | No redirect to invoice preview after create-invoice |
+| **Low** | E-6 | No edit action per row (only delete) |
+| **Low** | E-7 | Dead code: `clients` variable fetched server-side but never passed to `TimeClient` |
+| **Low** | E-8 | `getTeamContext` not explicitly mocked in tests (works due to deep mock, but fragile) |
+
+---
+
+## Phase F — Recurring Invoices
+
+| Severity | ID | Issue |
+|----------|----|-------|
+| **High** | F-1 | **Cron never sends emails when `autoSend = true`** — creates invoice but no Resend call |
+| **Medium** | F-2 | `nextRunDate` only computed server-side for `monthly`; weekly/biweekly/quarterly/annually use raw user-provided date |
+| **Medium** | F-3 | `description` not copied from recurring template to generated invoice (`notes` field left empty) |
+| **Medium** | F-4 | `reminderScheduleId` field missing from `RecurringInvoice` Prisma model |
+| **Medium** | F-5 | No Edit action in the UI — user must delete and recreate |
+| **Low** | F-6 | PUT used for status toggle (pause/resume sends full PUT with all fields) |
+| **Low** | F-7 | No soft-delete option — DELETE does hard delete |
+| **Low** | F-8 | Day-of-month input shown for "annually" (spec says monthly/quarterly only) |
+| **Low** | F-9 | Duplicated `computeNextRunDate` in cron (redefines inline instead of importing from `lib/date-utils`) |
+| **Low** | F-10 | No tests for `PUT /api/recurring/[id]` or `DELETE /api/recurring/[id]` |
+| **Low** | F-11 | No tests for cron `process-recurring/route.ts` |
+| **Low** | F-12 | No catch-up/backfill logic in cron (misses invoices if cron skips a day) |
+
+---
+
+## Phase G — Multi-Currency
+
+| Severity | ID | Issue |
+|----------|----|-------|
+| **Critical** | G-1 | **`TimeEntry` model missing `currency` field** — all time-derived invoices default to `baseCurrency` |
+| **Medium** | G-2 | `ForecastWidget.tsx` — 8 calls to `formatCurrency(val)` without currency arg (defaults to USD) |
+| **Medium** | G-3 | `TimeClient.tsx` — 3 calls to `formatCurrency(val)` without currency arg (defaults to USD) |
+| **Low** | G-4 | `RecurringClient.tsx` hardcodes `USD ($)` instead of offering currency selector |
+| **Low** | G-5 | `BankClient.tsx` line 336 — raw `{tx.amount.toFixed(2)} {tx.currency}` instead of `formatCurrency` |
+| **Low** | G-6 | `app/api/bank/confirm-match/[transactionId]/route.ts` line 70 — raw `$${tx.amount.toFixed(2)}` |
+| **Low** | G-7 | `app/api/contractors/[id]/pay/route.ts` line 132 — manual `$`/currency check |
+| **Low** | G-8 | `app/api/quotes/[id]/respond/route.ts` line 39 — raw `${currency} ${amount.toFixed(2)}` |
+| **Low** | G-9 | `PayrollClient.tsx` lines 254, 285 — hardcodes `"USD"` as second arg to `formatCurrency` |
+
+---
+
+## Phase H — Client Portal 2.0
+
+*No issues found. Fully implemented.* ✅
+
+---
+
+## Phase I — Basic Accounting
+
+| Severity | ID | Issue |
+|----------|----|-------|
+| **Missing** | I-1 | **Entire accounting page not built.** No `app/(app)/accounting/page.tsx` — 4 summary tiles, income/expense breakdown with charts, cash flow chart absent |
+| **Missing** | I-2 | **Export CSV API not built.** No `app/api/reports/export/route.ts` — PapaParse CSV generation, `Content-Disposition: attachment` header |
+
+---
+
+## Phase J — Mobile-First PWA
+
+| Severity | ID | Issue |
+|----------|----|-------|
+| **Low** | J-1 | No service worker registered (offline support not implemented) |
+| **Low** | J-2 | `theme_color`/`background_color` in manifest differ from spec (design choice, not a functional bug) |
+
+---
+
+## Phase K — Contracts & E-Signature
+
+| Severity | ID | Issue |
+|----------|----|-------|
+| **Critical** | K-1 | **Contract templates never seeded into DB.** `lib/contract-templates.ts` defines 3 templates but no seed script or init endpoint persists them. Template picker will always be empty |
+| **Critical** | K-2 | **Signed PDF stored as base64 data URL in `pdfUrl` field** instead of uploaded to Vercel Blob — causes DB bloat, non-properly-downloadable URLs |
+| **Low** | K-3 | Email send failure doesn't block status update — contract shown as "sent" even if email never arrives |
+| **Low** | K-4 | No default `expiresAt` set if user doesn't provide one at creation |
+| **Low** | K-5 | "New Contract" form immediately sends — no "Save as Draft" workflow |
+
+---
+
+## Phase L — Income Allocation (Profit First)
+
+| Severity | ID | Issue |
+|----------|----|-------|
+| **Low** | L-1 | Allocation notification message is generic — doesn't include client name or per-bucket breakdown as spec requires (`"$X received from [Client]. Here's your split: $Y to tax, $Z to you."`) |
+| **Low** | L-2 | No handling for `invoice.payment_succeeded` Stripe event — only `checkout.session.completed` triggers allocation |
+| **Low** | L-3 | Recent Payments table doesn't resolve `invoiceId` to client name/number — shows date and amounts only |
+
+---
+
+## Phase M — Bank Import
+
+| Severity | ID | Issue |
+|----------|----|-------|
+| **Critical** | M-1 | **No cron schedule in `vercel.json` for `sync-bank`** — automated bank syncing never runs |
+| **High** | M-2 | **Confirmed bank matches moved to "Ignored" tab** — `BankClient.tsx` line 180 sets `status: "ignored"` on confirm; spec says confirmed matches go to "Matched" tab |
+| **High** | M-3 | **"Add as Expense" button for unmatched transactions missing** — spec requires this per unmatched row |
+| **Medium** | M-4 | Plaid environment variables (`PLAID_CLIENT_ID`, `PLAID_SECRET`, `PLAID_ENV`) missing from `.env.example` |
+| **Medium** | M-5 | No in-app notification for unmatched credit transactions > $100 (spec requires it) |
+| **Low** | M-6 | "Bank" sidebar nav always visible — spec says only if >= 1 BankConnection |
+| **Low** | M-7 | Connect Bank UX requires 2 clicks (fetch token → "Open Plaid Link" button) — spec expects single-click flow |
+| **Low** | M-8 | Matched tab lacks match details — doesn't display `matchedInvoiceId` or `matchedExpenseId` per spec |
+
+---
+
+## Phase N — Email Receipts to Account
+
+| Severity | ID | Issue |
+|----------|----|-------|
+| **Medium** | N-1 | **Receipt banner default-dismissed** — `ExpensesClient.tsx` line 69 uses `useState(true)` so banner is never shown on first visit |
+| **Low** | N-2 | Image OCR (AWS Textract) not implemented (optional per spec, but documented gap) |
+| **Low** | N-3 | Mailgun attachment key naming (`attachment-1`, `attachment-2`) may not match `.getAll("attachment")` |
+
+---
+
+## Phase O — Instant Payouts
+
+| Severity | ID | Issue |
+|----------|----|-------|
+| **Bug** | O-1 | **`payout.amount` returned in cents** — Stripe's amount is in smallest currency unit; client expects dollars. Divide by 100 |
+| **Bug** | O-2 | **Fee always 0** — `(payout as any).fee ?? 0` — Stripe payout object doesn't expose fee at top level |
+| **Medium** | O-3 | No confirmation modal — uses plain `confirm()` instead of spec'd fee comparison ("Standard vs Instant" with amounts) |
+| **Medium** | O-4 | No invoice detail page (`/invoices/[id]`) exists — payout button only in list table |
+| **Low** | O-5 | Missing AllocationRecord logging on payout |
+
+---
+
+## Phase P — Contractor Payroll
+
+| Severity | ID | Issue |
+|----------|----|-------|
+| **Low** | P-1 | Hardcoded sender email `noreply@maroni.app` in pay route — should use `process.env.EMAIL_FROM` |
+| **Low** | P-2 | `paymentDate` parsed as `new Date(paymentDate)` — may shift timezone; should use `new Date(paymentDate + "T00:00:00")` |
+| **Low** | P-3 | Server fetches contractor/payment data for all plans — wasteful for Free/Pro users who see upgrade prompt |
+| **Low** | P-4 | Sidebar shows Payroll in zone 1 (visible to all); spec says zone 3 / Agency-only |
+
+---
+
+## Phase Q — Accountant/Bookkeeper Access
+
+| Severity | ID | Issue |
+|----------|----|-------|
+| **Medium** | Q-1 | **Accountant invite route has no plan gate** — Free/Pro users can invite despite Agency-only per pricing table |
+| **Low** | Q-2 | Missing "Download All for Tax Year" button on accountant dashboard |
+| **Low** | Q-3 | Accountant dashboard shows "Benchmarks" quick link instead of P&L (spec says P&L) |
+| **Low** | Q-4 | Dead code: `requireReadOnlyCheck` defined in `lib/accountant-session.ts` but never called |
+
+---
+
+## Phase R — Team & Agency Tier
+
+| Severity | ID | Issue |
+|----------|----|-------|
+| **Medium** | R-1 | **Team accept route missing GET handler** — email invite links return 405 Method Not Allowed (accountant accept has both GET+POST for browser-click flow) |
+| **Low** | R-2 | No "Change Role" action on team member list (only Remove) |
+
+---
+
+## Phase S — Business Credit Score & Client Health
+
+| Severity | ID | Issue |
+|----------|----|-------|
+| **High** | S-1 | **Health certificate returns HTML instead of PDF** — spec requires `@react-pdf/renderer` PDF with business name, logo, key stats |
+| **Medium** | S-2 | **`avgDaysLate` calculation excludes early payments** — filters to only positive differences (late payments only), inflating penalty for businesses with mixed early+late patterns |
+| **Medium** | S-3 | Health certificate missing core stats: total invoiced (year), collection rate %, average payment time, on-time payment rate |
+| **Low** | S-4 | Client health table "Invoices" column always renders "—" instead of actual count |
+| **Low** | S-5 | Promise redistribution gives flat 8.33 bonus instead of redistributing weights across other signals |
+
+---
+
+---
+
+## Phase T — Cash Flow Forecast & "Pay Yourself" Reminder
+
+| Severity | ID | Issue |
+|----------|----|-------|
+| **High** | T-1 | **No Accounting page exists** — spec says cash flow chart should be a section on `app/(app)/accounting/page.tsx`, but that page isn't built. Chart lives on standalone `/forecast` page instead |
+| **High** | T-2 | **Dual inconsistent forecast systems** — dashboard uses `lib/forecast.ts` (old system: best/worst/expected, daily, no expenses) while `/forecast` page uses `lib/cashflow.ts` (new system: income/expenses/cumulative, weekly). Users see different data in different places |
+| **Low** | T-3 | `lastPayYourselfDate` stored on `User` model instead of `BusinessProfile` per spec (consistent with T.3/T.4/T.5) |
+| **Low** | T-4 | Cron notification message missing spec'd content: no 💸 emoji, no owner split `%` |
+| **Low** | T-5 | No tests for acknowledge endpoint (`POST /api/allocation/pay-yourself-acknowledge`) or `PayYourselfWidget` |
+| **Low** | T-6 | Cashflow API test coverage thin — no data-scenario tests (different probabilities, recurring bucketing, confidence thresholds) |
+| **Low** | T-7 | Optional Resend email in T.4 cron not implemented |
+| **Low** | T-8 | Extra "Your Next Pay Yourself Amount" card on dashboard not in spec (may confuse users vs. the accumulator widget) |
+| **Low** | T-9 | Standalone "Forecast" nav item in sidebar (`Sidebar.tsx:56`) — spec says it should be part of Accounting page |
+
+---
+
+## Summary
+
+| Category | Count |
+|----------|-------|
+| **Critical bugs** | 4 (G-1, K-1, K-2, M-1) |
+| **High/Medium bugs** | 14 (E-1, E-2, F-1, F-2, M-2, M-3, M-4, M-5, N-1, Q-1, R-1, S-1, T-1, T-2) |
+| **Missing features** | 2 (I-1 Accounting page, I-2 Export CSV API) |
+| **Low/cosmetic** | 38+ |
+
+**Note:** Phase H (Client Portal) is the only phase fully implemented with no issues. Phase I (Accounting) is entirely missing. Phase T has dual inconsistent forecast systems that should be unified.

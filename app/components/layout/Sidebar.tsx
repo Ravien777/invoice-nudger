@@ -25,6 +25,7 @@ import {
   Clock,
   Landmark,
   Heart,
+  TrendingUp,
   UserCheck,
 } from "lucide-react";
 
@@ -52,6 +53,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Promises", icon: Handshake, href: "/promises", zone: 2 },
   { label: "Reconciliation", icon: RefreshCw, href: "/reconciliation", zone: 2 },
   { label: "Business Health", icon: Heart, href: "/health", zone: 3 },
+  { label: "Forecast", icon: TrendingUp, href: "/forecast", zone: 3 },
   { label: "Settings", icon: Settings, href: "/settings", zone: 3 },
 ];
 

@@ -7,7 +7,7 @@ beforeEach(() => {
 });
 
 describe("calculatePayYourselfAmount", () => {
-  it("returns 0 when no paid invoices", async () => {
+  it("returns 0 when no allocation records", async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       id: "user-1",
       email: "test@example.com",
@@ -15,13 +15,13 @@ describe("calculatePayYourselfAmount", () => {
       lastPayYourselfDate: null,
       taxRate: 30,
     } as any);
-    vi.mocked(prisma.invoice.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.allocationRecord.findMany).mockResolvedValue([]);
     const result = await calculatePayYourselfAmount("user-1");
     expect(result.available).toBe(0);
     expect(result.recommended).toBe(0);
   });
 
-  it("calculates 40% of paid invoices since last date", async () => {
+  it("sums ownerPayAmount from allocation records since last date", async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       id: "user-1",
       email: "test@example.com",
@@ -29,9 +29,9 @@ describe("calculatePayYourselfAmount", () => {
       lastPayYourselfDate: new Date("2025-01-01"),
       taxRate: 30,
     } as any);
-    vi.mocked(prisma.invoice.findMany).mockResolvedValue([
-      { amount: 2000 },
-      { amount: 3000 },
+    vi.mocked(prisma.allocationRecord.findMany).mockResolvedValue([
+      { ownerPayAmount: 800 },
+      { ownerPayAmount: 1200 },
     ] as any);
     const result = await calculatePayYourselfAmount("user-1");
     expect(result.available).toBe(2000);
@@ -47,19 +47,19 @@ describe("calculatePayYourselfAmount", () => {
       lastPayYourselfDate: lastDate,
       taxRate: 30,
     } as any);
-    vi.mocked(prisma.invoice.findMany).mockResolvedValue([{ amount: 1000 }] as any);
+    vi.mocked(prisma.allocationRecord.findMany).mockResolvedValue([{ ownerPayAmount: 400 }] as any);
     const result = await calculatePayYourselfAmount("user-1");
     expect(result.available).toBe(400);
-    expect(prisma.invoice.findMany).toHaveBeenCalledWith(
+    expect(prisma.allocationRecord.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
-          paidAt: { gt: lastDate },
+          createdAt: { gt: lastDate },
         }),
       }),
     );
   });
 
-  it("uses { not: null } filter when no lastPayYourselfDate", async () => {
+  it("omits createdAt filter when no lastPayYourselfDate", async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       id: "user-1",
       email: "test@example.com",
@@ -67,13 +67,11 @@ describe("calculatePayYourselfAmount", () => {
       lastPayYourselfDate: null,
       taxRate: 30,
     } as any);
-    vi.mocked(prisma.invoice.findMany).mockResolvedValue([{ amount: 500 }] as any);
+    vi.mocked(prisma.allocationRecord.findMany).mockResolvedValue([{ ownerPayAmount: 200 }] as any);
     await calculatePayYourselfAmount("user-1");
-    expect(prisma.invoice.findMany).toHaveBeenCalledWith(
+    expect(prisma.allocationRecord.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({
-          paidAt: { not: null },
-        }),
+        where: { userId: "user-1" },
       }),
     );
   });
@@ -94,7 +92,7 @@ describe("calculatePayYourselfAmount", () => {
       lastPayYourselfDate: lastDate,
       taxRate: 30,
     } as any);
-    vi.mocked(prisma.invoice.findMany).mockResolvedValue([] as any);
+    vi.mocked(prisma.allocationRecord.findMany).mockResolvedValue([] as any);
     const result = await calculatePayYourselfAmount("user-1");
     expect(result.lastPaymentDate).toEqual(lastDate);
   });

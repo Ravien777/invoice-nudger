@@ -3,12 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { calculatePayYourselfAmount } from "@/lib/pay-yourself";
 import { formatCurrency } from "@/lib/format-currency";
 
-const CRON_SECRET = process.env.CRON_SECRET;
-
 export async function GET(request: Request) {
-  if (CRON_SECRET && CRON_SECRET !== "skip") {
+  const cronSecret = process.env.CRON_SECRET;
+  if (cronSecret && cronSecret !== "skip") {
     const auth = request.headers.get("authorization");
-    if (auth !== `Bearer ${CRON_SECRET}`) {
+    if (auth !== `Bearer ${cronSecret}`) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
   }

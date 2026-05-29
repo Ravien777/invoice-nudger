@@ -1,7 +1,5 @@
 import { prisma } from "./prisma";
 
-const OWNER_PAY_PERCENT = 0.4;
-
 export interface PayYourselfResult {
   available: number;
   recommended: number;
@@ -20,19 +18,17 @@ export async function calculatePayYourselfAmount(
     return { available: 0, recommended: 0, lastPaymentDate: null };
   }
 
-  const paidInvoices = await prisma.invoice.findMany({
+  const allocationRecords = await prisma.allocationRecord.findMany({
     where: {
       userId,
-      status: "paid",
-      paidAt: user.lastPayYourselfDate
-        ? { gt: user.lastPayYourselfDate }
-        : { not: null },
+      ...(user.lastPayYourselfDate
+        ? { createdAt: { gt: user.lastPayYourselfDate } }
+        : {}),
     },
-    select: { amount: true },
+    select: { ownerPayAmount: true },
   });
 
-  const totalPaid = paidInvoices.reduce((sum, inv) => sum + inv.amount, 0);
-  const available = totalPaid * OWNER_PAY_PERCENT;
+  const available = allocationRecords.reduce((sum, r) => sum + r.ownerPayAmount, 0);
 
   return {
     available: Math.round(available * 100) / 100,
