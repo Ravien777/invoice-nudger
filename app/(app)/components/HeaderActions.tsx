@@ -12,6 +12,7 @@ export default function HeaderActions() {
 
   useEffect(() => {
     async function fetchPendingCount() {
+      if (document.hidden) return;
       try {
         const res = await fetch("/api/promises/count");
         const data = await res.json();

@@ -1,10 +1,3 @@
-import { gentleReminder } from "./gentle_reminder";
-import { dueToday } from "./due_today";
-import { overdueNotice } from "./overdue_notice";
-import { firmReminder } from "./firm_reminder";
-import { finalNotice } from "./final_notice";
-import { brokenPromiseNotice } from "./broken_promise_notice";
-
 interface TemplateParams {
   clientName: string;
   invoiceNumber: string | null;
@@ -22,17 +15,18 @@ interface EmailContent {
   html: string;
 }
 
-const templates: Record<string, (params: TemplateParams) => EmailContent> = {
-  gentle_reminder: gentleReminder,
-  due_today: dueToday,
-  overdue_notice: overdueNotice,
-  firm_reminder: firmReminder,
-  final_notice: finalNotice,
-  broken_promise_notice: brokenPromiseNotice as (params: TemplateParams) => EmailContent,
+const templateLoaders: Record<string, () => Promise<(params: TemplateParams) => EmailContent>> = {
+  gentle_reminder: () => import("./gentle_reminder").then((m) => m.gentleReminder),
+  due_today: () => import("./due_today").then((m) => m.dueToday),
+  overdue_notice: () => import("./overdue_notice").then((m) => m.overdueNotice),
+  firm_reminder: () => import("./firm_reminder").then((m) => m.firmReminder),
+  final_notice: () => import("./final_notice").then((m) => m.finalNotice),
+  broken_promise_notice: () => import("./broken_promise_notice").then((m) => m.brokenPromiseNotice as (params: TemplateParams) => EmailContent),
 };
 
-export function getTemplate(name: string): ((params: TemplateParams) => EmailContent) | null {
-  return templates[name] ?? null;
+export async function getTemplate(name: string): Promise<((params: TemplateParams) => EmailContent) | null> {
+  const loader = templateLoaders[name];
+  return loader ? loader() : null;
 }
 
 export type { TemplateParams, EmailContent };

@@ -4,10 +4,14 @@ import { mockSession, mockUser, createNextRequest } from "../helpers";
 import { POST } from "@/app/api/payouts/instant/route";
 
 const mockPayoutsCreate = vi.fn();
+const mockBalanceTransactionsList = vi.fn();
 vi.mock("@/lib/stripe", () => ({
   getStripe: vi.fn(() => ({
     payouts: {
       create: mockPayoutsCreate,
+    },
+    balanceTransactions: {
+      list: mockBalanceTransactionsList,
     },
   })),
 }));
@@ -18,6 +22,7 @@ beforeEach(async () => {
   vi.clearAllMocks();
   vi.mocked(getServerSession).mockReset();
   mockPayoutsCreate.mockReset();
+  mockBalanceTransactionsList.mockReset();
   const setup = await import("../setup");
   prisma = setup.prisma;
 });
@@ -92,8 +97,12 @@ describe("POST /api/payouts/instant", () => {
     mockSession();
     mockUser({ plan: "pro" });
     prisma.invoice.findUnique.mockResolvedValue(mockInvoice());
-    mockPayoutsCreate.mockResolvedValue({ id: "po_123", amount: 250000, fee: 2500, arrival_date: Math.floor(Date.now() / 1000) + 60 });
+    mockPayoutsCreate.mockResolvedValue({ id: "po_123", amount: 250000, arrival_date: Math.floor(Date.now() / 1000) + 60 });
+    mockBalanceTransactionsList.mockResolvedValue({ data: [{ fee: 2500 }] });
     prisma.invoice.update.mockResolvedValue(mockInvoice({ instantPayoutId: "po_123", paidOutAt: new Date() }));
+    prisma.allocationProfile.findUnique.mockResolvedValue(null);
+    prisma.allocationRecord.create.mockResolvedValue({ id: "alloc-1" });
+    prisma.notification.create.mockResolvedValue({ id: "notif-1" });
 
     const req = createNextRequest("http://localhost/api/payouts/instant", {
       method: "POST",
@@ -103,15 +112,19 @@ describe("POST /api/payouts/instant", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.payoutId).toBe("po_123");
-    expect(body.amount).toBe(250000);
+    expect(body.amount).toBe(2500);
   });
 
   it("returns 200 for agency plan", async () => {
     mockSession();
     mockUser({ plan: "agency" });
     prisma.invoice.findUnique.mockResolvedValue(mockInvoice());
-    mockPayoutsCreate.mockResolvedValue({ id: "po_456", amount: 250000, fee: 2500, arrival_date: Math.floor(Date.now() / 1000) + 60 });
+    mockPayoutsCreate.mockResolvedValue({ id: "po_456", amount: 250000, arrival_date: Math.floor(Date.now() / 1000) + 60 });
+    mockBalanceTransactionsList.mockResolvedValue({ data: [{ fee: 2500 }] });
     prisma.invoice.update.mockResolvedValue(mockInvoice({ instantPayoutId: "po_456", paidOutAt: new Date() }));
+    prisma.allocationProfile.findUnique.mockResolvedValue(null);
+    prisma.allocationRecord.create.mockResolvedValue({ id: "alloc-1" });
+    prisma.notification.create.mockResolvedValue({ id: "notif-1" });
 
     const req = createNextRequest("http://localhost/api/payouts/instant", {
       method: "POST",
@@ -212,8 +225,12 @@ describe("POST /api/payouts/instant", () => {
     mockUser();
     const invoice = mockInvoice();
     prisma.invoice.findUnique.mockResolvedValue(invoice);
-    mockPayoutsCreate.mockResolvedValue({ id: "po_final", amount: 250000, fee: 2500, arrival_date: Math.floor(Date.now() / 1000) + 60 });
+    mockPayoutsCreate.mockResolvedValue({ id: "po_final", amount: 250000, arrival_date: Math.floor(Date.now() / 1000) + 60 });
+    mockBalanceTransactionsList.mockResolvedValue({ data: [{ fee: 2500 }] });
     prisma.invoice.update.mockResolvedValue({ ...invoice, instantPayoutId: "po_final", paidOutAt: new Date() });
+    prisma.allocationProfile.findUnique.mockResolvedValue(null);
+    prisma.allocationRecord.create.mockResolvedValue({ id: "alloc-1" });
+    prisma.notification.create.mockResolvedValue({ id: "notif-1" });
 
     const req = createNextRequest("http://localhost/api/payouts/instant", {
       method: "POST",

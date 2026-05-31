@@ -182,8 +182,7 @@ function ClientTable({
             <tr key={client.clientEmail} className="border-b border-border-default hover:bg-surface-tertiary/50 transition-colors">
               <td className="py-3 px-3 text-text-primary">{client.clientEmail}</td>
               <td className="py-3 px-3 text-right text-text-secondary tabular-nums">
-                {/* invoices count not directly on result, infer from breakdown */}
-                {client.signals.length > 0 ? "—" : "—"}
+                {client.invoiceCount > 0 ? client.invoiceCount : "—"}
               </td>
               <td className="py-3 px-3 text-right text-text-secondary tabular-nums">
                 {client.breakdown.avgDaysToPay.details}

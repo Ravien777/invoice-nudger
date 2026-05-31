@@ -12,7 +12,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-import type { CashflowResult } from "@/lib/cashflow";
+import type { ForecastResult } from "@/lib/forecast";
 import { formatCurrency } from "@/lib/format-currency";
 
 function formatDate(iso: string): string {
@@ -24,7 +24,7 @@ function ConfidenceBadge({
   confidence,
   reason,
 }: {
-  confidence: CashflowResult["confidence"];
+  confidence: ForecastResult["confidence"];
   reason: string;
 }) {
   const colorMap = {
@@ -92,7 +92,7 @@ function SixtyDayCallout({
 }
 
 export default function ForecastClient() {
-  const [data, setData] = useState<CashflowResult | null>(null);
+  const [data, setData] = useState<ForecastResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -104,7 +104,7 @@ export default function ForecastClient() {
           const body = await res.json();
           throw new Error(body.error || "Failed to load forecast");
         }
-        const json: CashflowResult = await res.json();
+        const json: ForecastResult = await res.json();
         setData(json);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Unknown error");

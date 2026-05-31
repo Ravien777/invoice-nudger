@@ -26,6 +26,25 @@ export default async function BankPage() {
     }),
   ]);
 
+  const invoiceIds = transactions.filter((t) => t.matchedInvoiceId).map((t) => t.matchedInvoiceId!);
+  const expenseIds = transactions.filter((t) => t.matchedExpenseId).map((t) => t.matchedExpenseId!);
+  const [invoices, expenses] = await Promise.all([
+    invoiceIds.length > 0
+      ? prisma.invoice.findMany({
+          where: { id: { in: invoiceIds } },
+          select: { id: true, clientName: true, invoiceNumber: true },
+        })
+      : Promise.resolve([]),
+    expenseIds.length > 0
+      ? prisma.expense.findMany({
+          where: { id: { in: expenseIds } },
+          select: { id: true, description: true },
+        })
+      : Promise.resolve([]),
+  ]);
+  const invoiceMap = new Map(invoices.map((i) => [i.id, i]));
+  const expenseMap = new Map(expenses.map((e) => [e.id, e]));
+
   return (
     <PageShell
       title="Bank Import"
@@ -40,17 +59,32 @@ export default async function BankPage() {
           status: c.status,
           lastSyncAt: c.lastSyncAt?.toISOString() ?? null,
         }))}
-        initialTransactions={transactions.map((t) => ({
-          id: t.id,
-          date: t.date.toISOString().split("T")[0],
-          description: t.description,
-          amount: t.amount,
-          currency: t.currency,
-          category: t.category,
-          matchedInvoiceId: t.matchedInvoiceId,
-          matchedExpenseId: t.matchedExpenseId,
-          status: t.status,
-        }))}
+        initialTransactions={transactions.map((t) => {
+          let matchedEntityName: string | null = null;
+          let matchedEntityHref: string | null = null;
+          if (t.matchedInvoiceId) {
+            const inv = invoiceMap.get(t.matchedInvoiceId);
+            matchedEntityName = inv ? (inv.invoiceNumber ?? inv.clientName) : t.matchedInvoiceId;
+            matchedEntityHref = `/invoices/${t.matchedInvoiceId}`;
+          } else if (t.matchedExpenseId) {
+            const exp = expenseMap.get(t.matchedExpenseId);
+            matchedEntityName = exp?.description ?? t.matchedExpenseId;
+            matchedEntityHref = `/expenses`;
+          }
+          return {
+            id: t.id,
+            date: t.date.toISOString().split("T")[0],
+            description: t.description,
+            amount: t.amount,
+            currency: t.currency,
+            category: t.category,
+            matchedInvoiceId: t.matchedInvoiceId,
+            matchedExpenseId: t.matchedExpenseId,
+            matchedEntityName,
+            matchedEntityHref,
+            status: t.status,
+          };
+        })}
       />
     </PageShell>
   );

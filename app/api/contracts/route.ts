@@ -14,7 +14,7 @@ const createContractSchema = z.object({
   expiresAt: z.string().datetime().optional(),
 });
 
-export async function GET() {
+export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
     return new Response("Unauthorized", { status: 401 });
@@ -24,9 +24,13 @@ export async function GET() {
   });
   if (!user) return new Response("Unauthorized", { status: 401 });
 
+  const { searchParams } = new URL(request.url);
+  const limit = Math.min(parseInt(searchParams.get("limit") || "50", 10), 200);
+
   const contracts = await prisma.contract.findMany({
     where: { userId: user.id },
     orderBy: { createdAt: "desc" },
+    take: limit,
     include: {
       template: { select: { name: true } },
     },

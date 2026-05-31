@@ -41,7 +41,7 @@ function mockRecurring(overrides: Record<string, unknown> = {}) {
 
 describe("GET /api/recurring", () => {
   it("returns 401 without session", async () => {
-    const res = await ListGET();
+    const res = await ListGET(createNextRequest("http://localhost/api/recurring"));
     expect(res.status).toBe(401);
   });
 
@@ -50,7 +50,7 @@ describe("GET /api/recurring", () => {
     mockUser();
     prisma.recurringInvoice.findMany.mockResolvedValue([mockRecurring()]);
 
-    const res = await ListGET();
+    const res = await ListGET(createNextRequest("http://localhost/api/recurring"));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(Array.isArray(body)).toBe(true);

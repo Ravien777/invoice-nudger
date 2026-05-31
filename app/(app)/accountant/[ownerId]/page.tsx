@@ -35,6 +35,7 @@ export default async function AccountantViewPage({
   }
 
   const ownerName = access.owner.name || access.owner.email || "this account";
+  const currentYear = new Date().getFullYear();
 
   return (
     <PageShell
@@ -112,6 +113,23 @@ export default async function AccountantViewPage({
             <p className="text-xs text-muted">Compare against peers</p>
           </div>
         </Link>
+      </div>
+
+      {/* Export */}
+      <div className="mb-8">
+        <a
+          href={`/api/accountant/${ownerId}/export`}
+          className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface p-5 shadow-sm transition hover:shadow-md hover:border-accent/30"
+          download
+        >
+          <div className="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
+            <FileText className="h-5 w-5 text-accent" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-foreground">Download All for Tax Year</p>
+            <p className="text-xs text-muted">CSV export of invoices & expenses ({currentYear})</p>
+          </div>
+        </a>
       </div>
 
     </PageShell>

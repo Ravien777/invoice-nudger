@@ -11,6 +11,7 @@ export async function createAllocationRecord(
   totalReceived: number,
   currency: string,
   invoiceId?: string,
+  clientName?: string,
 ) {
   const profile = await prisma.allocationProfile.findUnique({
     where: { userId },
@@ -40,14 +41,21 @@ export async function createAllocationRecord(
   });
 
   const formattedAmount = formatCurrency(totalReceived, currency);
+  const taxFmt = formatCurrency(taxAmount, currency);
+  const opFmt = formatCurrency(operatingAmount, currency);
+  const profitFmt = formatCurrency(profitAmount, currency);
+  const ownerFmt = formatCurrency(ownerPayAmount, currency);
+
+  const prefix = clientName ? `${clientName} \u2014 ` : "";
+  const message = `${prefix}${formattedAmount} received: Tax: ${taxFmt}, Business: ${opFmt}, Profit: ${profitFmt}, You: ${ownerFmt}.`;
 
   await prisma.notification.create({
     data: {
       userId,
       type: "allocation",
       title: "Income Allocated",
-      message: `${formattedAmount} received — allocated across tax, business, profit, and your pay.`,
-      metadata: { allocationRecordId: record.id, invoiceId: invoiceId ?? null },
+      message,
+      metadata: { allocationRecordId: record.id, invoiceId: invoiceId ?? null, clientName: clientName ?? null },
     },
   });
 

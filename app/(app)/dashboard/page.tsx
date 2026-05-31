@@ -2,18 +2,16 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
-import { startOfMonth, endOfMonth, subMonths, differenceInCalendarDays, subDays, startOfWeek, format } from "date-fns";
+import { startOfMonth, endOfMonth, subMonths, subDays, startOfWeek, format } from "date-fns";
 import Link from "next/link";
+import { Suspense } from "react";
 import { Plus, FileText, AlertCircle, CheckCircle, Receipt } from "lucide-react";
 import DashboardClient from "./DashboardClient";
 import { getTier } from "@/lib/subscriptions";
-import BenchmarkWidget from "./BenchmarkWidget";
-import { computeForecast } from "@/lib/forecast";
-import ForecastWidget from "./ForecastWidget";
-import EfficiencyWidget from "./EfficiencyWidget";
-import { computeCollectionEfficiencyForUser } from "@/lib/analytics";
-import { calculatePayYourselfAmount } from "@/lib/pay-yourself";
-import PayYourselfWidget from "./PayYourselfWidget";
+import BenchmarkSection from "./BenchmarkSection";
+import EfficiencySection from "./EfficiencySection";
+import PayYourselfSection from "./PayYourselfSection";
+import ForecastWidgetSection from "./ForecastWidgetSection";
 import { PageShell } from "@/app/components/layout/PageShell";
 import { Button } from "@/app/components/ui/Button";
 import { StatCard } from "@/app/components/ui/StatCard";
@@ -44,13 +42,17 @@ export default async function DashboardPage() {
   const twoWeeksAgo = subDays(new Date(), 14);
   const thisWeekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
 
-  const [unpaidCount, overdueCount, paidThisMonth, totalInvoices, monthlyInvoiceCount, reconciledCount, discrepancyCount, outstandingByCurrency, recentInvoices, paidLastMonth, expenseAgg, latestAllocation, recentSignedContracts, timeThisWeek] =
+  const [statusCounts, reconciliationCounts, paidThisMonth, monthlyInvoiceCount, outstandingByCurrency, recentInvoices, paidLastMonth, expenseAgg, recentSignedContracts, timeThisWeek] =
     await Promise.all([
-      prisma.invoice.count({
-        where: { userId: user!.id, status: "unpaid" },
+      prisma.invoice.groupBy({
+        by: ["status"],
+        where: { userId: user!.id },
+        _count: true,
       }),
-      prisma.invoice.count({
-        where: { userId: user!.id, status: "overdue" },
+      prisma.invoice.groupBy({
+        by: ["reconciliationStatus"],
+        where: { userId: user!.id },
+        _count: true,
       }),
       prisma.invoice.count({
         where: {
@@ -60,19 +62,10 @@ export default async function DashboardPage() {
         },
       }),
       prisma.invoice.count({
-        where: { userId: user!.id },
-      }),
-      prisma.invoice.count({
         where: {
           userId: user!.id,
           createdAt: { gte: monthStart, lte: monthEnd },
         },
-      }),
-      prisma.invoice.count({
-        where: { userId: user!.id, reconciliationStatus: "reconciled" },
-      }),
-      prisma.invoice.count({
-        where: { userId: user!.id, reconciliationStatus: "discrepancy" },
       }),
       prisma.invoice.groupBy({
         by: ["currency"],
@@ -97,11 +90,6 @@ export default async function DashboardPage() {
         _sum: { amount: true },
         _count: true,
       }),
-      prisma.allocationRecord.findFirst({
-        where: { userId: user!.id },
-        orderBy: { createdAt: "desc" },
-        select: { ownerPayAmount: true, totalReceived: true, currency: true },
-      }),
       prisma.contract.findMany({
         where: {
           userId: user!.id,
@@ -119,78 +107,12 @@ export default async function DashboardPage() {
       }),
     ]);
 
-  const userPaidInvoices = await prisma.invoice.findMany({
-    where: { userId: user!.id, status: "paid", paidAt: { not: null } },
-    select: { dueDate: true, paidAt: true, amount: true },
-  });
+  const unpaidCount = statusCounts.find((s) => s.status === "unpaid")?._count ?? 0;
+  const overdueCount = statusCounts.find((s) => s.status === "overdue")?._count ?? 0;
+  const totalInvoices = statusCounts.reduce((sum, s) => sum + s._count, 0);
+  const reconciledCount = reconciliationCounts.find((r) => r.reconciliationStatus === "reconciled")?._count ?? 0;
+  const discrepancyCount = reconciliationCounts.find((r) => r.reconciliationStatus === "discrepancy")?._count ?? 0;
 
-  const userDaysToPay = userPaidInvoices
-    .map((inv) => differenceInCalendarDays(inv.paidAt!, inv.dueDate))
-    .filter((d) => d !== null);
-  const userAvgDaysToPay = userDaysToPay.length > 0
-    ? userDaysToPay.reduce((a, b) => a + b, 0) / userDaysToPay.length
-    : 0;
-  const userLatePct = userDaysToPay.length > 0
-    ? (userDaysToPay.filter((d) => d > 0).length / userDaysToPay.length) * 100
-    : 0;
-
-  const userOldInvoices = await prisma.invoice.count({
-    where: { userId: user!.id, createdAt: { lte: subDays(new Date(), 90) } },
-  });
-  const userOldPaid = await prisma.invoice.count({
-    where: { userId: user!.id, status: "paid", createdAt: { lte: subDays(new Date(), 90) } },
-  });
-  const userCollectionRate = userOldInvoices > 0 ? (userOldPaid / userOldInvoices) * 100 : 0;
-
-  let benchmarkData: Array<{ userValue: number; industryValue: number; metric: string; label: string; higherIsBetter: boolean; format: "days" | "percentage" }> = [];
-  let hasEnoughBenchmarks = false;
-
-  const targetIndustry = user!.industry;
-  if (targetIndustry) {
-    const benchmarks = await prisma.industryBenchmark.findMany({
-      where: { industry: targetIndustry },
-      orderBy: { computedAt: "desc" },
-      take: 4,
-    });
-
-    if (benchmarks.length >= 4) {
-      hasEnoughBenchmarks = true;
-      const bm = new Map(benchmarks.map((b) => [b.metric, b]));
-      benchmarkData = [
-        {
-          metric: "avg_days_to_pay",
-          label: "Avg Days to Pay",
-          userValue: userAvgDaysToPay,
-          industryValue: bm.get("avg_days_to_pay")?.value ?? 0,
-          higherIsBetter: false,
-          format: "days",
-        },
-        {
-          metric: "collection_rate",
-          label: "Collection Rate (90d)",
-          userValue: userCollectionRate,
-          industryValue: bm.get("collection_rate")?.value ?? 0,
-          higherIsBetter: true,
-          format: "percentage",
-        },
-        {
-          metric: "late_payment_percentage",
-          label: "Late Payment %",
-          userValue: userLatePct,
-          industryValue: bm.get("late_payment_percentage")?.value ?? 0,
-          higherIsBetter: false,
-          format: "percentage",
-        },
-      ];
-    }
-  }
-
-  const forecast = await computeForecast(user!.id);
-  const hasForecastAccess = getTier(user!.plan).features.includes("cash_flow_forecast");
-
-  const efficiencyMetrics = await computeCollectionEfficiencyForUser(user!.id);
-
-  const payYourself = await calculatePayYourselfAmount(user!.id);
   const tier = getTier(user!.plan);
   const usagePercent = tier.invoiceLimit
     ? Math.min((monthlyInvoiceCount / tier.invoiceLimit) * 100, 100)
@@ -394,39 +316,18 @@ export default async function DashboardPage() {
           </div>
         )}
 
-        {/* Analytics widgets */}
-        <div className="mb-8">
-          <BenchmarkWidget
-            benchmarks={benchmarkData}
-            industry={user!.industry}
-            hasEnoughData={hasEnoughBenchmarks}
-          />
-        </div>
+        {/* Streaming sections — each fetches its own data independently */}
+        <Suspense fallback={<div className="mb-8 h-48 rounded-xl bg-surface-muted animate-pulse" />}>
+          <BenchmarkSection userId={user!.id} industry={user!.industry} />
+        </Suspense>
 
-        <div className="mb-8">
-          <EfficiencyWidget metrics={efficiencyMetrics} plan={user!.plan} />
-        </div>
+        <Suspense fallback={<div className="mb-8 h-48 rounded-xl bg-surface-muted animate-pulse" />}>
+          <EfficiencySection userId={user!.id} plan={user!.plan} />
+        </Suspense>
 
-        <div className="mb-8 grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
-          <PayYourselfWidget
-            available={payYourself.available}
-            baseCurrency={bp.baseCurrency}
-            hasAccess={tier.features.includes("cash_flow_forecast")}
-          />
-          {latestAllocation && (
-            <div className="rounded-xl border border-border-default bg-surface-secondary p-6 shadow-sm">
-              <h2 className="text-sm font-medium text-text-secondary mb-1">
-                Your Next Pay Yourself Amount
-              </h2>
-              <p className="text-2xl font-bold text-text-primary mt-2">
-                {formatCurrency(latestAllocation.ownerPayAmount, latestAllocation.currency)}
-              </p>
-              <p className="text-xs text-text-tertiary mt-1">
-                from {formatCurrency(latestAllocation.totalReceived, latestAllocation.currency)} received
-              </p>
-            </div>
-          )}
-        </div>
+        <Suspense fallback={<div className="mb-8 max-w-md h-32 rounded-xl bg-surface-muted animate-pulse" />}>
+          <PayYourselfSection userId={user!.id} plan={user!.plan} baseCurrency={bp.baseCurrency} />
+        </Suspense>
 
         {timeThisWeek._count > 0 && (
           <div className="mb-8 rounded-xl border border-border-default bg-surface p-6 shadow-sm max-w-sm">
@@ -444,9 +345,9 @@ export default async function DashboardPage() {
           </div>
         )}
 
-        <div className="mb-8">
-          <ForecastWidget forecast={forecast} hasAccess={hasForecastAccess} baseCurrency={bp.baseCurrency} />
-        </div>
+        <Suspense fallback={<div className="mb-8 h-64 rounded-xl bg-surface-muted animate-pulse" />}>
+          <ForecastWidgetSection userId={user!.id} plan={user!.plan} baseCurrency={bp.baseCurrency} />
+        </Suspense>
 
         {/* Recent invoices table */}
         {recentInvoices.length > 0 && (

@@ -29,8 +29,10 @@ export async function GET(request: Request) {
 
   const unpaidInvoices = await prisma.invoice.findMany({
     where: { status: { in: ["unpaid", "overdue"] } },
+    take: 1000,
+    orderBy: { dueDate: "asc" },
     include: {
-      user: true,
+      user: { select: { plan: true, aiRemindersEnabled: true, aiTone: true } },
       reminderSchedule: {
         include: { steps: true },
       },
@@ -119,7 +121,7 @@ export async function GET(request: Request) {
           const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
           const paymentLink = invoice.paymentLink || `${baseUrl}/pay/${invoice.id}`;
 
-          const templateFn = getTemplate("broken_promise_notice");
+          const templateFn = await getTemplate("broken_promise_notice");
           if (templateFn) {
             const content = templateFn({
               clientName: invoice.clientName,

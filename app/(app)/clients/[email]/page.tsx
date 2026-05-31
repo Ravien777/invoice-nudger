@@ -2,8 +2,14 @@ import { notFound, redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import ClientDetailClient from "./ClientDetailClient";
+import nextDynamic from "next/dynamic";
 import { PageShell } from "@/app/components/layout/PageShell";
+
+const ClientDetailClient = nextDynamic(() => import("./ClientDetailClient"), {
+  loading: () => (
+    <div className="h-80 rounded-xl bg-surface-muted animate-pulse" />
+  ),
+});
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 

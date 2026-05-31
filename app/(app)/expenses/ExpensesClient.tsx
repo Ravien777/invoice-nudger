@@ -67,13 +67,9 @@ export default function ExpensesClient({
   const [localCategories, setLocalCategories] = useState(categories);
   const [receiptUrl, setReceiptUrl] = useState("");
   const [receiptUploading, setReceiptUploading] = useState(false);
-  const [receiptBannerDismissed, setReceiptBannerDismissed] = useState(true);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setReceiptBannerDismissed(localStorage.getItem("receipt-banner-dismissed") === "true");
-    }
-  }, []);
+  const [receiptBannerDismissed, setReceiptBannerDismissed] = useState(
+    () => typeof window !== "undefined" && localStorage.getItem("receipt-banner-dismissed") === "true",
+  );
 
   const dismissReceiptBanner = () => {
     setReceiptBannerDismissed(true);

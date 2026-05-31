@@ -49,7 +49,7 @@ function params(id: string) {
 
 describe("GET /api/quotes", () => {
   it("returns 401 without session", async () => {
-    const res = await ListGET();
+    const res = await ListGET(createNextRequest("http://localhost/api/quotes"));
     expect(res.status).toBe(401);
   });
 
@@ -58,7 +58,7 @@ describe("GET /api/quotes", () => {
     mockUser();
     prisma.quote.findMany.mockResolvedValue([mockQuote()]);
 
-    const res = await ListGET();
+    const res = await ListGET(createNextRequest("http://localhost/api/quotes"));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.quotes).toHaveLength(1);

@@ -3,6 +3,16 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const token = searchParams.get("token");
+  if (!token) {
+    return NextResponse.json({ error: "Invite token is required" }, { status: 400 });
+  }
+  const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+  return NextResponse.redirect(new URL(`/team/accept?token=${token}`, baseUrl));
+}
+
 export async function POST(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const token = searchParams.get("token");

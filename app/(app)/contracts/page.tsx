@@ -19,6 +19,7 @@ export default async function ContractsPage() {
   const contracts = await prisma.contract.findMany({
     where: { userId: user.id },
     orderBy: { createdAt: "desc" },
+    take: 50,
     select: {
       id: true,
       title: true,

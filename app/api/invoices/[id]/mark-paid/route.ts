@@ -56,7 +56,7 @@ export async function POST(
     notes: "Manually marked as paid",
   });
 
-  await createAllocationRecord(user.id, invoice.amount, invoice.currency, invoice.id);
+  await createAllocationRecord(user.id, invoice.amount, invoice.currency, invoice.id, invoice.clientName);
 
   await prisma.reminderLog.create({
     data: {

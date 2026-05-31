@@ -26,8 +26,21 @@ export async function GET(request: Request) {
       lateFeeEnabled: true,
       status: { in: ["unpaid", "overdue"] },
     },
+    take: 1000,
+    orderBy: { dueDate: "asc" },
     include: {
-      user: true,
+      user: {
+        select: {
+          lateFeeGraceDays: true,
+          lateFeeType: true,
+          lateFeeValue: true,
+          lateFeeEnabled: true,
+          lateFeeFrequency: true,
+          interestEnabled: true,
+          interestRate: true,
+          feeCap: true,
+        },
+      },
     },
   });
 

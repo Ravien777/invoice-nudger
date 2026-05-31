@@ -21,6 +21,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
+  if (user.plan !== "agency") {
+    return NextResponse.json({ error: "Accountant access requires an Agency plan." }, { status: 403 });
+  }
+
   const body = await req.json();
   const { email } = body as { email?: string };
   if (!email || typeof email !== "string" || !email.includes("@")) {

@@ -20,6 +20,7 @@ export default async function RecurringPage() {
   const recurring = await prisma.recurringInvoice.findMany({
     where: { userId: user.id },
     orderBy: { createdAt: "desc" },
+    take: 50,
   });
 
   const schedules = await prisma.reminderSchedule.findMany({

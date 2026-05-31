@@ -40,7 +40,7 @@ export async function sendReminderEmail(
     subject = options.aiCopy.subject;
     html = options.aiCopy.html;
   } else {
-    const templateFn = getTemplate(step.emailTemplate);
+    const templateFn = await getTemplate(step.emailTemplate);
 
     if (!templateFn) {
       return { success: false, error: `Unknown email template: ${step.emailTemplate}` };

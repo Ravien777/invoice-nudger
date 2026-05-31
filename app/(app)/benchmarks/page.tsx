@@ -2,8 +2,14 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
-import BenchmarksClient from "./BenchmarksClient";
+import nextDynamic from "next/dynamic";
 import { PageShell } from "@/app/components/layout/PageShell";
+
+const BenchmarksClient = nextDynamic(() => import("./BenchmarksClient"), {
+  loading: () => (
+    <div className="h-80 rounded-xl bg-surface-muted animate-pulse" />
+  ),
+});
 
 export default async function BenchmarksPage() {
   const session = await getServerSession(authOptions);

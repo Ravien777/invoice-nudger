@@ -61,7 +61,7 @@ export async function POST(
     notes: `Matched from bank transaction: ${tx.description}`,
   });
 
-  await createAllocationRecord(user.id, tx.amount, tx.currency, invoice.id);
+  await createAllocationRecord(user.id, tx.amount, tx.currency, invoice.id, invoice.clientName);
 
   await prisma.notification.create({
     data: {

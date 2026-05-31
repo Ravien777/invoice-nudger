@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { formatCurrency } from "@/lib/format-currency";
 import { Plus, RefreshCw, ExternalLink, Check, X, Banknote, Loader2 } from "lucide-react";
 import { usePlaidLink } from "react-plaid-link";
@@ -27,6 +27,8 @@ interface Transaction {
   category: string | null;
   matchedInvoiceId: string | null;
   matchedExpenseId: string | null;
+  matchedEntityName: string | null;
+  matchedEntityHref: string | null;
   status: string;
 }
 
@@ -139,6 +141,12 @@ export default function BankClient({
     onExit: () => setLinkToken(null),
   });
 
+  useEffect(() => {
+    if (linkToken && ready) {
+      open();
+    }
+  }, [linkToken, ready, open]);
+
   const handleIgnoreTransaction = async (id: string) => {
     const res = await fetch(`/api/bank/transactions/${id}`, {
       method: "PUT",
@@ -169,6 +177,19 @@ export default function BankClient({
     );
   };
 
+  const handleConvertToExpense = async (id: string) => {
+    const res = await fetch(`/api/bank/transactions/${id}/convert-to-expense`, { method: "POST" });
+    if (!res.ok) {
+      const err = await res.json();
+      toast.error(err.error ?? "Failed to convert to expense");
+      return;
+    }
+    toast.success("Expense created");
+    setTransactions((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, status: "ignored", matchedExpenseId: t.id } : t)),
+    );
+  };
+
   const handleConfirmMatch = async (id: string) => {
     const res = await fetch(`/api/bank/confirm-match/${id}`, { method: "POST" });
     if (!res.ok) {
@@ -178,7 +199,7 @@ export default function BankClient({
     }
     toast.success("Match confirmed");
     setTransactions((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, status: "ignored" } : t)),
+      prev.map((t) => (t.id === id ? { ...t, status: "matched" } : t)),
     );
   };
 
@@ -211,16 +232,6 @@ export default function BankClient({
             </Button>
           )}
         </div>
-        {linkToken && open && (
-          <Button
-            size="sm"
-            onClick={() => open()}
-            disabled={!ready}
-          >
-            <ExternalLink className="h-4 w-4" />
-            Open Plaid Link
-          </Button>
-        )}
       </div>
 
       {connections.length > 0 && (
@@ -311,6 +322,7 @@ export default function BankClient({
               <TableRow>
                 <TableCell>Date</TableCell>
                 <TableCell>Description</TableCell>
+                <TableCell hideBelow="sm">Matched To</TableCell>
                 <TableCell hideBelow="sm">Category</TableCell>
                 <TableCell className="text-right">Amount</TableCell>
                 <TableCell className="text-right">Actions</TableCell>
@@ -318,16 +330,28 @@ export default function BankClient({
             </TableHead>
             <TableBody>
               {filtered.map((tx) => (
-                <TableRow key={tx.id}>
-                  <TableCell className="text-sm text-text-secondary">
-                    {tx.date}
-                  </TableCell>
-                  <TableCell className="font-medium text-text-primary">
-                    {tx.description}
-                  </TableCell>
-                  <TableCell className="text-sm text-text-secondary" hideBelow="sm">
-                    {tx.category ?? "-"}
-                  </TableCell>
+                  <TableRow key={tx.id}>
+                    <TableCell className="text-sm text-text-secondary">
+                      {tx.date}
+                    </TableCell>
+                    <TableCell className="font-medium text-text-primary">
+                      {tx.description}
+                    </TableCell>
+                    <TableCell className="text-sm" hideBelow="sm">
+                      {tx.matchedEntityHref ? (
+                        <a
+                          href={tx.matchedEntityHref}
+                          className="text-[var(--accent)] hover:underline"
+                        >
+                          {tx.matchedEntityName ?? "View"}
+                        </a>
+                      ) : (
+                        <span className="text-text-tertiary">{"\u2014"}</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-sm text-text-secondary" hideBelow="sm">
+                      {tx.category ?? "-"}
+                    </TableCell>
                   <TableCell
                     className={`text-right font-medium tabular-nums ${
                       tx.amount > 0 ? "text-success" : "text-text-primary"
@@ -340,6 +364,15 @@ export default function BankClient({
                     <div className="flex items-center justify-end gap-1">
                       {tab === "to-review" && (
                         <>
+                          {tx.amount < 0 && (
+                            <button
+                              onClick={() => handleConvertToExpense(tx.id)}
+                              className="p-1.5 rounded-md text-accent hover:bg-accent/10 transition-colors"
+                              title="Add as Expense"
+                            >
+                              <Plus className="h-3.5 w-3.5" />
+                            </button>
+                          )}
                           {tx.matchedInvoiceId && (
                             <button
                               onClick={() => handleConfirmMatch(tx.id)}

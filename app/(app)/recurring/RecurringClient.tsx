@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Plus, Pause, Play, Trash2, Pencil } from "lucide-react";
 import { Button } from "@/app/components/ui/Button";
 import { Badge, type BadgeVariant } from "@/app/components/ui/Badge";
@@ -145,9 +145,9 @@ export default function RecurringClient({ initial, schedules, baseCurrency = "US
 
   const needsDay = form.frequency === "monthly" || form.frequency === "quarterly";
 
-  let lineItemIdx = 0;
+  const lineItemIdx = useRef(0);
   const addLineItem = () => {
-    setLineItems([...lineItems, { tempId: `item_${++lineItemIdx}`, description: "", quantity: "", unitPrice: "", taxRate: "" }]);
+    setLineItems([...lineItems, { tempId: `item_${++lineItemIdx.current}`, description: "", quantity: "", unitPrice: "", taxRate: "" }]);
   };
 
   const removeLineItem = (tempId: string) => {

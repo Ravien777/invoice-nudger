@@ -1,5 +1,3 @@
-"use client";
-
 interface BenchmarkData {
   userValue: number;
   industryValue: number;

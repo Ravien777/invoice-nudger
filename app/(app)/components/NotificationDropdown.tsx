@@ -44,6 +44,7 @@ export default function NotificationDropdown() {
 
   useEffect(() => {
     async function fetchNotifications() {
+      if (document.hidden) return;
       try {
         const res = await fetch("/api/notifications?limit=5&unreadFirst=true");
         const data = await res.json();

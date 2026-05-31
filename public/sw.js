@@ -1,4 +1,4 @@
-const CACHE = "maroni-v1";
+const CACHE = "maroni-v2";
 const STATIC_ASSETS = [
   "/manifest.json",
   "/icon-192.svg",
@@ -32,12 +32,14 @@ self.addEventListener("fetch", (event) => {
       caches.match(event.request).then((cached) => {
         return cached
           ? cached
-          : fetch(event.request).then((response) => {
-              return caches.open(CACHE).then((cache) => {
-                cache.put(event.request, response.clone());
-                return response;
-              });
-            });
+          : fetch(event.request)
+              .then((response) => {
+                return caches.open(CACHE).then((cache) => {
+                  cache.put(event.request, response.clone());
+                  return response;
+                });
+              })
+              .catch(() => cached || new Response("Offline", { status: 503 }));
       }),
     );
   }

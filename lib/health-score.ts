@@ -235,8 +235,7 @@ export async function calculateBusinessHealthScore(
   const totalExpenses = expenseAgg._sum.amount ?? 0;
 
   const lateDays = allInvoices
-    .map((inv) => differenceInCalendarDays(inv.paidAt!, inv.dueDate))
-    .filter((d) => d > 0);
+    .map((inv) => differenceInCalendarDays(inv.paidAt!, inv.dueDate));
   const avgDaysLate =
     lateDays.length > 0
       ? lateDays.reduce((a, b) => a + b, 0) / lateDays.length

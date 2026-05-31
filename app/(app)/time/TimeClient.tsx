@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Play, Square, Trash2, Loader2 } from "lucide-react";
+import { Play, Square, Trash2, Pencil, Loader2 } from "lucide-react";
 import { Button } from "@/app/components/ui/Button";
 import { Table, TableHead, TableBody, TableRow, TableCell } from "@/app/components/ui/Table";
 import { EmptyState } from "@/app/components/ui/EmptyState";
@@ -52,11 +52,13 @@ function elapsed(s: string): string {
 export default function TimeClient({
   entries: initialEntries,
   activeEntry: initialActive,
+  clients,
   defaultHourlyRate,
   baseCurrency = "USD",
 }: {
   entries: TimeEntry[];
   activeEntry: TimeEntry | null;
+  clients: { clientEmail: string; clientName: string | null }[];
   defaultHourlyRate: number | null;
   baseCurrency?: string;
 }) {
@@ -74,6 +76,7 @@ export default function TimeClient({
     hourlyRate: defaultHourlyRate ? String(defaultHourlyRate) : "",
     currency: baseCurrency,
   });
+  const [newClientMode, setNewClientMode] = useState(false);
 
   useEffect(() => {
     if (!activeEntry) return;
@@ -92,7 +95,23 @@ export default function TimeClient({
       hourlyRate: defaultHourlyRate ? String(defaultHourlyRate) : "",
       currency: baseCurrency,
     });
+    setNewClientMode(false);
     setShowForm(false);
+  };
+
+  const handleClientSelect = (email: string) => {
+    if (email === "__new__") {
+      setNewClientMode(true);
+      setForm((f) => ({ ...f, clientEmail: "", clientName: "" }));
+      return;
+    }
+    setNewClientMode(false);
+    const selected = clients.find((c) => c.clientEmail === email);
+    setForm((f) => ({
+      ...f,
+      clientEmail: email,
+      clientName: selected?.clientName ?? "",
+    }));
   };
 
   const startTimer = async () => {
@@ -154,6 +173,47 @@ export default function TimeClient({
     }
   };
 
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ description: "", durationMinutes: "", hourlyRate: "" });
+
+  const startEdit = (entry: TimeEntry) => {
+    setEditingId(entry.id);
+    setEditForm({
+      description: entry.description ?? "",
+      durationMinutes: entry.durationMinutes ? String(entry.durationMinutes) : "",
+      hourlyRate: entry.hourlyRate ? String(entry.hourlyRate) : "",
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditForm({ description: "", durationMinutes: "", hourlyRate: "" });
+  };
+
+  const saveEdit = async (id: string) => {
+    const payload: Record<string, unknown> = {};
+    if (editForm.description) payload.description = editForm.description;
+    if (editForm.durationMinutes) payload.durationMinutes = parseInt(editForm.durationMinutes, 10);
+    if (editForm.hourlyRate) payload.hourlyRate = parseFloat(editForm.hourlyRate);
+    if (Object.keys(payload).length === 0) { cancelEdit(); return; }
+
+    try {
+      const res = await fetch(`/api/time/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed to update");
+      setEntries((prev) => prev.map((e) => (e.id === id ? { ...e, ...data.entry } : e)));
+      toast.success("Updated");
+      cancelEdit();
+      router.refresh();
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
+
   const unbilled = entries.filter((e) => !e.invoiced && e.endTime);
 
   const clientMap = new Map<string, ClientGroup>();
@@ -194,15 +254,8 @@ export default function TimeClient({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to create invoice");
-      setEntries((prev) =>
-        prev.map((e) =>
-          e.clientEmail === clientEmail && !e.invoiced
-            ? { ...e, invoiced: true, invoiceId: data.invoice.id }
-            : e,
-        ),
-      );
       toast.success("Invoice created");
-      router.refresh();
+      router.push(`/invoices/${data.invoice.id}`);
     } catch (e: any) {
       toast.error(e.message);
     } finally {
@@ -245,14 +298,30 @@ export default function TimeClient({
             <div className="rounded-xl border border-border-default bg-surface p-6 shadow-sm space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-text-secondary mb-1">Client Email *</label>
-                  <input
-                    type="email"
-                    value={form.clientEmail}
-                    onChange={(e) => setForm({ ...form, clientEmail: e.target.value })}
-                    className="w-full rounded-lg border border-border-default bg-canvas px-3 py-2 text-sm text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-border-focus"
-                    placeholder="client@example.com"
-                  />
+                  <label className="block text-xs font-medium text-text-secondary mb-1">Client *</label>
+                  {newClientMode ? (
+                    <input
+                      type="email"
+                      value={form.clientEmail}
+                      onChange={(e) => setForm({ ...form, clientEmail: e.target.value })}
+                      className="w-full rounded-lg border border-border-default bg-canvas px-3 py-2 text-sm text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-border-focus"
+                      placeholder="client@example.com"
+                    />
+                  ) : (
+                    <select
+                      value={form.clientEmail}
+                      onChange={(e) => handleClientSelect(e.target.value)}
+                      className="w-full rounded-lg border border-border-default bg-canvas px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-border-focus"
+                    >
+                      <option value="">Select a client...</option>
+                      {clients.map((c) => (
+                        <option key={c.clientEmail} value={c.clientEmail}>
+                          {c.clientName ?? c.clientEmail}
+                        </option>
+                      ))}
+                      <option value="__new__">+ New client...</option>
+                    </select>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-text-secondary mb-1">Client Name</label>
@@ -350,6 +419,58 @@ export default function TimeClient({
                 {g.entries.map((entry) => {
                   const rate = entry.hourlyRate ?? defaultHourlyRate ?? 0;
                   const value = ((entry.durationMinutes ?? 0) / 60) * rate;
+                  const isEditing = editingId === entry.id;
+
+                  if (isEditing) {
+                    return (
+                      <TableRow key={entry.id}>
+                        <TableCell>
+                          {new Date(entry.startTime).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                        </TableCell>
+                        <TableCell>
+                          <input
+                            type="text"
+                            value={editForm.description}
+                            onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                            className="w-full rounded border border-border-default bg-canvas px-2 py-1 text-sm text-text-primary"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <input
+                            type="number"
+                            value={editForm.durationMinutes}
+                            onChange={(e) => setEditForm({ ...editForm, durationMinutes: e.target.value })}
+                            className="w-20 rounded border border-border-default bg-canvas px-2 py-1 text-sm text-text-primary font-mono"
+                            min="1"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <input
+                            type="number"
+                            value={editForm.hourlyRate}
+                            onChange={(e) => setEditForm({ ...editForm, hourlyRate: e.target.value })}
+                            className="w-20 rounded border border-border-default bg-canvas px-2 py-1 text-sm text-text-primary"
+                            min="0"
+                            step="0.01"
+                          />
+                        </TableCell>
+                        <TableCell className="font-medium text-text-primary">
+                          {formatCurrency(Math.round(value * 100) / 100, baseCurrency)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button size="sm" onClick={() => saveEdit(entry.id)}>
+                              Save
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={cancelEdit}>
+                              Cancel
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  }
+
                   return (
                     <TableRow key={entry.id}>
                       <TableCell>
@@ -360,13 +481,22 @@ export default function TimeClient({
                       <TableCell>{rate ? formatCurrency(rate, baseCurrency) : "\u2014"}</TableCell>
                       <TableCell>{formatCurrency(Math.round(value * 100) / 100, baseCurrency)}</TableCell>
                       <TableCell>
-                        <button
-                          onClick={() => deleteEntry(entry.id)}
-                          className="p-1 text-text-tertiary hover:text-text-primary transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => startEdit(entry)}
+                            className="p-1 text-text-tertiary hover:text-text-primary transition-colors"
+                            title="Edit"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => deleteEntry(entry.id)}
+                            className="p-1 text-text-tertiary hover:text-text-primary transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );

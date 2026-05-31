@@ -1,8 +1,9 @@
 import { prisma } from "./prisma";
+import { cache } from "react";
 
-export async function getOwnerIdForAccountant(
+export const getOwnerIdForAccountant = cache(async (
   sessionEmail: string,
-): Promise<string | null> {
+): Promise<string | null> => {
   const access = await prisma.accountantAccess.findFirst({
     where: {
       accountantEmail: sessionEmail,
@@ -12,11 +13,6 @@ export async function getOwnerIdForAccountant(
   });
 
   return access?.ownerId ?? null;
-}
+});
 
-export async function requireReadOnlyCheck(
-  sessionEmail: string,
-): Promise<{ isAccountant: boolean; ownerId: string | null }> {
-  const ownerId = await getOwnerIdForAccountant(sessionEmail);
-  return { isAccountant: ownerId !== null, ownerId };
-}
+

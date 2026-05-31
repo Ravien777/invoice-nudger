@@ -18,6 +18,7 @@ export default async function QuotesPage() {
   const quotes = await prisma.quote.findMany({
     where: { userId: user.id },
     orderBy: { createdAt: "desc" },
+    take: 50,
     include: { lineItems: { orderBy: { sortOrder: "asc" } } },
   });
 

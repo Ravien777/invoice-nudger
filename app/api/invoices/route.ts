@@ -29,6 +29,8 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const statusFilter = searchParams.get("status");
+  const limitParam = searchParams.get("limit");
+  const take = Math.min(parseInt(limitParam || "200", 10), 1000);
 
   const where: Record<string, unknown> = { userId: effectiveUserId };
   if (statusFilter && statusFilter !== "all") {
@@ -38,6 +40,7 @@ export async function GET(request: Request) {
   const invoices = await prisma.invoice.findMany({
     where,
     orderBy: { createdAt: "desc" },
+    take,
   });
 
   return NextResponse.json(invoices);
@@ -125,7 +128,7 @@ export async function POST(request: Request) {
     },
   });
 
-  await computePaymentProbabilityForInvoice(invoice.id);
+  computePaymentProbabilityForInvoice(invoice.id).catch(console.error);
 
   return NextResponse.json(invoice, { status: 201 });
 }

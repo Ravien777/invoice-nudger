@@ -10,10 +10,21 @@ export async function POST() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  await prisma.user.update({
+  const user = await prisma.user.findUnique({
     where: { email: session.user.email },
-    data: { lastPayYourselfDate: new Date() },
+    select: { id: true, businessProfile: { select: { id: true } } },
   });
+
+  if (!user) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+
+  if (user.businessProfile) {
+    await prisma.businessProfile.update({
+      where: { id: user.businessProfile.id },
+      data: { lastPayYourselfDate: new Date() },
+    });
+  }
 
   return NextResponse.json({ success: true });
 }

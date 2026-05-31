@@ -12,8 +12,7 @@ describe("calculatePayYourselfAmount", () => {
       id: "user-1",
       email: "test@example.com",
       name: "Test",
-      lastPayYourselfDate: null,
-      taxRate: 30,
+      businessProfile: { lastPayYourselfDate: null },
     } as any);
     vi.mocked(prisma.allocationRecord.findMany).mockResolvedValue([]);
     const result = await calculatePayYourselfAmount("user-1");
@@ -26,8 +25,7 @@ describe("calculatePayYourselfAmount", () => {
       id: "user-1",
       email: "test@example.com",
       name: "Test",
-      lastPayYourselfDate: new Date("2025-01-01"),
-      taxRate: 30,
+      businessProfile: { lastPayYourselfDate: new Date("2025-01-01") },
     } as any);
     vi.mocked(prisma.allocationRecord.findMany).mockResolvedValue([
       { ownerPayAmount: 800 },
@@ -44,8 +42,7 @@ describe("calculatePayYourselfAmount", () => {
       id: "user-1",
       email: "test@example.com",
       name: "Test",
-      lastPayYourselfDate: lastDate,
-      taxRate: 30,
+      businessProfile: { lastPayYourselfDate: lastDate },
     } as any);
     vi.mocked(prisma.allocationRecord.findMany).mockResolvedValue([{ ownerPayAmount: 400 }] as any);
     const result = await calculatePayYourselfAmount("user-1");
@@ -64,8 +61,7 @@ describe("calculatePayYourselfAmount", () => {
       id: "user-1",
       email: "test@example.com",
       name: "Test",
-      lastPayYourselfDate: null,
-      taxRate: 30,
+      businessProfile: { lastPayYourselfDate: null },
     } as any);
     vi.mocked(prisma.allocationRecord.findMany).mockResolvedValue([{ ownerPayAmount: 200 }] as any);
     await calculatePayYourselfAmount("user-1");
@@ -83,14 +79,13 @@ describe("calculatePayYourselfAmount", () => {
     expect(result.lastPaymentDate).toBeNull();
   });
 
-  it("returns lastPaymentDate from user", async () => {
+  it("returns lastPaymentDate from businessProfile", async () => {
     const lastDate = new Date("2025-01-01");
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       id: "user-1",
       email: "test@example.com",
       name: "Test",
-      lastPayYourselfDate: lastDate,
-      taxRate: 30,
+      businessProfile: { lastPayYourselfDate: lastDate },
     } as any);
     vi.mocked(prisma.allocationRecord.findMany).mockResolvedValue([] as any);
     const result = await calculatePayYourselfAmount("user-1");

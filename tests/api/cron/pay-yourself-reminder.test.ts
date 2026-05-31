@@ -46,16 +46,15 @@ describe("GET /api/cron/pay-yourself-reminder", () => {
   it("processes users and creates notifications for those with available amount", async () => {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     vi.mocked(prisma.user.findMany).mockResolvedValue([
-      { id: "user-1", name: "User 1", businessProfile: { baseCurrency: "USD" } },
-      { id: "user-2", name: "User 2", businessProfile: { baseCurrency: "USD" } },
+      { id: "user-1", name: "User 1", email: "user1@test.com", businessProfile: { baseCurrency: "USD", lastPayYourselfDate: null }, allocationProfile: { ownerPayPercent: 40 } },
+      { id: "user-2", name: "User 2", email: "user2@test.com", businessProfile: { baseCurrency: "USD", lastPayYourselfDate: null }, allocationProfile: { ownerPayPercent: 30 } },
     ] as any);
 
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       id: "user-1",
-      email: "test@example.com",
+      email: "user1@test.com",
       name: "User 1",
-      lastPayYourselfDate: thirtyDaysAgo,
-      taxRate: 30,
+      businessProfile: { lastPayYourselfDate: thirtyDaysAgo },
     } as any);
 
     vi.mocked(prisma.allocationRecord.findMany)
@@ -85,15 +84,14 @@ describe("GET /api/cron/pay-yourself-reminder", () => {
 
   it("does not create notification when available amount is 0", async () => {
     vi.mocked(prisma.user.findMany).mockResolvedValue([
-      { id: "user-1", name: "User 1", businessProfile: { baseCurrency: "USD" } },
+      { id: "user-1", name: "User 1", email: "user1@test.com", businessProfile: { baseCurrency: "USD", lastPayYourselfDate: null }, allocationProfile: { ownerPayPercent: 40 } },
     ] as any);
 
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       id: "user-1",
-      email: "test@example.com",
+      email: "user1@test.com",
       name: "User 1",
-      lastPayYourselfDate: null,
-      taxRate: 30,
+      businessProfile: { lastPayYourselfDate: null },
     } as any);
 
     vi.mocked(prisma.allocationRecord.findMany).mockResolvedValue([]);
@@ -120,8 +118,8 @@ describe("GET /api/cron/pay-yourself-reminder", () => {
 
   it("handles errors gracefully per user", async () => {
     vi.mocked(prisma.user.findMany).mockResolvedValue([
-      { id: "user-1", name: "User 1", businessProfile: { baseCurrency: "USD" } },
-      { id: "user-2", name: "User 2", businessProfile: { baseCurrency: "USD" } },
+      { id: "user-1", name: "User 1", email: "user1@test.com", businessProfile: { baseCurrency: "USD", lastPayYourselfDate: null }, allocationProfile: { ownerPayPercent: 40 } },
+      { id: "user-2", name: "User 2", email: "user2@test.com", businessProfile: { baseCurrency: "USD", lastPayYourselfDate: null }, allocationProfile: { ownerPayPercent: 30 } },
     ] as any);
 
     vi.mocked(prisma.user.findUnique).mockImplementation(() => {

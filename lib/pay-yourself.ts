@@ -11,18 +11,20 @@ export async function calculatePayYourselfAmount(
 ): Promise<PayYourselfResult> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { lastPayYourselfDate: true },
+    select: { businessProfile: { select: { lastPayYourselfDate: true } } },
   });
 
   if (!user) {
     return { available: 0, recommended: 0, lastPaymentDate: null };
   }
 
+  const lastPayYourselfDate = user.businessProfile?.lastPayYourselfDate ?? null;
+
   const allocationRecords = await prisma.allocationRecord.findMany({
     where: {
       userId,
-      ...(user.lastPayYourselfDate
-        ? { createdAt: { gt: user.lastPayYourselfDate } }
+      ...(lastPayYourselfDate
+        ? { createdAt: { gt: lastPayYourselfDate } }
         : {}),
     },
     select: { ownerPayAmount: true },
@@ -33,6 +35,6 @@ export async function calculatePayYourselfAmount(
   return {
     available: Math.round(available * 100) / 100,
     recommended: Math.round(available * 100) / 100,
-    lastPaymentDate: user.lastPayYourselfDate,
+    lastPaymentDate: lastPayYourselfDate,
   };
 }

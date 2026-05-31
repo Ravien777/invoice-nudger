@@ -32,6 +32,7 @@ export default async function ExpensesPage() {
     prisma.expense.findMany({
       where: { userId: user.id, date: { gte: monthStart, lte: monthEnd } },
       orderBy: { date: "desc" },
+      take: 100,
       include: { category: { select: { id: true, name: true, color: true } } },
     }),
     prisma.expense.count({

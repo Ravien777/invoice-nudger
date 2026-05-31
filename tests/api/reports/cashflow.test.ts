@@ -67,6 +67,7 @@ describe("GET /api/reports/cashflow", () => {
       .mockResolvedValueOnce([]);
     vi.mocked(prisma.recurringInvoice.findMany).mockResolvedValue([]);
     vi.mocked(prisma.expense.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.clientPaymentProfile.findMany).mockResolvedValue([]);
     vi.mocked(prisma.invoice.count).mockResolvedValue(0);
     vi.mocked(prisma.invoice.findFirst).mockResolvedValue(null);
 
@@ -91,6 +92,7 @@ describe("GET /api/reports/cashflow", () => {
       .mockResolvedValueOnce([]);
     vi.mocked(prisma.recurringInvoice.findMany).mockResolvedValue([]);
     vi.mocked(prisma.expense.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.clientPaymentProfile.findMany).mockResolvedValue([]);
     vi.mocked(prisma.invoice.count).mockResolvedValue(0);
     vi.mocked(prisma.invoice.findFirst).mockResolvedValue(null);
 
@@ -112,10 +114,88 @@ describe("GET /api/reports/cashflow", () => {
       .mockResolvedValueOnce([]);
     vi.mocked(prisma.recurringInvoice.findMany).mockResolvedValue([]);
     vi.mocked(prisma.expense.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.clientPaymentProfile.findMany).mockResolvedValue([]);
     vi.mocked(prisma.invoice.count).mockResolvedValue(0);
     vi.mocked(prisma.invoice.findFirst).mockResolvedValue(null);
 
     const response = await callHandler();
     expect(response.headers.get("Cache-Control")).toContain("s-maxage=3600");
+  });
+
+  it("includes expenses in forecast with mixed data", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: "user-1",
+      email: "test@example.com",
+      name: "Test",
+      plan: "pro",
+    } as any);
+    vi.mocked(prisma.invoice.findMany)
+      .mockResolvedValueOnce([
+        { id: "inv-1", clientName: "A", amount: 1000, paymentProbability: 0.8, dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), clientEmail: "a@test.com" },
+        { id: "inv-2", clientName: "B", amount: 500, paymentProbability: 0.5, dueDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000), clientEmail: "b@test.com" },
+      ] as any)
+      .mockResolvedValueOnce([]);
+    vi.mocked(prisma.recurringInvoice.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.expense.findMany).mockResolvedValue([
+      { amount: 200, date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
+      { amount: 300, date: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000) },
+      { amount: 100, date: new Date(Date.now() - 80 * 24 * 60 * 60 * 1000) },
+    ] as any);
+    vi.mocked(prisma.clientPaymentProfile.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.invoice.count).mockResolvedValue(2);
+    vi.mocked(prisma.invoice.findFirst).mockResolvedValue({ paidAt: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000) } as any);
+
+    const response = await callHandler();
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.totalExpectedIncome).toBeGreaterThan(0);
+    expect(body.totalExpectedExpenses).toBeGreaterThan(0);
+    expect(body.totalExpectedIncome).toBeGreaterThan(body.totalExpectedExpenses);
+  });
+
+  it("returns low confidence with no payment history", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: "user-1",
+      email: "test@example.com",
+      name: "Test",
+      plan: "agency",
+    } as any);
+    vi.mocked(prisma.invoice.findMany)
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]);
+    vi.mocked(prisma.recurringInvoice.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.expense.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.clientPaymentProfile.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.invoice.count).mockResolvedValue(0);
+    vi.mocked(prisma.invoice.findFirst).mockResolvedValue(null);
+
+    const response = await callHandler();
+    const body = await response.json();
+    expect(body.confidence).toBe("low");
+    expect(body.confidenceReason).toContain("No paid invoice history");
+  });
+
+  it("includes recurring invoices in forecast", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: "user-1",
+      email: "test@example.com",
+      name: "Test",
+      plan: "pro",
+    } as any);
+    vi.mocked(prisma.invoice.findMany)
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]);
+    vi.mocked(prisma.recurringInvoice.findMany).mockResolvedValue([
+      { amount: 200, nextRunDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), clientName: "Monthly Client" },
+    ] as any);
+    vi.mocked(prisma.expense.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.clientPaymentProfile.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.invoice.count).mockResolvedValue(1);
+    vi.mocked(prisma.invoice.findFirst).mockResolvedValue(null);
+
+    const response = await callHandler();
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.totalExpectedIncome).toBeGreaterThanOrEqual(200);
   });
 });

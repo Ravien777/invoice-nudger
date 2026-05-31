@@ -10,6 +10,7 @@ export function NotificationBell() {
 
   useEffect(() => {
     async function fetchCount() {
+      if (document.hidden) return;
       try {
         const res = await fetch("/api/notifications?limit=1");
         if (res.ok) {

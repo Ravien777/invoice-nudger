@@ -43,16 +43,16 @@ export default async function SettingsPage() {
   const smsUsage = await getMonthlyNotificationUsage(user!.id, "sms");
   const whatsappUsage = await getMonthlyNotificationUsage(user!.id, "whatsapp");
 
+  const promiseGroups = await prisma.promiseEvent.groupBy({
+    by: ["status"],
+    where: { invoice: { userId: user!.id }, status: { in: ["active", "pending_review", "expired"] } },
+    _count: true,
+  });
+
   const promiseStats = {
-    active: await prisma.promiseEvent.count({
-      where: { invoice: { userId: user!.id }, status: "active" },
-    }),
-    pending: await prisma.promiseEvent.count({
-      where: { invoice: { userId: user!.id }, status: "pending_review" },
-    }),
-    expired: await prisma.promiseEvent.count({
-      where: { invoice: { userId: user!.id }, status: "expired" },
-    }),
+    active: promiseGroups.find((g) => g.status === "active")?._count ?? 0,
+    pending: promiseGroups.find((g) => g.status === "pending_review")?._count ?? 0,
+    expired: promiseGroups.find((g) => g.status === "expired")?._count ?? 0,
   };
 
   const accountantAccess = await prisma.accountantAccess.findMany({

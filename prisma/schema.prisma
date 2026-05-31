@@ -32,7 +32,6 @@ model User {
   feeCap            Float            @default(0)
   receiptEmail       String?    @unique
   businessProfile   BusinessProfile?
-  lastPayYourselfDate DateTime?
   alertPreferences  Json?
   allocationProfile    AllocationProfile?
   allocationRecords    AllocationRecord[]
@@ -76,6 +75,7 @@ model BusinessProfile {
   fiscalYearStart   Int     @default(1)
   taxSavingsAmount  Float   @default(0)
   baseCurrency      String  @default("USD")
+  lastPayYourselfDate DateTime?
   defaultHourlyRate Float?
   businessName      String?
   businessAddress   String?
@@ -158,6 +158,13 @@ model Invoice {
   lineItems            InvoiceLineItem[]
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
+
+  @@index([userId, status, paidAt])
+  @@index([userId, status, createdAt])
+  @@index([userId, createdAt])
+  @@index([userId, reconciliationStatus])
+  @@index([userId, clientEmail])
+  @@index([lateFeeEnabled, status])
 }
 
 model InvoiceLineItem {
@@ -335,6 +342,7 @@ model PromiseEvent {
 
   @@index([invoiceId])
   @@index([status])
+  @@index([invoiceId, status])
 }
 
 model InvoiceDailySummary {
@@ -403,6 +411,9 @@ model Expense {
   status        String           @default("confirmed") // confirmed | draft
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
+
+  @@index([userId, date])
+  @@index([userId, status, date])
 }
 
 model TimeEntry {
@@ -420,6 +431,8 @@ model TimeEntry {
   invoiced        Boolean   @default(false)
   invoiceId       String?
   createdAt       DateTime  @default(now())
+
+  @@index([userId, startTime])
 }
 
 model BankConnection {
@@ -454,6 +467,9 @@ model BankTransaction {
   matchedExpenseId String?
   status           String          @default("unmatched")
   createdAt        DateTime        @default(now())
+
+  @@index([userId, status])
+  @@index([userId, date])
 }
 
 model Quote {
@@ -518,6 +534,9 @@ model RecurringInvoice {
   lastRunDate        DateTime?
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
+
+  @@index([userId])
+  @@index([status, nextRunDate])
 }
 
 model IndustryBenchmark {
@@ -544,6 +563,7 @@ model AccountantAccess {
   revokedAt       DateTime?
 
   @@unique([ownerId, accountantEmail])
+  @@index([accountantEmail, status])
 }
 
 model TeamMember {

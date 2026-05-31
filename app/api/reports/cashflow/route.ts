@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getTier } from "@/lib/tiers";
-import { computeCashflowForecast } from "@/lib/cashflow";
+import { computeForecast } from "@/lib/forecast";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -30,7 +30,7 @@ export async function GET() {
     );
   }
 
-  const forecast = await computeCashflowForecast(user.id);
+  const forecast = await computeForecast(user.id);
 
   return NextResponse.json(forecast, {
     headers: {

@@ -21,7 +21,9 @@ export async function GET() {
 
   try {
     const metrics = await computeCollectionEfficiencyForUser(user.id);
-    return NextResponse.json(metrics);
+    return NextResponse.json(metrics, {
+      headers: { "Cache-Control": "private, s-maxage=3600, stale-while-revalidate=600" },
+    });
   } catch (error) {
     console.error("Efficiency computation failed:", error);
     return NextResponse.json(

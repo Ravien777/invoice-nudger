@@ -24,6 +24,8 @@ interface AllocationRecordItem {
   ownerPayAmount: number;
   currency: string;
   invoiceId: string | null;
+  clientName: string | null;
+  invoiceNumber: string | null;
   note: string | null;
   createdAt: string;
 }
@@ -240,6 +242,7 @@ export default function MoneyClient({
               <TableHead>
                 <TableRow>
                   <TableCell>Date</TableCell>
+                  <TableCell>Invoice</TableCell>
                   <TableCell>Total Received</TableCell>
                   <TableCell>Tax ({profile.taxPercent}%)</TableCell>
                   <TableCell>Business ({profile.operatingPercent}%)</TableCell>
@@ -256,6 +259,18 @@ export default function MoneyClient({
                         day: "numeric",
                         year: "numeric",
                       })}
+                    </TableCell>
+                    <TableCell className="text-sm text-text-primary">
+                      {r.clientName ? (
+                        <a
+                          href={`/invoices/${r.invoiceId}`}
+                          className="text-[var(--accent)] hover:underline"
+                        >
+                          {r.invoiceNumber ?? r.clientName}
+                        </a>
+                      ) : (
+                        "\u2014"
+                      )}
                     </TableCell>
                     <TableCell className="font-medium text-text-primary">
                       {formatCurrency(r.totalReceived, r.currency)}

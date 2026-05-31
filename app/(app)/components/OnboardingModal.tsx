@@ -20,12 +20,11 @@ export default function OnboardingModal({
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (open) {
-      const dismissed = localStorage.getItem(DISMISSED_KEY) || localStorage.getItem("invoice-nudger-onboarding-dismissed");
-      if (!dismissed) {
-        const timer = setTimeout(() => setVisible(true), 400);
-        return () => clearTimeout(timer);
-      }
+    if (!open) return;
+    const dismissed = localStorage.getItem(DISMISSED_KEY) || localStorage.getItem("invoice-nudger-onboarding-dismissed");
+    if (!dismissed) {
+      const timer = setTimeout(() => setVisible(true), 400);
+      return () => clearTimeout(timer);
     }
   }, [open]);
 

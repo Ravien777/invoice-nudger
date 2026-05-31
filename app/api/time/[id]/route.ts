@@ -118,13 +118,15 @@ export async function DELETE(
   }
 
   const teamCtx = await getTeamContext(session);
-  if (teamCtx) {
-    return NextResponse.json({ error: "Only the account owner can delete time entries." }, { status: 403 });
+  if (teamCtx?.role === "viewer") {
+    return NextResponse.json({ error: "Read-only access." }, { status: 403 });
   }
+
+  const effectiveUserId = teamCtx?.ownerId ?? user.id;
 
   const { id } = await params;
   const existing = await prisma.timeEntry.findFirst({
-    where: { id, userId: user.id },
+    where: { id, userId: effectiveUserId },
   });
   if (!existing) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });

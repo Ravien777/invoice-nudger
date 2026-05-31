@@ -2,9 +2,15 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import nextDynamic from "next/dynamic";
 import { PageShell } from "@/app/components/layout/PageShell";
 import { getTier } from "@/lib/tiers";
-import ForecastClient from "./ForecastClient";
+
+const ForecastClient = nextDynamic(() => import("./ForecastClient"), {
+  loading: () => (
+    <div className="h-80 rounded-xl bg-surface-muted animate-pulse" />
+  ),
+});
 
 export default async function ForecastPage() {
   const session = await getServerSession(authOptions);

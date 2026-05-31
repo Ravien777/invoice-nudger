@@ -160,7 +160,7 @@ export async function PUT(
     },
   });
 
-  await computePaymentProbabilityForInvoice(id);
+  computePaymentProbabilityForInvoice(id).catch(console.error);
 
   return NextResponse.json(updated);
 }

@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import type { ReactNode } from "react";

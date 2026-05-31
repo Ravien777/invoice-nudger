@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { quoteSchema } from "@/lib/validations";
 import { getOwnerIdForAccountant } from "@/lib/accountant-session";
 
-export async function GET() {
+export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -30,9 +30,13 @@ export async function GET() {
     data: { status: "expired" },
   });
 
+  const { searchParams } = new URL(request.url);
+  const limit = Math.min(parseInt(searchParams.get("limit") || "50", 10), 200);
+
   const quotes = await prisma.quote.findMany({
     where: { userId: effectiveUserId },
     orderBy: { createdAt: "desc" },
+    take: limit,
     include: { lineItems: { orderBy: { sortOrder: "asc" } } },
   });
 

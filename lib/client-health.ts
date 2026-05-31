@@ -14,6 +14,7 @@ export interface ClientHealthResult {
   label: string;
   breakdown: ClientHealthBreakdown;
   signals: string[];
+  invoiceCount: number;
 }
 
 export function getClientLabel(score: number): string {
@@ -144,7 +145,7 @@ export async function calculateClientHealthScore(
 
   const promiseAdjustment =
     promiseKeptRate.maxScore === 0
-      ? 25 / 3
+      ? 0
       : 0;
   const adjustedPromiseMax = promiseKeptRate.maxScore > 0 ? 25 : 0;
 
@@ -177,6 +178,7 @@ export async function calculateClientHealthScore(
       disputeRate,
     },
     signals,
+    invoiceCount: totalInvoices,
   };
 }
 
@@ -185,10 +187,97 @@ export async function calculateAllClientHealthScores(
 ): Promise<ClientHealthResult[]> {
   const profiles = await prisma.clientPaymentProfile.findMany({
     where: { userId },
-    select: { clientEmail: true },
+    select: {
+      clientEmail: true,
+      paidInvoices: true,
+      totalInvoices: true,
+      avgDaysLate: true,
+      onTimePayments: true,
+    },
   });
 
-  return Promise.all(
-    profiles.map((p) => calculateClientHealthScore(userId, p.clientEmail)),
-  );
+  if (profiles.length === 0) return [];
+
+  const clientEmails = profiles.map((p) => p.clientEmail);
+
+  const [allInvoices, allPromiseInvoices] = await Promise.all([
+    prisma.invoice.findMany({
+      where: { userId, clientEmail: { in: clientEmails } },
+      select: { clientEmail: true, status: true, paidAt: true, dueDate: true },
+    }),
+    prisma.invoice.findMany({
+      where: { userId, clientEmail: { in: clientEmails }, promiseStatus: { not: "none" } },
+      select: { clientEmail: true, promiseStatus: true },
+    }),
+  ]);
+
+  const invoicesByEmail = new Map<string, typeof allInvoices>();
+  for (const inv of allInvoices) {
+    const arr = invoicesByEmail.get(inv.clientEmail);
+    if (arr) arr.push(inv);
+    else invoicesByEmail.set(inv.clientEmail, [inv]);
+  }
+
+  const promiseByEmail = new Map<string, typeof allPromiseInvoices>();
+  for (const inv of allPromiseInvoices) {
+    const arr = promiseByEmail.get(inv.clientEmail);
+    if (arr) arr.push(inv);
+    else promiseByEmail.set(inv.clientEmail, [inv]);
+  }
+
+  return profiles.map((profile) => {
+    const invoices = invoicesByEmail.get(profile.clientEmail) || [];
+    const promiseInvoices = promiseByEmail.get(profile.clientEmail) || [];
+    const totalInvoices = profile.totalInvoices ?? invoices.length;
+    const paidInvoices = profile.paidInvoices ?? 0;
+
+    const avgDaysToPay = computeClientAvgDaysToPayScore(profile.avgDaysLate ?? null);
+    const paymentRate = computeClientPaymentRateScore(paidInvoices, totalInvoices);
+
+    let promiseKeptRate: { score: number; maxScore: number; details: string };
+    if (promiseInvoices.length === 0) {
+      promiseKeptRate = { score: 0, maxScore: 0, details: "No promises tracked (skipped)" };
+    } else {
+      const kept = promiseInvoices.filter((inv) => inv.promiseStatus === "fulfilled").length;
+      const rate = kept / promiseInvoices.length;
+      promiseKeptRate = {
+        score: Math.round(rate * 25),
+        maxScore: 25,
+        details: `${kept}/${promiseInvoices.length} promises kept (${(rate * 100).toFixed(0)}%)`,
+      };
+    }
+
+    const disputeRate = computeClientDisputeRateScore(totalInvoices, invoices);
+
+    const promiseAdjustment =
+      promiseKeptRate.maxScore === 0 ? 0 : 0;
+    const adjustedPromiseMax = promiseKeptRate.maxScore > 0 ? 25 : 0;
+
+    const totalMax = 25 + 25 + adjustedPromiseMax + 25;
+    const totalScore =
+      avgDaysToPay.score +
+      paymentRate.score +
+      (promiseKeptRate.maxScore > 0 ? promiseKeptRate.score : promiseAdjustment) +
+      disputeRate.score;
+
+    const score = Math.min(Math.round((totalScore / totalMax) * 100), 100);
+    const label = getClientLabel(score);
+
+    const signals: string[] = [];
+    if (avgDaysToPay.score < 20) signals.push(avgDaysToPay.details);
+    if (paymentRate.score < 20) signals.push(paymentRate.details);
+    if (promiseKeptRate.maxScore > 0 && promiseKeptRate.score < 15) {
+      signals.push(promiseKeptRate.details);
+    }
+    if (disputeRate.score < 20) signals.push(disputeRate.details);
+
+    return {
+      clientEmail: profile.clientEmail,
+      score,
+      label,
+      breakdown: { avgDaysToPay, paymentRate, promiseKeptRate, disputeRate },
+      signals,
+      invoiceCount: totalInvoices,
+    };
+  });
 }

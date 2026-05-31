@@ -31,8 +31,11 @@ export async function GET(request: Request) {
     where.status = status;
   }
 
+  const limit = Math.min(parseInt(url.searchParams.get("limit") || "50", 10), 200);
+
   const promises = await prisma.promiseEvent.findMany({
     where,
+    take: limit,
     include: {
       invoice: {
         select: {

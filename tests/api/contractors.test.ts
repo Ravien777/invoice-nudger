@@ -36,8 +36,7 @@ function params(id: string) {
 
 describe("GET /api/contractors (list)", () => {
   it("returns 401 without session", async () => {
-    const req = createNextRequest("http://localhost/api/contractors");
-    const res = await ListGET();
+    const res = await ListGET(createNextRequest("http://localhost/api/contractors"));
     expect(res.status).toBe(401);
   });
 
@@ -46,7 +45,7 @@ describe("GET /api/contractors (list)", () => {
     mockUser();
     prisma.contractor.findMany.mockResolvedValue([mockContractor()]);
 
-    const res = await ListGET();
+    const res = await ListGET(createNextRequest("http://localhost/api/contractors"));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(Array.isArray(body)).toBe(true);

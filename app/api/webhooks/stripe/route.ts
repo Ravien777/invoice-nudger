@@ -105,6 +105,7 @@ export async function POST(request: Request) {
             invoice.amount,
             invoice.currency,
             invoice.id,
+            invoice.clientName,
           );
         }
       }
@@ -197,6 +198,28 @@ export async function POST(request: Request) {
           notes: `Refunded via Stripe: ${charge.id}`,
         });
       }
+    }
+
+    return new Response("OK");
+  }
+
+  if (event.type === "invoice.payment_succeeded") {
+    const invoiceObj = event.data.object as unknown as Record<string, unknown>;
+    const customerId = invoiceObj.customer as string;
+
+    const user = await prisma.user.findFirst({
+      where: { stripeCustomerId: customerId },
+    });
+
+    if (user) {
+      const subscriptionId = invoiceObj.subscription as string | undefined;
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          subscriptionStatus: "active",
+          ...(subscriptionId ? { stripeSubscriptionId: subscriptionId } : {}),
+        },
+      });
     }
 
     return new Response("OK");

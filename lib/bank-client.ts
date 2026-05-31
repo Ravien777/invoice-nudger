@@ -2,6 +2,7 @@ import { Configuration, PlaidApi, PlaidEnvironments, type Transaction } from "pl
 import { prisma } from "./prisma";
 import { decrypt } from "./integrations/crypto";
 import { autoMatchTransaction } from "./bank-matching";
+import { formatCurrency } from "./format-currency";
 
 function getPlaidClient(): PlaidApi {
   const config = new Configuration({
@@ -149,5 +150,21 @@ async function upsertTransaction(userId: string, connectionId: string, tx: Trans
 
   if (transaction.status === "unmatched") {
     await autoMatchTransaction(transaction.id);
+
+    const updated = await prisma.bankTransaction.findUnique({
+      where: { id: transaction.id },
+      select: { status: true, amount: true, currency: true },
+    });
+
+    if (updated && updated.status === "unmatched" && updated.amount > 0 && updated.amount >= 100) {
+      await prisma.notification.create({
+        data: {
+          userId,
+          type: "unmatched_credit",
+          title: "Unmatched Payment",
+          message: `You received ${formatCurrency(updated.amount, updated.currency)} from an unknown source — is this a client payment?`,
+        },
+      });
+    }
   }
 }

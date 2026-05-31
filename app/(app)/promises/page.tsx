@@ -25,6 +25,7 @@ export default async function PromisesPage() {
 
   const promises = await prisma.promiseEvent.findMany({
     where: { invoice: { userId: user.id } },
+    take: 50,
     include: {
       invoice: {
         select: {

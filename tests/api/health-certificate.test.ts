@@ -47,7 +47,7 @@ describe("GET /api/reports/health-certificate", () => {
     expect(body.error).toContain("Agency");
   });
 
-  it("returns HTML certificate for agency users", async () => {
+  it("returns PDF certificate for agency users", async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       id: "user-1",
       email: "test@example.com",
@@ -78,7 +78,7 @@ describe("GET /api/reports/health-certificate", () => {
     const response = await callHandler();
     expect(response.status).toBe(200);
     const contentType = response.headers.get("Content-Type");
-    expect(contentType).toContain("text/html");
+    expect(contentType).toContain("application/pdf");
     const disposition = response.headers.get("Content-Disposition");
     expect(disposition).toContain("attachment");
     expect(disposition).toContain("health-certificate");

@@ -19,6 +19,7 @@ export default async function ClientsPage() {
   const profiles = await prisma.clientPaymentProfile.findMany({
     where: { userId: user!.id },
     orderBy: { riskScore: "desc" },
+    take: 100,
   });
 
   const serialized = profiles.map((p) => ({

@@ -13,8 +13,8 @@ const baseParams = {
 };
 
 describe("email templates", () => {
-  it("gentle_reminder returns subject and html", () => {
-    const tpl = getTemplate("gentle_reminder");
+  it("gentle_reminder returns subject and html", async () => {
+    const tpl = await getTemplate("gentle_reminder");
     expect(tpl).not.toBeNull();
     const result = tpl!(baseParams);
     expect(result).toHaveProperty("subject");
@@ -22,37 +22,37 @@ describe("email templates", () => {
     expect(result.html).toContain("John");
   });
 
-  it("due_today returns subject with invoice", () => {
-    const tpl = getTemplate("due_today");
+  it("due_today returns subject with invoice", async () => {
+    const tpl = await getTemplate("due_today");
     expect(tpl).not.toBeNull();
     const result = tpl!(baseParams);
     expect(result.html).toContain("INV-001");
   });
 
-  it("overdue_notice includes amount", () => {
-    const tpl = getTemplate("overdue_notice");
+  it("overdue_notice includes amount", async () => {
+    const tpl = await getTemplate("overdue_notice");
     expect(tpl).not.toBeNull();
     const result = tpl!(baseParams);
     expect(result.html).toContain("1,500");
   });
 
-  it("firm_reminder returns subject and html", () => {
-    const tpl = getTemplate("firm_reminder");
+  it("firm_reminder returns subject and html", async () => {
+    const tpl = await getTemplate("firm_reminder");
     expect(tpl).not.toBeNull();
     const result = tpl!(baseParams);
     expect(result).toHaveProperty("subject");
     expect(result).toHaveProperty("html");
   });
 
-  it("final_notice has urgent language", () => {
-    const tpl = getTemplate("final_notice");
+  it("final_notice has urgent language", async () => {
+    const tpl = await getTemplate("final_notice");
     expect(tpl).not.toBeNull();
     const result = tpl!(baseParams);
     expect(result.subject.toLowerCase()).toContain("final");
   });
 
-  it("broken_promise_notice requires promisedDate", () => {
-    const tpl = getTemplate("broken_promise_notice");
+  it("broken_promise_notice requires promisedDate", async () => {
+    const tpl = await getTemplate("broken_promise_notice");
     expect(tpl).not.toBeNull();
     const result = tpl!({ ...baseParams, promisedDate: new Date("2025-06-20") });
     expect(result).toHaveProperty("subject");
@@ -71,15 +71,15 @@ describe("email templates", () => {
     expect(result.html).toContain("john@example.com");
   });
 
-  it("returns null for unknown template name", () => {
-    expect(getTemplate("nonexistent")).toBeNull();
+  it("returns null for unknown template name", async () => {
+    expect(await getTemplate("nonexistent")).toBeNull();
   });
 
-  it("all templates produce unique subjects", () => {
+  it("all templates produce unique subjects", async () => {
     const subjects = new Set<string>();
     const names = ["gentle_reminder", "due_today", "overdue_notice", "firm_reminder", "final_notice", "broken_promise_notice"];
     for (const name of names) {
-      const tpl = getTemplate(name);
+      const tpl = await getTemplate(name);
       expect(tpl).not.toBeNull();
       const params = name === "broken_promise_notice"
         ? { ...baseParams, promisedDate: new Date("2025-06-20") }

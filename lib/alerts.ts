@@ -118,6 +118,26 @@ export async function checkClientDeterioration(userId: string) {
     },
   });
 
+  if (profiles.length === 0) return 0;
+
+  const clientEmails = profiles.map((p) => p.clientEmail);
+  const allRecentInvoices = await prisma.invoice.findMany({
+    where: {
+      userId,
+      clientEmail: { in: clientEmails },
+      status: "paid",
+      paidAt: { gte: thirtyDaysAgo },
+    },
+    select: { clientEmail: true, dueDate: true, paidAt: true },
+  });
+
+  const invoicesByEmail = new Map<string, typeof allRecentInvoices>();
+  for (const inv of allRecentInvoices) {
+    const arr = invoicesByEmail.get(inv.clientEmail);
+    if (arr) arr.push(inv);
+    else invoicesByEmail.set(inv.clientEmail, [inv]);
+  }
+
   let alertsCreated = 0;
 
   for (const profile of profiles) {
@@ -125,15 +145,7 @@ export async function checkClientDeterioration(userId: string) {
       ? profile.onTimePayments / profile.paidInvoices
       : 0;
 
-    const recentInvoices = await prisma.invoice.findMany({
-      where: {
-        userId,
-        clientEmail: profile.clientEmail,
-        status: "paid",
-        paidAt: { gte: thirtyDaysAgo },
-      },
-      select: { dueDate: true, paidAt: true },
-    });
+    const recentInvoices = invoicesByEmail.get(profile.clientEmail) || [];
 
     const recentOnTime = recentInvoices.filter(
       (inv) => inv.paidAt && differenceInCalendarDays(inv.paidAt, inv.dueDate) <= 0,
@@ -243,13 +255,26 @@ export async function generatePredictiveAlertsForUser(userId: string) {
   return total;
 }
 
-export async function generatePredictiveAlertsForAll() {
-  const users = await prisma.user.findMany({ select: { id: true } });
-  let total = 0;
+const ALERTS_BATCH_SIZE = 1000;
 
-  for (const user of users) {
-    total += await generatePredictiveAlertsForUser(user.id);
-  }
+export async function generatePredictiveAlertsForAll() {
+  let total = 0;
+  let cursor: string | undefined;
+
+  do {
+    const users = await prisma.user.findMany({
+      select: { id: true },
+      take: ALERTS_BATCH_SIZE,
+      orderBy: { id: "asc" },
+      ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+    });
+
+    for (const user of users) {
+      total += await generatePredictiveAlertsForUser(user.id);
+    }
+
+    cursor = users[users.length - 1]?.id;
+  } while (cursor);
 
   return total;
 }

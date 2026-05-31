@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getStripe } from "@/lib/stripe";
+import { createAllocationRecord } from "@/lib/allocation";
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
@@ -63,10 +64,24 @@ export async function POST(request: Request) {
       data: { instantPayoutId: payout.id, paidOutAt: new Date() },
     });
 
+    const balanceTxns = await stripe.balanceTransactions.list({
+      payout: payout.id,
+      limit: 1,
+    });
+    const fee = balanceTxns.data[0]?.fee ? Math.abs(balanceTxns.data[0].fee) / 100 : 0;
+
+    await createAllocationRecord(
+      user.id,
+      invoice.amount,
+      invoice.currency,
+      invoice.id,
+      invoice.clientName,
+    );
+
     return NextResponse.json({
       payoutId: payout.id,
-      amount: payout.amount,
-      fee: (payout as any).fee ?? 0,
+      amount: payout.amount / 100,
+      fee,
       arrivalTime: payout.arrival_date,
     });
   } catch (err: unknown) {

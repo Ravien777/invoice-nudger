@@ -36,6 +36,11 @@ export default async function TimePage() {
     createdAt: e.createdAt.toISOString(),
   }));
 
+  const serializedClients = clients.map((c) => ({
+    clientEmail: c.clientEmail,
+    clientName: c.clientName,
+  }));
+
   const activeEntry = serialized.find((e) => !e.endTime) ?? null;
 
   return (
@@ -46,6 +51,7 @@ export default async function TimePage() {
       <TimeClient
         entries={serialized}
         activeEntry={activeEntry}
+        clients={serializedClients}
         defaultHourlyRate={user.businessProfile?.defaultHourlyRate ?? null}
         baseCurrency={user.businessProfile?.baseCurrency ?? "USD"}
       />

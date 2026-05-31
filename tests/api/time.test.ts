@@ -1,6 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { getServerSession } from "next-auth";
+import { getTeamContext } from "@/lib/team-session";
 import { mockSession, mockUser, createNextRequest } from "../helpers";
+
+vi.mock("@/lib/team-session", () => ({
+  getTeamContext: vi.fn(),
+}));
 import { GET as ListGET, POST as CreatePOST } from "@/app/api/time/route";
 import { GET as ItemGET, PUT as ItemPUT, DELETE as ItemDELETE } from "@/app/api/time/[id]/route";
 import { POST as StopPOST } from "@/app/api/time/[id]/stop/route";
@@ -11,6 +16,7 @@ let prisma: any;
 beforeEach(async () => {
   vi.clearAllMocks();
   vi.mocked(getServerSession).mockReset();
+  vi.mocked(getTeamContext).mockResolvedValue(null);
   const setup = await import("../setup");
   prisma = setup.prisma;
 });
@@ -250,6 +256,29 @@ describe("DELETE /api/time/[id]", () => {
 
     const res = await ItemDELETE(createNextRequest("http://localhost/api/time/entry-1", { method: "DELETE" }), params("entry-1"));
     expect(res.status).toBe(400);
+  });
+
+  it("allows team member with member role to delete", async () => {
+    mockSession();
+    mockUser();
+    vi.mocked(getTeamContext).mockResolvedValue({ ownerId: "owner-1", role: "member" });
+    prisma.timeEntry.findFirst.mockResolvedValue(mockEntry({ userId: "owner-1" }));
+    prisma.timeEntry.delete.mockResolvedValue({} as any);
+
+    const res = await ItemDELETE(createNextRequest("http://localhost/api/time/entry-1", { method: "DELETE" }), params("entry-1"));
+    expect(res.status).toBe(200);
+    expect(prisma.timeEntry.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ userId: "owner-1" }) }),
+    );
+  });
+
+  it("blocks team member with viewer role from deleting", async () => {
+    mockSession();
+    mockUser();
+    vi.mocked(getTeamContext).mockResolvedValue({ ownerId: "owner-1", role: "viewer" });
+
+    const res = await ItemDELETE(createNextRequest("http://localhost/api/time/entry-1", { method: "DELETE" }), params("entry-1"));
+    expect(res.status).toBe(403);
   });
 });
 

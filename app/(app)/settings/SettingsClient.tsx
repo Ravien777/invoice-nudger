@@ -700,6 +700,27 @@ export default function SettingsClient({
     }
   }
 
+  async function handleChangeRole(id: string, role: string) {
+    try {
+      const res = await fetch(`/api/team/${id}/role`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        toast.error(data.error || "Failed to change role");
+        return;
+      }
+      toast.success(`Role changed to ${role}`);
+      setTeamMembers((prev) =>
+        prev.map((tm) => (tm.id === id ? { ...tm, role } : tm)),
+      );
+    } catch {
+      toast.error("Network error");
+    }
+  }
+
   // -----------------------------------------------------------------------
   // Render
   // -----------------------------------------------------------------------
@@ -1581,7 +1602,23 @@ TWILIO_WHATSAPP_NUMBER=+14155238886`}
                           <div className="min-w-0">
                             <p className="text-sm font-medium text-foreground truncate">{member.memberEmail}</p>
                             <p className="text-xs text-muted">
-                              Role: <span className="capitalize">{member.role}</span>
+                              {member.status === "active" ? (
+                                <>
+                                  Role:{" "}
+                                  <select
+                                    value={member.role}
+                                    onChange={(e) => handleChangeRole(member.id, e.target.value)}
+                                    className="bg-transparent border border-border-default rounded px-1 py-0.5 text-xs text-foreground"
+                                  >
+                                    <option value="member">Member</option>
+                                    <option value="viewer">Viewer</option>
+                                  </select>
+                                </>
+                              ) : (
+                                <>
+                                  Role: <span className="capitalize">{member.role}</span>
+                                </>
+                              )}
                               {" — "}
                               {member.status === "active" && "Active"}
                               {member.status === "pending" && "Invitation sent"}

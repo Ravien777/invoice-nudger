@@ -1,5 +1,3 @@
-"use client";
-
 import type { ReactNode } from "react";
 import { FileText, Users, Search } from "lucide-react";
 import { Button } from "./Button";

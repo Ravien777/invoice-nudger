@@ -5,6 +5,7 @@ import {
   useContext,
   useState,
   useEffect,
+  useMemo,
   type ReactNode,
 } from "react";
 
@@ -29,16 +30,14 @@ export function useSidebar() {
 }
 
 export function SidebarProvider({ children }: { children: ReactNode }) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(
+    () => typeof window !== "undefined" && localStorage.getItem("sidebar-collapsed") === "true",
+  );
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const stored = localStorage.getItem("sidebar-collapsed");
-    if (stored === "true") {
-      setCollapsed(true);
-    }
   }, []);
 
   useEffect(() => {
@@ -73,10 +72,13 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
   const toggleMobile = () => setMobileOpen((prev) => !prev);
   const closeMobile = () => setMobileOpen(false);
 
+  const value = useMemo(
+    () => ({ collapsed, toggle, mobileOpen, toggleMobile, closeMobile }),
+    [collapsed, mobileOpen],
+  );
+
   return (
-    <SidebarContext.Provider
-      value={{ collapsed, toggle, mobileOpen, toggleMobile, closeMobile }}
-    >
+    <SidebarContext.Provider value={value}>
       {children}
     </SidebarContext.Provider>
   );

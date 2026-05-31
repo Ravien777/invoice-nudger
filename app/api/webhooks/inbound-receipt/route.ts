@@ -27,7 +27,13 @@ export async function POST(request: Request) {
   const subject = formData.get("subject") as string;
   const bodyPlain = formData.get("body-plain") as string;
   const bodyHtml = formData.get("body-html") as string;
-  const attachments = formData.getAll("attachment") as Array<File>;
+  const attachments: Array<File> = [];
+  for (const key of formData.keys()) {
+    if (key === "attachment" || /^attachment-\d+$/.test(key)) {
+      const files = formData.getAll(key);
+      attachments.push(...(files as Array<File>));
+    }
+  }
 
   if (!verifyMailgunSignature(timestamp, token, signature)) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });

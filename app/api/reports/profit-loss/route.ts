@@ -101,5 +101,7 @@ export async function GET(req: NextRequest) {
       estimatedTax,
       taxRate: bp.taxRate,
     },
+  }, {
+    headers: { "Cache-Control": "private, s-maxage=3600, stale-while-revalidate=600" },
   });
 }

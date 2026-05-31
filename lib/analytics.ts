@@ -307,14 +307,27 @@ export async function computeAllAnalyticsForUser(userId: string) {
   await computeClientProfilesForUser(userId);
 }
 
-export async function computeAllAnalytics() {
-  const users = await prisma.user.findMany({ select: { id: true } });
-  const yesterday = subDays(new Date(), 1);
+const BATCH_SIZE = 1000;
 
-  for (const user of users) {
-    await computeDailySummaryForUser(user.id, yesterday);
-    await computeClientProfilesForUser(user.id);
-  }
+export async function computeAllAnalytics() {
+  const yesterday = subDays(new Date(), 1);
+  let cursor: string | undefined;
+
+  do {
+    const users = await prisma.user.findMany({
+      select: { id: true },
+      take: BATCH_SIZE,
+      orderBy: { id: "asc" },
+      ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+    });
+
+    for (const user of users) {
+      await computeDailySummaryForUser(user.id, yesterday);
+      await computeClientProfilesForUser(user.id);
+    }
+
+    cursor = users[users.length - 1]?.id;
+  } while (cursor);
 
   await computeIndustryBenchmarks();
 }

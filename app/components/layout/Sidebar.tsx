@@ -54,20 +54,23 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Promises", icon: Handshake, href: "/promises", zone: 2 },
   { label: "Reconciliation", icon: RefreshCw, href: "/reconciliation", zone: 2 },
   { label: "Business Health", icon: Heart, href: "/health", zone: 3 },
-  { label: "Forecast", icon: TrendingUp, href: "/forecast", zone: 3 },
   { label: "Settings", icon: Settings, href: "/settings", zone: 3 },
 ];
 
-const ZONE_INDICES = NAV_ITEMS.reduce<number[]>((acc, item, i) => {
-  if (i > 0 && item.zone !== NAV_ITEMS[i - 1].zone) acc.push(i);
-  return acc;
-}, []);
-
-export default function Sidebar() {
+export default function Sidebar({ bankConnectionCount = 0 }: { bankConnectionCount?: number }) {
   const pathname = usePathname();
   const { collapsed, toggle, mobileOpen, closeMobile } = useSidebar();
   const { data: session } = useSession();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+
+  const visibleItems = NAV_ITEMS.filter(
+    (item) => item.label !== "Bank" || bankConnectionCount > 0,
+  );
+
+  const ZONE_INDICES = visibleItems.reduce<number[]>((acc, item, i) => {
+    if (i > 0 && item.zone !== visibleItems[i - 1].zone) acc.push(i);
+    return acc;
+  }, []);
 
   const isActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard";
@@ -107,7 +110,7 @@ export default function Sidebar() {
 
       {/* Nav items */}
       <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-1">
-        {NAV_ITEMS.map((item, index) => {
+        {visibleItems.map((item, index) => {
           const showDivider = ZONE_INDICES.includes(index);
           const Icon = item.icon;
           return (

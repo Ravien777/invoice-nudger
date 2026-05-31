@@ -3,12 +3,11 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { startOfYear, endOfYear, startOfMonth, endOfMonth } from "date-fns";
+import { Suspense } from "react";
 import { PageShell } from "@/app/components/layout/PageShell";
 import { StatCard } from "@/app/components/ui/StatCard";
 import { formatCurrency } from "@/lib/format-currency";
-import { computeForecast } from "@/lib/forecast";
-import { getTier } from "@/lib/subscriptions";
-import AccountingCharts from "./AccountingCharts";
+import { AccountingSection } from "./AccountingSection";
 
 export const dynamic = "force-dynamic";
 
@@ -98,17 +97,6 @@ export default async function AccountingPage() {
     expenses: expensesByMonth[month] || 0,
   }));
 
-  const paidTrend =
-    monthlyIncome > 0
-      ? {
-          value: formatCurrency(monthlyIncome, bp.baseCurrency),
-          positive: monthlyIncome >= monthlyExpenses,
-        }
-      : undefined;
-
-  const forecast = await computeForecast(user.id);
-  const hasForecastAccess = getTier(user.plan).features.includes("cash_flow_forecast");
-
   return (
     <PageShell
       title="Accounting"
@@ -138,12 +126,14 @@ export default async function AccountingPage() {
           />
         </div>
 
-        <AccountingCharts
-          chartData={chartData}
-          forecast={forecast}
-          hasForecastAccess={hasForecastAccess}
-          baseCurrency={bp.baseCurrency}
-        />
+        <Suspense fallback={<div className="h-80 rounded-xl bg-surface-muted animate-pulse" />}>
+          <AccountingSection
+            userId={user.id}
+            chartData={chartData}
+            baseCurrency={bp.baseCurrency}
+            plan={user.plan}
+          />
+        </Suspense>
       </div>
     </PageShell>
   );

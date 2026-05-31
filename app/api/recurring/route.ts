@@ -6,7 +6,7 @@ import { recurringSchema } from "@/lib/validations";
 import { computeNextRunDate } from "@/lib/date-utils";
 import { getOwnerIdForAccountant } from "@/lib/accountant-session";
 
-export async function GET() {
+export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -22,9 +22,13 @@ export async function GET() {
   const accountantOwnerId = await getOwnerIdForAccountant(session.user.email);
   const effectiveUserId = accountantOwnerId ?? user.id;
 
+  const { searchParams } = new URL(request.url);
+  const limit = Math.min(parseInt(searchParams.get("limit") || "50", 10), 200);
+
   const recurring = await prisma.recurringInvoice.findMany({
     where: { userId: effectiveUserId },
     orderBy: { createdAt: "desc" },
+    take: limit,
   });
 
   return NextResponse.json(recurring);

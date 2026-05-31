@@ -41,18 +41,32 @@ export default async function MoneyPage() {
     }),
   ]);
 
-  const serializedRecords = records.map((r) => ({
-    id: r.id,
-    totalReceived: r.totalReceived,
-    taxAmount: r.taxAmount,
-    operatingAmount: r.operatingAmount,
-    profitAmount: r.profitAmount,
-    ownerPayAmount: r.ownerPayAmount,
-    currency: r.currency,
-    invoiceId: r.invoiceId,
-    note: r.note,
-    createdAt: r.createdAt.toISOString(),
-  }));
+  const invoiceIds = records.map((r) => r.invoiceId).filter(Boolean) as string[];
+  const invoices = invoiceIds.length > 0
+    ? await prisma.invoice.findMany({
+        where: { id: { in: invoiceIds } },
+        select: { id: true, clientName: true, invoiceNumber: true },
+      })
+    : [];
+  const invoiceMap = new Map(invoices.map((i) => [i.id, i]));
+
+  const serializedRecords = records.map((r) => {
+    const inv = r.invoiceId ? invoiceMap.get(r.invoiceId) : null;
+    return {
+      id: r.id,
+      totalReceived: r.totalReceived,
+      taxAmount: r.taxAmount,
+      operatingAmount: r.operatingAmount,
+      profitAmount: r.profitAmount,
+      ownerPayAmount: r.ownerPayAmount,
+      currency: r.currency,
+      invoiceId: r.invoiceId,
+      clientName: inv?.clientName ?? null,
+      invoiceNumber: inv?.invoiceNumber ?? null,
+      note: r.note,
+      createdAt: r.createdAt.toISOString(),
+    };
+  });
 
   const initialTotals = {
     totalReceived: totals._sum.totalReceived ?? 0,

@@ -18,6 +18,7 @@ export default async function InvoicesPage() {
   const invoices = await prisma.invoice.findMany({
     where: { userId: user!.id },
     orderBy: { createdAt: "desc" },
+    take: 50,
   });
 
   const defaultSchedule = await prisma.reminderSchedule.findFirst({

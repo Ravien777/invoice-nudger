@@ -70,5 +70,7 @@ export async function GET(req: NextRequest) {
     taxRate,
     taxSavingsAmount: taxSavings?.taxSavingsAmount ?? 0,
     currency: bp.baseCurrency,
+  }, {
+    headers: { "Cache-Control": "private, s-maxage=3600, stale-while-revalidate=600" },
   });
 }
