@@ -77,7 +77,7 @@ export default function InvoicesClient({
   const [dateTo, setDateTo] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState<number>(20);
+  const [pageSize, setPageSize] = useState<number>(10);
   const [aiModal, setAiModal] = useState<{
     open: boolean;
     invoiceId: string;
@@ -154,7 +154,11 @@ export default function InvoicesClient({
       setInvoices((prev) =>
         prev.map((inv) =>
           inv.id === id
-            ? { ...inv, instantPayoutId: data.payoutId, paidOutAt: new Date().toISOString() }
+            ? {
+                ...inv,
+                instantPayoutId: data.payoutId,
+                paidOutAt: new Date().toISOString(),
+              }
             : inv,
         ),
       );
@@ -164,10 +168,13 @@ export default function InvoicesClient({
     }
   }, []);
 
-  const handleGenerateAI = useCallback((id: string) => {
-    const firstStep = scheduleSteps[0]?.emailTemplate ?? "gentle_reminder";
-    setAiModal({ open: true, invoiceId: id, stepName: firstStep });
-  }, [scheduleSteps]);
+  const handleGenerateAI = useCallback(
+    (id: string) => {
+      const firstStep = scheduleSteps[0]?.emailTemplate ?? "gentle_reminder";
+      setAiModal({ open: true, invoiceId: id, stepName: firstStep });
+    },
+    [scheduleSteps],
+  );
 
   const handleBulkMarkPaid = useCallback(async () => {
     const ids = Array.from(selectedIds);
@@ -184,7 +191,9 @@ export default function InvoicesClient({
     }
 
     if (successCount > 0) {
-      toast.success(`${successCount} invoice${successCount > 1 ? "s" : ""} marked as paid`);
+      toast.success(
+        `${successCount} invoice${successCount > 1 ? "s" : ""} marked as paid`,
+      );
     }
     if (failCount > 0) {
       toast.error(`${failCount} invoice${failCount > 1 ? "s" : ""} failed`);
@@ -193,7 +202,8 @@ export default function InvoicesClient({
 
   const handleBulkDelete = useCallback(async () => {
     const ids = Array.from(selectedIds);
-    if (!confirm(`Delete ${ids.length} invoice${ids.length > 1 ? "s" : ""}?`)) return;
+    if (!confirm(`Delete ${ids.length} invoice${ids.length > 1 ? "s" : ""}?`))
+      return;
 
     let successCount = 0;
     let failCount = 0;
@@ -208,7 +218,9 @@ export default function InvoicesClient({
     }
 
     if (successCount > 0) {
-      toast.success(`${successCount} invoice${successCount > 1 ? "s" : ""} deleted`);
+      toast.success(
+        `${successCount} invoice${successCount > 1 ? "s" : ""} deleted`,
+      );
     }
     if (failCount > 0) {
       toast.error(`${failCount} invoice${failCount > 1 ? "s" : ""} failed`);
@@ -267,18 +279,18 @@ export default function InvoicesClient({
             onClick={() => setCsvModalOpen(true)}
           >
             <Upload className="h-4 w-4" />
-            Import CSV
+            <span className="hidden md:inline">Import CSV</span>
           </Button>
           <Button href="/invoices/new" size="sm">
             <Plus className="h-4 w-4" />
-            New Invoice
+            <span className="hidden md:inline">New Invoice</span>
           </Button>
         </div>
       }
     >
       {/* Secondary nav */}
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Link
             href="/invoices/ai-queue"
             className="rounded-lg bg-surface-tertiary px-3 py-1.5 text-sm font-medium text-purple-500 ring-1 ring-purple-500/20 transition hover:bg-purple-500/10"
@@ -316,7 +328,7 @@ export default function InvoicesClient({
           <option value="cancelled">Cancelled</option>
         </Select>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Input
             type="date"
             value={dateFrom}
@@ -409,8 +421,8 @@ export default function InvoicesClient({
 
       {/* Pagination */}
       {filtered.length > 0 && (
-        <div className="flex items-center justify-between mt-4 pb-4">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between mt-4 pb-4 flex-wrap gap-2 md:flex-nowrap md:gap-3">
+          <div className="flex items-center gap-3 w-full justify-between md:w-auto md:justify-start">
             <span className="text-sm text-text-secondary">
               Showing {startItem}–{endItem} of {filtered.length}
             </span>
@@ -425,12 +437,14 @@ export default function InvoicesClient({
                 className="text-xs py-1 px-2"
               >
                 {PAGE_SIZES.map((s) => (
-                  <option key={s} value={s}>{s}</option>
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
                 ))}
               </Select>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3 w-full justify-between md:w-auto md:justify-start">
             <Button
               variant="secondary"
               size="sm"
@@ -466,7 +480,9 @@ export default function InvoicesClient({
           onClose={() => setAiModal(null)}
           invoiceId={aiModal.invoiceId}
           stepName={aiModal.stepName}
-          defaultTone={userTone as "professional" | "friendly" | "firm" | "casual"}
+          defaultTone={
+            userTone as "professional" | "friendly" | "firm" | "casual"
+          }
           onGenerated={refetch}
         />
       )}

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -8,6 +9,8 @@ import { Suspense } from "react";
 import { Plus, FileText, AlertCircle, CheckCircle, Receipt } from "lucide-react";
 import DashboardClient from "./DashboardClient";
 import { getTier } from "@/lib/subscriptions";
+
+export const metadata: Metadata = { title: "Dashboard" };
 import BenchmarkSection from "./BenchmarkSection";
 import EfficiencySection from "./EfficiencySection";
 import PayYourselfSection from "./PayYourselfSection";

@@ -27,10 +27,16 @@ export default async function Home() {
               Templates
             </Link>
             <Link
-              href="/api/auth/signin"
+              href="/auth/signin"
               className="rounded-full bg-foreground px-5 py-2 text-sm font-medium text-surface shadow-(--shadow) transition hover:brightness-110"
             >
               Sign in
+            </Link>
+            <Link
+              href="/auth/signup"
+              className="rounded-full border border-border bg-surface px-5 py-2 text-sm font-medium text-foreground transition hover:bg-surface-muted"
+            >
+              Get started
             </Link>
           </div>
         </div>
@@ -52,13 +58,13 @@ export default async function Home() {
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link
-                href="/api/auth/signin"
+                href="/auth/signup"
                 className="rounded-full bg-accent px-6 py-3 text-base font-medium text-surface shadow-(--shadow) transition hover:brightness-110"
               >
                 Start Free Trial
               </Link>
               <Link
-                href="/api/auth/signin"
+                href="/auth/signin"
                 className="rounded-full border border-border bg-surface px-6 py-3 text-base font-medium text-foreground transition hover:bg-surface-muted"
               >
                 Sign in
@@ -193,8 +199,8 @@ export default async function Home() {
                   Secure & Private
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted ">
-                  Your data is encrypted in transit and at rest. Authentication
-                  uses email magic links — no passwords needed.
+                  Your data is encrypted in transit and at rest. Secure
+                  email and password authentication.
                 </p>
               </div>
               <div className="rounded-3xl border border-border bg-surface-muted p-6 shadow-sm shadow-slate-900/5 transition hover:-translate-y-0.5 hover:shadow-md ">
@@ -281,7 +287,7 @@ export default async function Home() {
             </p>
             <div className="mt-8">
               <Link
-                href="/api/auth/signin"
+                href="/auth/signup"
                 className="inline-block rounded-full bg-accent px-8 py-3 text-base font-medium text-surface shadow-sm transition hover:brightness-110"
               >
                 Start Free Trial

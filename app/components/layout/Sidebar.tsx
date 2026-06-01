@@ -57,15 +57,13 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Settings", icon: Settings, href: "/settings", zone: 3 },
 ];
 
-export default function Sidebar({ bankConnectionCount = 0 }: { bankConnectionCount?: number }) {
+export default function Sidebar() {
   const pathname = usePathname();
   const { collapsed, toggle, mobileOpen, closeMobile } = useSidebar();
   const { data: session } = useSession();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
-  const visibleItems = NAV_ITEMS.filter(
-    (item) => item.label !== "Bank" || bankConnectionCount > 0,
-  );
+  const visibleItems = NAV_ITEMS;
 
   const ZONE_INDICES = visibleItems.reduce<number[]>((acc, item, i) => {
     if (i > 0 && item.zone !== visibleItems[i - 1].zone) acc.push(i);
@@ -165,7 +163,12 @@ export default function Sidebar({ bankConnectionCount = 0 }: { bankConnectionCou
                     </p>
                   </div>
                   <button
-                    onClick={() => signOut({ callbackUrl: "/" })}
+                    onClick={async () => {
+                      try {
+                        await signOut({ redirect: false });
+                      } catch {}
+                      window.location.href = "/";
+                    }}
                     className="flex items-center gap-2 w-full px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-surface-tertiary transition-colors"
                   >
                     <LogOut className="h-4 w-4" />
@@ -193,7 +196,12 @@ export default function Sidebar({ bankConnectionCount = 0 }: { bankConnectionCou
               </div>
             </div>
             <button
-              onClick={() => signOut({ callbackUrl: "/" })}
+              onClick={async () => {
+                try {
+                  await signOut({ redirect: false });
+                } catch {}
+                window.location.href = "/";
+              }}
               className="p-1.5 rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-tertiary transition-colors"
               title="Sign out"
             >

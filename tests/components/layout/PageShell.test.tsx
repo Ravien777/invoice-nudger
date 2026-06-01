@@ -1,11 +1,29 @@
 // @vitest-environment jsdom
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { PageShell } from "@/app/components/layout/PageShell";
 import { SidebarProvider } from "@/app/components/layout/SidebarProvider";
 
+vi.mock("next-auth/react", () => ({
+  useSession: vi.fn(() => ({
+    data: { user: { email: "test@example.com" } },
+  })),
+  signOut: vi.fn(),
+  SessionProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
+vi.mock("@/app/components/layout/NotificationBell", () => ({
+  NotificationBell: () => <span data-testid="notification-bell">Bell</span>,
+}));
+
+import { SessionProvider } from "next-auth/react";
+
 function renderWithProvider(ui: React.ReactElement) {
-  return render(<SidebarProvider>{ui}</SidebarProvider>);
+  return render(
+    <SessionProvider>
+      <SidebarProvider>{ui}</SidebarProvider>
+    </SessionProvider>,
+  );
 }
 
 describe("PageShell", () => {

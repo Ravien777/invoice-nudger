@@ -1,9 +1,12 @@
+import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import NotificationsClient from "./NotificationsClient";
 import { PageShell } from "@/app/components/layout/PageShell";
+
+export const metadata: Metadata = { title: "Notifications" };
 
 export default async function NotificationsPage() {
   const session = await getServerSession(authOptions);
@@ -21,6 +24,15 @@ export default async function NotificationsPage() {
       where: { userId: user!.id },
       orderBy: { createdAt: "desc" },
       take: 20,
+      select: {
+        id: true,
+        type: true,
+        title: true,
+        message: true,
+        read: true,
+        createdAt: true,
+        metadata: true,
+      },
     }),
     prisma.notification.count({
       where: { userId: user!.id },

@@ -41,9 +41,41 @@ export async function GET(request: Request) {
     where,
     orderBy: { createdAt: "desc" },
     take,
+    select: {
+      id: true,
+      invoiceNumber: true,
+      clientName: true,
+      clientEmail: true,
+      clientPhone: true,
+      projectName: true,
+      amount: true,
+      currency: true,
+      dueDate: true,
+      status: true,
+      notes: true,
+      source: true,
+      paymentLink: true,
+      paidAt: true,
+      reconciliationStatus: true,
+      promiseStatus: true,
+      promisedDate: true,
+      promiseConfidence: true,
+      lateFeeEnabled: true,
+      lateFeeAmount: true,
+      interestRate: true,
+      accruedFees: true,
+      feeCap: true,
+      paymentProbability: true,
+      instantPayoutId: true,
+      paidOutAt: true,
+      createdAt: true,
+      updatedAt: true,
+    },
   });
 
-  return NextResponse.json(invoices);
+  return NextResponse.json(invoices, {
+    headers: { "Cache-Control": "private, max-age=60, stale-while-revalidate=300" },
+  });
 }
 
 export async function POST(request: Request) {

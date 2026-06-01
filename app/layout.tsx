@@ -16,7 +16,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Maroni",
+  title: {
+    template: "%s | Maroni",
+    default: "Maroni",
+  },
   description:
     "From invoices to payout, steady.",
 };

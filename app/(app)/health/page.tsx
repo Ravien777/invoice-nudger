@@ -1,8 +1,12 @@
+import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { Download } from "lucide-react";
 import { PageShell } from "@/app/components/layout/PageShell";
+
+export const metadata: Metadata = { title: "Business Health" };
 import { calculateBusinessHealthScore } from "@/lib/health-score";
 import { calculateAllClientHealthScores } from "@/lib/client-health";
 import HealthClient from "./HealthClient";
@@ -93,9 +97,10 @@ export default async function HealthPage() {
         user.plan === "agency" ? (
           <a
             href="/api/reports/health-certificate"
-            className="inline-flex items-center gap-2 rounded-lg border border-border-default px-4 py-2 text-sm font-medium text-text-primary hover:bg-surface-tertiary transition-colors"
+            className="inline-flex items-center gap-2 rounded-lg border border-border-default px-3 py-1.5 text-sm font-medium text-text-primary hover:bg-surface-tertiary transition-colors"
           >
-            Download Health Certificate
+            <Download className="h-4 w-4 shrink-0" />
+            <span className="hidden md:inline">Download Health Certificate</span>
           </a>
         ) : null
       }

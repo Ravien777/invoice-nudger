@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import ReconciliationClient from "./ReconciliationClient";
+
+export const metadata: Metadata = { title: "Reconciliation" };
 import { PageShell } from "@/app/components/layout/PageShell";
 
 export default async function ReconciliationPage() {

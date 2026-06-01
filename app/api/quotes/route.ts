@@ -37,10 +37,34 @@ export async function GET(request: Request) {
     where: { userId: effectiveUserId },
     orderBy: { createdAt: "desc" },
     take: limit,
-    include: { lineItems: { orderBy: { sortOrder: "asc" } } },
+    select: {
+      id: true,
+      quoteNumber: true,
+      clientName: true,
+      clientEmail: true,
+      clientAddress: true,
+      issueDate: true,
+      expiryDate: true,
+      status: true,
+      amount: true,
+      subtotal: true,
+      totalTax: true,
+      currency: true,
+      notes: true,
+      sellerName: true,
+      sellerAddress: true,
+      sellerTaxId: true,
+      paymentTerms: true,
+      convertedToInvoiceId: true,
+      createdAt: true,
+      updatedAt: true,
+      lineItems: { orderBy: { sortOrder: "asc" }, select: { id: true, description: true, quantity: true, unitPrice: true, taxRate: true, taxAmount: true, total: true, sortOrder: true } },
+    },
   });
 
-  return NextResponse.json({ quotes });
+  return NextResponse.json({ quotes }, {
+    headers: { "Cache-Control": "private, max-age=300, stale-while-revalidate=600" },
+  });
 }
 
 export async function POST(req: NextRequest) {

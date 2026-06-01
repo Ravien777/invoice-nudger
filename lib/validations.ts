@@ -94,3 +94,36 @@ export const recurringSchema = z.object({
 });
 
 export type RecurringFormData = z.infer<typeof recurringSchema>;
+
+export const signupSchema = z.object({
+  name: z.string().trim().min(1, "Name is required"),
+  email: z.string().email("Valid email is required").transform((e) => e.toLowerCase()),
+  password: z.string().min(1, "Password is required"),
+  confirmPassword: z.string().min(1, "Please confirm your password"),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+});
+
+export type SignupFormData = z.infer<typeof signupSchema>;
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1, "Invalid token"),
+  password: z.string().min(1, "Password is required"),
+  confirmPassword: z.string().min(1, "Please confirm your password"),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+});
+
+export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().email("Valid email is required").transform((e) => e.toLowerCase()),
+});
+
+export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
+
+export const devSigninSchema = z.object({
+  email: z.string().email("Valid email is required"),
+});

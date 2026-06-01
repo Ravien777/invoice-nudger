@@ -3,8 +3,21 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
-import { Pencil, Link as LinkIcon, Check, Sparkles, Bell, Trash2 } from "lucide-react";
-import { Table, TableHead, TableBody, TableRow, TableCell } from "@/app/components/ui/Table";
+import {
+  Pencil,
+  Link as LinkIcon,
+  Check,
+  Sparkles,
+  Bell,
+  Trash2,
+} from "lucide-react";
+import {
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+} from "@/app/components/ui/Table";
 import { Badge, type BadgeVariant } from "@/app/components/ui/Badge";
 import { formatCurrency } from "@/lib/format-currency";
 import { Button } from "@/app/components/ui/Button";
@@ -79,11 +92,20 @@ function riskBadge(score: number | undefined): React.ReactNode {
   if (score === undefined) return null;
   let color: string;
   let label: string;
-  if (score <= 0.3) { color = "bg-success/10 text-success"; label = "Low"; }
-  else if (score <= 0.7) { color = "bg-warning/10 text-warning"; label = "Med"; }
-  else { color = "bg-danger/10 text-danger"; label = "High"; }
+  if (score <= 0.3) {
+    color = "bg-success/10 text-success";
+    label = "Low";
+  } else if (score <= 0.7) {
+    color = "bg-warning/10 text-warning";
+    label = "Med";
+  } else {
+    color = "bg-danger/10 text-danger";
+    label = "High";
+  }
   return (
-    <span className={`ml-1.5 inline-block rounded-full px-1.5 py-0.5 text-[10px] font-medium ${color}`}>
+    <span
+      className={`ml-1.5 inline-block rounded-full px-1.5 py-0.5 text-[10px] font-medium ${color}`}
+    >
       {label}
     </span>
   );
@@ -91,12 +113,19 @@ function riskBadge(score: number | undefined): React.ReactNode {
 
 const PROBABILITY_PLAN = ["pro", "agency"];
 
-function probabilityBadge(score: number | undefined, plan: string): React.ReactNode {
+function probabilityBadge(
+  score: number | undefined,
+  plan: string,
+): React.ReactNode {
   if (score === undefined || !PROBABILITY_PLAN.includes(plan)) return null;
   let color: string;
-  if (score >= 0.8) { color = "bg-success/10 text-success"; }
-  else if (score >= 0.5) { color = "bg-warning/10 text-warning"; }
-  else { color = "bg-danger/10 text-danger"; }
+  if (score >= 0.8) {
+    color = "bg-success/10 text-success";
+  } else if (score >= 0.5) {
+    color = "bg-warning/10 text-warning";
+  } else {
+    color = "bg-danger/10 text-danger";
+  }
   const pct = (score * 100).toFixed(0);
   return (
     <span
@@ -242,7 +271,12 @@ export default function InvoiceTable({
       return;
     }
 
-    if (!confirm(`Request an instant payout of ${formatCurrency(inv.amount, inv.currency)}?\nFunds will arrive in minutes (1% Stripe fee applies).`)) return;
+    if (
+      !confirm(
+        `Request an instant payout of ${formatCurrency(inv.amount, inv.currency)}?\nFunds will arrive in minutes (1% Stripe fee applies).`,
+      )
+    )
+      return;
 
     setPayouting(id);
 
@@ -260,7 +294,11 @@ export default function InvoiceTable({
     }
   }
 
-  async function handleSendReminder(invoiceId: string, stepName: string, channel: "email" | "sms" | "whatsapp" = "email") {
+  async function handleSendReminder(
+    invoiceId: string,
+    stepName: string,
+    channel: "email" | "sms" | "whatsapp" = "email",
+  ) {
     setOpenDropdown(null);
     setSending(invoiceId);
 
@@ -287,21 +325,36 @@ export default function InvoiceTable({
     }
   }
 
-  const allSelected = invoices.length > 0 && selectedIds.size === invoices.length;
+  const allSelected =
+    invoices.length > 0 && selectedIds.size === invoices.length;
 
   if (invoices.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <div className="flex flex-col items-center gap-2 mb-4">
           <div className="h-12 w-12 rounded-full bg-surface-tertiary flex items-center justify-center">
-            <svg className="h-6 w-6 text-text-tertiary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <svg
+              className="h-6 w-6 text-text-tertiary"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
             </svg>
           </div>
         </div>
-        <h3 className="text-base font-medium text-text-secondary">No invoices found</h3>
-        <p className="text-sm text-text-secondary mt-1 max-w-xs">Get started by creating your first invoice.</p>
-        <div className="mt-4 flex items-center gap-3">
+        <h3 className="text-base font-medium text-text-secondary">
+          No invoices found
+        </h3>
+        <p className="text-sm text-text-secondary mt-1 max-w-xs">
+          Get started by creating your first invoice.
+        </p>
+        <div className="mt-4 flex items-center gap-3 flex-wrap">
           <Link
             href="/invoices/new"
             className="inline-flex items-center justify-center gap-2 rounded-md bg-accent text-white hover:bg-accent-hover font-medium text-sm px-4 py-2 transition-colors"
@@ -333,8 +386,18 @@ export default function InvoiceTable({
               aria-label={allSelected ? "Deselect all" : "Select all"}
             >
               {allSelected && (
-                <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                <svg
+                  className="h-3 w-3 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={3}
+                    d="M5 13l4 4L19 7"
+                  />
                 </svg>
               )}
             </button>
@@ -344,7 +407,9 @@ export default function InvoiceTable({
           <TableCell>Amount</TableCell>
           <TableCell hideBelow="sm">Due Date</TableCell>
           <TableCell>Status</TableCell>
-          {PROBABILITY_PLAN.includes(userPlan) && <TableCell hideBelow="md">Prob.</TableCell>}
+          {PROBABILITY_PLAN.includes(userPlan) && (
+            <TableCell hideBelow="md">Prob.</TableCell>
+          )}
           <TableCell>Actions</TableCell>
         </TableRow>
       </TableHead>
@@ -364,8 +429,18 @@ export default function InvoiceTable({
                   aria-label={isSelected ? "Deselect" : "Select"}
                 >
                   {isSelected && (
-                    <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    <svg
+                      className="h-3 w-3 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={3}
+                        d="M5 13l4 4L19 7"
+                      />
                     </svg>
                   )}
                 </button>
@@ -386,7 +461,10 @@ export default function InvoiceTable({
                 <div className="text-xs text-text-secondary">
                   {inv.clientEmail}
                   {inv.clientPhone && (
-                    <span className="ml-1 text-success" title={`Phone: ${inv.clientPhone}`}>
+                    <span
+                      className="ml-1 text-success"
+                      title={`Phone: ${inv.clientPhone}`}
+                    >
                       📞
                     </span>
                   )}
@@ -403,7 +481,8 @@ export default function InvoiceTable({
                 </div>
                 {inv.accruedFees > 0 && (
                   <div className="text-xs text-text-secondary">
-                    Total: {formatCurrency(inv.amount + inv.accruedFees, inv.currency)}
+                    Total:{" "}
+                    {formatCurrency(inv.amount + inv.accruedFees, inv.currency)}
                   </div>
                 )}
               </TableCell>
@@ -412,21 +491,42 @@ export default function InvoiceTable({
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <Badge variant={inv.status as BadgeVariant}>{inv.status}</Badge>
+                  <Badge variant={inv.status as BadgeVariant}>
+                    {inv.status}
+                  </Badge>
                   {inv.status === "paid" && inv.paymentLink && (
                     <span className="inline-block rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-medium text-success ring-1 ring-success/20">
                       Paid via Stripe
                     </span>
                   )}
-                  {inv.source && inv.source !== "manual" && inv.source !== "csv" && (
-                    <span className="inline-block rounded-full bg-surface-tertiary px-2 py-0.5 text-[10px] font-medium text-text-secondary ring-1 ring-border-default">
-                      {inv.source === "xero" ? "Xero" : inv.source === "quickbooks" ? "QuickBooks" : inv.source}
-                    </span>
-                  )}
+                  {inv.source &&
+                    inv.source !== "manual" &&
+                    inv.source !== "csv" && (
+                      <span className="inline-block rounded-full bg-surface-tertiary px-2 py-0.5 text-[10px] font-medium text-text-secondary ring-1 ring-border-default">
+                        {inv.source === "xero"
+                          ? "Xero"
+                          : inv.source === "quickbooks"
+                            ? "QuickBooks"
+                            : inv.source}
+                      </span>
+                    )}
                   {inv.reconciliationStatus === "reconciled" && (
-                    <span className="inline-flex items-center gap-0.5 rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-medium text-success ring-1 ring-success/20" title="Reconciled">
-                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    <span
+                      className="inline-flex items-center gap-0.5 rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-medium text-success ring-1 ring-success/20"
+                      title="Reconciled"
+                    >
+                      <svg
+                        className="h-3 w-3"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
                       </svg>
                     </span>
                   )}
@@ -436,16 +536,39 @@ export default function InvoiceTable({
                       className="inline-flex items-center gap-0.5 rounded-full bg-warning/10 px-2 py-0.5 text-[10px] font-medium text-warning ring-1 ring-warning/20 hover:brightness-110"
                       title="Payment discrepancy - click to review"
                     >
-                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                      <svg
+                        className="h-3 w-3"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
+                        />
                       </svg>
                       Discrepancy
                     </Link>
                   )}
                   {inv.promiseStatus === "active" && inv.promisedDate && (
-                    <span className="inline-flex items-center gap-0.5 rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-medium text-success ring-1 ring-success/20" title={`Promise active until ${new Date(inv.promisedDate).toLocaleDateString()}`}>
-                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    <span
+                      className="inline-flex items-center gap-0.5 rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-medium text-success ring-1 ring-success/20"
+                      title={`Promise active until ${new Date(inv.promisedDate).toLocaleDateString()}`}
+                    >
+                      <svg
+                        className="h-3 w-3"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
                       </svg>
                       Promise: {new Date(inv.promisedDate).toLocaleDateString()}
                     </span>
@@ -456,8 +579,18 @@ export default function InvoiceTable({
                       className="inline-flex items-center gap-0.5 rounded-full bg-warning/10 px-2 py-0.5 text-[10px] font-medium text-warning ring-1 ring-warning/20 hover:brightness-110"
                       title="Promise pending review - click to review"
                     >
-                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <svg
+                        className="h-3 w-3"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
                       </svg>
                       Review Promise
                     </Link>
@@ -466,13 +599,15 @@ export default function InvoiceTable({
               </TableCell>
               {PROBABILITY_PLAN.includes(userPlan) && (
                 <TableCell hideBelow="md">
-                  {inv.status !== "paid" && inv.status !== "cancelled"
-                    ? probabilityBadge(probabilities[inv.id], userPlan)
-                    : <span className="text-xs text-text-secondary">—</span>}
+                  {inv.status !== "paid" && inv.status !== "cancelled" ? (
+                    probabilityBadge(probabilities[inv.id], userPlan)
+                  ) : (
+                    <span className="text-xs text-text-secondary">—</span>
+                  )}
                 </TableCell>
               )}
               <TableCell>
-                <div className="flex items-center gap-1.5 flex-wrap">
+                <div className="flex items-center gap-1.5 md:flex-wrap justify-end">
                   {inv.paymentLink ? (
                     <a
                       href={inv.paymentLink}
@@ -517,17 +652,29 @@ export default function InvoiceTable({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className={PLAN_WITH_PAYOUT.includes(userPlan) ? "text-amber-500" : "text-text-tertiary opacity-50 cursor-not-allowed"}
+                      className={
+                        PLAN_WITH_PAYOUT.includes(userPlan)
+                          ? "text-amber-500"
+                          : "text-text-tertiary opacity-50 cursor-not-allowed"
+                      }
                       title={
                         PLAN_WITH_PAYOUT.includes(userPlan)
                           ? "Get Paid Now — funds arrive in minutes"
                           : "Upgrade to Pro to use Instant Payouts."
                       }
-                      onClick={() => PLAN_WITH_PAYOUT.includes(userPlan) && handlePayout(inv.id)}
-                      disabled={payouting === inv.id || !PLAN_WITH_PAYOUT.includes(userPlan)}
+                      onClick={() =>
+                        PLAN_WITH_PAYOUT.includes(userPlan) &&
+                        handlePayout(inv.id)
+                      }
+                      disabled={
+                        payouting === inv.id ||
+                        !PLAN_WITH_PAYOUT.includes(userPlan)
+                      }
                       loading={payouting === inv.id}
                     >
-                      {PLAN_WITH_PAYOUT.includes(userPlan) ? "Get Paid Now" : "Pro"}
+                      {PLAN_WITH_PAYOUT.includes(userPlan)
+                        ? "Get Paid Now"
+                        : "Pro"}
                     </Button>
                   )}
                   {inv.status === "paid" && inv.instantPayoutId && (
@@ -551,81 +698,87 @@ export default function InvoiceTable({
                           />
                         )}
                         <div
-                        className="relative"
-                        ref={openDropdown === inv.id ? dropdownRef : undefined}
-                      >
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-accent"
-                          title="Send Reminder"
-                          onClick={() =>
-                            setOpenDropdown(
-                              openDropdown === inv.id ? null : inv.id,
-                            )
+                          className="relative"
+                          ref={
+                            openDropdown === inv.id ? dropdownRef : undefined
                           }
-                          disabled={sending === inv.id}
-                          loading={sending === inv.id}
-                          icon={Bell}
-                        />
-                        {openDropdown === inv.id && (
-                          <div className="absolute right-0 z-10 mt-1 w-64 rounded-lg border border-border-default bg-surface-secondary shadow-lg">
-                            <div className="py-1">
-                              <div className="px-4 py-1.5 text-[10px] font-medium uppercase text-text-tertiary">Email</div>
-                              {scheduleSteps.map((step) => (
-                                <button
-                                  key={step.emailTemplate}
-                                  onClick={() =>
-                                    handleSendReminder(
-                                      inv.id,
-                                      step.emailTemplate,
-                                      "email",
-                                    )
-                                  }
-                                  className="block w-full px-4 py-2 text-left text-xs text-text-primary transition hover:bg-surface-tertiary"
-                                >
-                                  {stepLabel(step)}
-                                </button>
-                              ))}
-                              {inv.clientPhone && (
-                                <>
-                                  <div className="mt-1 border-t border-border-default px-4 py-1.5 text-[10px] font-medium uppercase text-text-tertiary">Phone</div>
-                                  {scheduleSteps.map((step) => (
-                                    <button
-                                      key={`sms-${step.emailTemplate}`}
-                                      onClick={() =>
-                                        handleSendReminder(
-                                          inv.id,
-                                          step.emailTemplate,
-                                          "sms",
-                                        )
-                                      }
-                                      className="block w-full px-4 py-2 text-left text-xs text-text-primary transition hover:bg-surface-tertiary"
-                                    >
-                                      SMS — {stepLabel(step)}
-                                    </button>
-                                  ))}
-                                  {scheduleSteps.map((step) => (
-                                    <button
-                                      key={`wa-${step.emailTemplate}`}
-                                      onClick={() =>
-                                        handleSendReminder(
-                                          inv.id,
-                                          step.emailTemplate,
-                                          "whatsapp",
-                                        )
-                                      }
-                                      className="block w-full px-4 py-2 text-left text-xs text-text-primary transition hover:bg-surface-tertiary"
-                                    >
-                                      WhatsApp — {stepLabel(step)}
-                                    </button>
-                                  ))}
-                                </>
-                              )}
+                        >
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-accent"
+                            title="Send Reminder"
+                            onClick={() =>
+                              setOpenDropdown(
+                                openDropdown === inv.id ? null : inv.id,
+                              )
+                            }
+                            disabled={sending === inv.id}
+                            loading={sending === inv.id}
+                            icon={Bell}
+                          />
+                          {openDropdown === inv.id && (
+                            <div className="absolute right-0 z-10 mt-1 w-64 rounded-lg border border-border-default bg-surface-secondary shadow-lg">
+                              <div className="py-1">
+                                <div className="px-4 py-1.5 text-[10px] font-medium uppercase text-text-tertiary">
+                                  Email
+                                </div>
+                                {scheduleSteps.map((step) => (
+                                  <button
+                                    key={step.emailTemplate}
+                                    onClick={() =>
+                                      handleSendReminder(
+                                        inv.id,
+                                        step.emailTemplate,
+                                        "email",
+                                      )
+                                    }
+                                    className="block w-full px-4 py-2 text-left text-xs text-text-primary transition hover:bg-surface-tertiary"
+                                  >
+                                    {stepLabel(step)}
+                                  </button>
+                                ))}
+                                {inv.clientPhone && (
+                                  <>
+                                    <div className="mt-1 border-t border-border-default px-4 py-1.5 text-[10px] font-medium uppercase text-text-tertiary">
+                                      Phone
+                                    </div>
+                                    {scheduleSteps.map((step) => (
+                                      <button
+                                        key={`sms-${step.emailTemplate}`}
+                                        onClick={() =>
+                                          handleSendReminder(
+                                            inv.id,
+                                            step.emailTemplate,
+                                            "sms",
+                                          )
+                                        }
+                                        className="block w-full px-4 py-2 text-left text-xs text-text-primary transition hover:bg-surface-tertiary"
+                                      >
+                                        SMS — {stepLabel(step)}
+                                      </button>
+                                    ))}
+                                    {scheduleSteps.map((step) => (
+                                      <button
+                                        key={`wa-${step.emailTemplate}`}
+                                        onClick={() =>
+                                          handleSendReminder(
+                                            inv.id,
+                                            step.emailTemplate,
+                                            "whatsapp",
+                                          )
+                                        }
+                                        className="block w-full px-4 py-2 text-left text-xs text-text-primary transition hover:bg-surface-tertiary"
+                                      >
+                                        WhatsApp — {stepLabel(step)}
+                                      </button>
+                                    ))}
+                                  </>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        )}
-                      </div>
+                          )}
+                        </div>
                       </>
                     )}
                   <Button

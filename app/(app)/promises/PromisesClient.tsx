@@ -183,7 +183,7 @@ export default function PromisesClient({
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
+                  <div className="flex items-center gap-3 mb-2 flex-wrap">
                     <h3 className="text-lg font-semibold text-text-primary">
                       {promise.invoice.clientName}
                     </h3>

@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import SettingsClient from "./SettingsClient";
+
+export const metadata: Metadata = { title: "Settings" };
 import { getMonthlyInvoiceCount, getTier, getAIMonthlyUsage, canUseClientPortal, getMonthlyNotificationUsage, canAddTeamMembers } from "@/lib/subscriptions";
 import { assignReceiptEmail } from "@/lib/assign-receipt-emails";
 
@@ -72,7 +75,7 @@ export default async function SettingsPage() {
     : {};
 
   return (
-    <SettingsClient
+      <SettingsClient
       schedule={schedule}
       integrations={integrations}
       accountantAccess={accountantAccess.map((a) => ({

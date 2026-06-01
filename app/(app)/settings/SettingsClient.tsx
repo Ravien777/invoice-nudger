@@ -164,18 +164,36 @@ function offsetLabel(daysOffset: number): string {
   return `${daysOffset} days after due`;
 }
 
-const platformConfig: Record<string, { label: string; color: string; icon: string }> = {
+const platformConfig: Record<
+  string,
+  { label: string; color: string; icon: string }
+> = {
   xero: { label: "Xero", color: "#13B5EA", icon: "X" },
   quickbooks: { label: "QuickBooks", color: "#2CA01C", icon: "QB" },
 };
 
-type Tab = "profile" | "business" | "notifications" | "accountant" | "team" | "billing" | "danger";
+type Tab =
+  | "profile"
+  | "business"
+  | "notifications"
+  | "accountant"
+  | "team"
+  | "billing"
+  | "danger";
 
 // ---------------------------------------------------------------------------
 // Sub-components
 // ---------------------------------------------------------------------------
 
-function TabBtn({ onClick, active, children }: { onClick: () => void; active: boolean; children: React.ReactNode }) {
+function TabBtn({
+  onClick,
+  active,
+  children,
+}: {
+  onClick: () => void;
+  active: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <Button
       variant="ghost"
@@ -188,7 +206,13 @@ function TabBtn({ onClick, active, children }: { onClick: () => void; active: bo
   );
 }
 
-function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+function Toggle({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
   return (
     <button
       type="button"
@@ -230,43 +254,66 @@ export default function SettingsClient({
   const [name, setName] = useState(userProfile.name ?? "");
   const [savingName, setSavingName] = useState(false);
   const [industry, setIndustry] = useState(industrySettings.industry ?? "");
-  const [benchmarksOptOut, setBenchmarksOptOut] = useState(industrySettings.benchmarksOptOut);
+  const [benchmarksOptOut, setBenchmarksOptOut] = useState(
+    industrySettings.benchmarksOptOut,
+  );
   const [aiTone, setAiTone] = useState(aiSettings.tone);
-  const [alertPrefs, setAlertPrefs] = useState<Record<string, unknown>>(userProfile.alertPreferences);
+  const [alertPrefs, setAlertPrefs] = useState<Record<string, unknown>>(
+    userProfile.alertPreferences,
+  );
   const [savingIndustry, setSavingIndustry] = useState(false);
   const [savingAlerts, setSavingAlerts] = useState(false);
   const [taxRate, setTaxRate] = useState(Math.round(userProfile.taxRate * 100));
-  const [fiscalYearStart, setFiscalYearStart] = useState(userProfile.fiscalYearStart);
-  const [taxSavingsAmount, setTaxSavingsAmount] = useState(userProfile.taxSavingsAmount);
+  const [fiscalYearStart, setFiscalYearStart] = useState(
+    userProfile.fiscalYearStart,
+  );
+  const [taxSavingsAmount, setTaxSavingsAmount] = useState(
+    userProfile.taxSavingsAmount,
+  );
   const [baseCurrency, setBaseCurrency] = useState(userProfile.baseCurrency);
-  const [defaultHourlyRate, setDefaultHourlyRate] = useState(userProfile.defaultHourlyRate ?? 0);
+  const [defaultHourlyRate, setDefaultHourlyRate] = useState(
+    userProfile.defaultHourlyRate ?? 0,
+  );
   const [savingTax, setSavingTax] = useState(false);
 
   // Notifications tab
   const [steps, setSteps] = useState<Step[]>(schedule?.steps ?? []);
-  const [scheduleName, setScheduleName] = useState(schedule?.name ?? "Standard");
+  const [scheduleName, setScheduleName] = useState(
+    schedule?.name ?? "Standard",
+  );
   const [savingSchedule, setSavingSchedule] = useState(false);
   const [aiEnabled, setAiEnabled] = useState(aiSettings.enabled);
   const [savingAI, setSavingAI] = useState(false);
 
   // Business tab
-  const [integrations, setIntegrations] = useState<Integration[]>(initialIntegrations);
+  const [integrations, setIntegrations] =
+    useState<Integration[]>(initialIntegrations);
   const [syncing, setSyncing] = useState<Record<string, boolean>>({});
   const [portalEnabled, setPortalEnabled] = useState(portalSettings.enabled);
-  const [branding, setBranding] = useState<PortalBranding>(portalSettings.branding);
+  const [branding, setBranding] = useState<PortalBranding>(
+    portalSettings.branding,
+  );
   const [savingPortal, setSavingPortal] = useState(false);
   const [lateFeeEnabled, setLateFeeEnabled] = useState(lateFeeSettings.enabled);
   const [lateFeeType, setLateFeeType] = useState(lateFeeSettings.type);
   const [lateFeeValue, setLateFeeValue] = useState(lateFeeSettings.value);
-  const [lateFeeFrequency, setLateFeeFrequency] = useState(lateFeeSettings.frequency);
-  const [interestEnabled, setInterestEnabled] = useState(lateFeeSettings.interestEnabled);
-  const [interestRate, setInterestRate] = useState(lateFeeSettings.interestRate);
+  const [lateFeeFrequency, setLateFeeFrequency] = useState(
+    lateFeeSettings.frequency,
+  );
+  const [interestEnabled, setInterestEnabled] = useState(
+    lateFeeSettings.interestEnabled,
+  );
+  const [interestRate, setInterestRate] = useState(
+    lateFeeSettings.interestRate,
+  );
   const [graceDays, setGraceDays] = useState(lateFeeSettings.graceDays);
   const [feeCap, setFeeCap] = useState(lateFeeSettings.feeCap);
   const [savingLateFees, setSavingLateFees] = useState(false);
 
   // Accountant Access tab
-  const [accountantAccess, setAccountantAccess] = useState(initialAccountantAccess);
+  const [accountantAccess, setAccountantAccess] = useState(
+    initialAccountantAccess,
+  );
   const [inviteEmail, setInviteEmail] = useState("");
   const [sendingInvite, setSendingInvite] = useState(false);
 
@@ -288,7 +335,9 @@ export default function SettingsClient({
 
     if (success === "success" && platform) {
       (async () => {
-        toast.success(`${platformConfig[platform]?.label || platform} connected successfully`);
+        toast.success(
+          `${platformConfig[platform]?.label || platform} connected successfully`,
+        );
         window.history.replaceState({}, "", "/settings");
         try {
           const res = await fetch(`/api/integrations/${platform}/status`);
@@ -298,7 +347,7 @@ export default function SettingsClient({
               const exists = prev.find((i) => i.platform === platform);
               if (exists) {
                 return prev.map((i) =>
-                  i.platform === platform ? { ...i, ...data } : i
+                  i.platform === platform ? { ...i, ...data } : i,
                 );
               }
               return [...prev, { ...data, platform, id: "" }];
@@ -370,7 +419,13 @@ export default function SettingsClient({
       const res = await fetch("/api/settings/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ taxRate, fiscalYearStart, taxSavingsAmount, baseCurrency, defaultHourlyRate }),
+        body: JSON.stringify({
+          taxRate,
+          fiscalYearStart,
+          taxSavingsAmount,
+          baseCurrency,
+          defaultHourlyRate,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -409,7 +464,11 @@ export default function SettingsClient({
   // Notifications tab handlers
   // -----------------------------------------------------------------------
 
-  function handleStepChange(index: number, field: "daysOffset" | "emailTemplate", value: string) {
+  function handleStepChange(
+    index: number,
+    field: "daysOffset" | "emailTemplate",
+    value: string,
+  ) {
     setSteps((prev) => {
       const next = [...prev];
       next[index] = {
@@ -506,7 +565,8 @@ export default function SettingsClient({
   }
 
   async function handleDisconnect(platform: string) {
-    if (!confirm(`Disconnect ${platformConfig[platform]?.label || platform}?`)) return;
+    if (!confirm(`Disconnect ${platformConfig[platform]?.label || platform}?`))
+      return;
     try {
       const res = await fetch(`/api/integrations/${platform}/disconnect`, {
         method: "POST",
@@ -628,7 +688,11 @@ export default function SettingsClient({
       }
       toast.success("Access revoked");
       setAccountantAccess((prev) =>
-        prev.map((a) => (a.id === id ? { ...a, status: "revoked", revokedAt: new Date().toISOString() } : a)),
+        prev.map((a) =>
+          a.id === id
+            ? { ...a, status: "revoked", revokedAt: new Date().toISOString() }
+            : a,
+        ),
       );
     } catch {
       toast.error("Network error");
@@ -693,7 +757,11 @@ export default function SettingsClient({
       }
       toast.success("Team member removed");
       setTeamMembers((prev) =>
-        prev.map((tm) => (tm.id === id ? { ...tm, status: "removed", removedAt: new Date().toISOString() } : tm)),
+        prev.map((tm) =>
+          tm.id === id
+            ? { ...tm, status: "removed", removedAt: new Date().toISOString() }
+            : tm,
+        ),
       );
     } catch {
       toast.error("Network error");
@@ -727,14 +795,49 @@ export default function SettingsClient({
 
   return (
     <PageShell title="Settings" subtitle="Manage your account and preferences">
-      <div className="mb-6 flex gap-1 rounded-lg bg-surface-muted p-1 w-fit overflow-x-auto">
-        <TabBtn onClick={() => setActiveTab("profile")} active={activeTab === "profile"}>Profile</TabBtn>
-        <TabBtn onClick={() => setActiveTab("business")} active={activeTab === "business"}>Business</TabBtn>
-        <TabBtn onClick={() => setActiveTab("notifications")} active={activeTab === "notifications"}>Notifications</TabBtn>
-        <TabBtn onClick={() => setActiveTab("accountant")} active={activeTab === "accountant"}>Accountant</TabBtn>
-        <TabBtn onClick={() => setActiveTab("team")} active={activeTab === "team"}>Team</TabBtn>
-        <TabBtn onClick={() => setActiveTab("billing")} active={activeTab === "billing"}>Billing</TabBtn>
-        <TabBtn onClick={() => setActiveTab("danger")} active={activeTab === "danger"}>Danger Zone</TabBtn>
+      <div className="mb-6 flex flex-wrap gap-1 rounded-lg bg-surface-muted p-1 w-fit overflow-x-auto">
+        <TabBtn
+          onClick={() => setActiveTab("profile")}
+          active={activeTab === "profile"}
+        >
+          Profile
+        </TabBtn>
+        <TabBtn
+          onClick={() => setActiveTab("business")}
+          active={activeTab === "business"}
+        >
+          Business
+        </TabBtn>
+        <TabBtn
+          onClick={() => setActiveTab("notifications")}
+          active={activeTab === "notifications"}
+        >
+          Notifications
+        </TabBtn>
+        <TabBtn
+          onClick={() => setActiveTab("accountant")}
+          active={activeTab === "accountant"}
+        >
+          Accountant
+        </TabBtn>
+        <TabBtn
+          onClick={() => setActiveTab("team")}
+          active={activeTab === "team"}
+        >
+          Team
+        </TabBtn>
+        <TabBtn
+          onClick={() => setActiveTab("billing")}
+          active={activeTab === "billing"}
+        >
+          Billing
+        </TabBtn>
+        <TabBtn
+          onClick={() => setActiveTab("danger")}
+          active={activeTab === "danger"}
+        >
+          Danger Zone
+        </TabBtn>
       </div>
 
       {/* ================================================================= */}
@@ -744,12 +847,22 @@ export default function SettingsClient({
         <div className="space-y-6">
           {/* Personal Info */}
           <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold text-foreground">Personal Info</h2>
+            <h2 className="mb-4 text-lg font-semibold text-foreground">
+              Personal Info
+            </h2>
             <div className="space-y-4 max-w-md">
               <FormField label="Name">
                 <div className="flex gap-2">
-                  <Input value={name} onChange={(e) => setName(e.target.value)} className="flex-1" />
-                  <Button onClick={handleSaveName} loading={savingName} size="sm">
+                  <Input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button
+                    onClick={handleSaveName}
+                    loading={savingName}
+                    size="sm"
+                  >
                     Save
                   </Button>
                 </div>
@@ -762,10 +875,18 @@ export default function SettingsClient({
 
           {/* Industry & Benchmarks */}
           <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold text-foreground">Industry & Benchmarks</h2>
+            <h2 className="mb-4 text-lg font-semibold text-foreground">
+              Industry & Benchmarks
+            </h2>
             <div className="space-y-4 max-w-md">
-              <FormField label="Your Industry" hint="Used to compare your payment collection against peers">
-                <Select value={industry} onChange={(e) => setIndustry(e.target.value)}>
+              <FormField
+                label="Your Industry"
+                hint="Used to compare your payment collection against peers"
+              >
+                <Select
+                  value={industry}
+                  onChange={(e) => setIndustry(e.target.value)}
+                >
                   <option value="">-- Select industry --</option>
                   <option value="freelance_design">Freelance Design</option>
                   <option value="software_dev">Software Development</option>
@@ -776,15 +897,24 @@ export default function SettingsClient({
               </FormField>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted">Include in anonymous benchmarks</p>
+                  <p className="text-sm font-medium text-muted">
+                    Include in anonymous benchmarks
+                  </p>
                   <p className="text-xs text-muted mt-0.5">
                     Your data will be aggregated anonymously with other users
                   </p>
                 </div>
-                <Toggle checked={!benchmarksOptOut} onChange={(v) => setBenchmarksOptOut(!v)} />
+                <Toggle
+                  checked={!benchmarksOptOut}
+                  onChange={(v) => setBenchmarksOptOut(!v)}
+                />
               </div>
               <div className="pt-2">
-                <Button onClick={handleSaveIndustry} loading={savingIndustry} size="sm">
+                <Button
+                  onClick={handleSaveIndustry}
+                  loading={savingIndustry}
+                  size="sm"
+                >
                   Save
                 </Button>
               </div>
@@ -793,10 +923,18 @@ export default function SettingsClient({
 
           {/* AI Tone */}
           <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold text-foreground">AI Tone</h2>
+            <h2 className="mb-4 text-lg font-semibold text-foreground">
+              AI Tone
+            </h2>
             <div className="space-y-4 max-w-md">
-              <FormField label="Default Tone" hint="Used when generating AI reminder emails">
-                <Select value={aiTone} onChange={(e) => setAiTone(e.target.value)}>
+              <FormField
+                label="Default Tone"
+                hint="Used when generating AI reminder emails"
+              >
+                <Select
+                  value={aiTone}
+                  onChange={(e) => setAiTone(e.target.value)}
+                >
                   <option value="professional">Professional</option>
                   <option value="friendly">Friendly</option>
                   <option value="firm">Firm</option>
@@ -804,7 +942,11 @@ export default function SettingsClient({
                 </Select>
               </FormField>
               <div className="pt-2">
-                <Button onClick={handleSaveAISettings} loading={savingAI} size="sm">
+                <Button
+                  onClick={handleSaveAISettings}
+                  loading={savingAI}
+                  size="sm"
+                >
                   Save Tone
                 </Button>
               </div>
@@ -813,16 +955,34 @@ export default function SettingsClient({
 
           {/* Alert Preferences */}
           <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold text-foreground">Alert Preferences</h2>
+            <h2 className="mb-4 text-lg font-semibold text-foreground">
+              Alert Preferences
+            </h2>
             <p className="text-sm text-muted mb-4">
               Choose which alerts you want to receive in your notification bell.
             </p>
             <div className="space-y-4 max-w-md">
               {[
-                { key: "highRiskInvoices", label: "High-risk invoices", desc: "When a high-risk invoice is detected" },
-                { key: "clientDeterioration", label: "Client deterioration", desc: "When a client's payment behaviour worsens" },
-                { key: "cashFlowGap", label: "Cash flow gap", desc: "When a cash flow gap is detected" },
-                { key: "weeklyDigest", label: "Weekly digest", desc: "Weekly summary of your account" },
+                {
+                  key: "highRiskInvoices",
+                  label: "High-risk invoices",
+                  desc: "When a high-risk invoice is detected",
+                },
+                {
+                  key: "clientDeterioration",
+                  label: "Client deterioration",
+                  desc: "When a client's payment behaviour worsens",
+                },
+                {
+                  key: "cashFlowGap",
+                  label: "Cash flow gap",
+                  desc: "When a cash flow gap is detected",
+                },
+                {
+                  key: "weeklyDigest",
+                  label: "Weekly digest",
+                  desc: "Weekly summary of your account",
+                },
               ].map(({ key, label, desc }) => (
                 <div key={key} className="flex items-center justify-between">
                   <div>
@@ -837,21 +997,32 @@ export default function SettingsClient({
               ))}
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted">Cash flow threshold</p>
-                  <p className="text-xs text-muted">Minimum gap ($) to trigger an alert</p>
+                  <p className="text-sm font-medium text-muted">
+                    Cash flow threshold
+                  </p>
+                  <p className="text-xs text-muted">
+                    Minimum gap ($) to trigger an alert
+                  </p>
                 </div>
                 <div className="w-28">
                   <Input
                     type="number"
                     value={(alertPrefs.cashFlowThreshold as number) ?? 1000}
                     onChange={(e) =>
-                      setAlertPrefs((p) => ({ ...p, cashFlowThreshold: parseInt(e.target.value) || 0 }))
+                      setAlertPrefs((p) => ({
+                        ...p,
+                        cashFlowThreshold: parseInt(e.target.value) || 0,
+                      }))
                     }
                   />
                 </div>
               </div>
               <div className="pt-2">
-                <Button onClick={handleSaveAlerts} loading={savingAlerts} size="sm">
+                <Button
+                  onClick={handleSaveAlerts}
+                  loading={savingAlerts}
+                  size="sm"
+                >
                   Save Alert Preferences
                 </Button>
               </div>
@@ -860,12 +1031,18 @@ export default function SettingsClient({
 
           {/* Tax Settings */}
           <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold text-foreground">Tax Settings</h2>
+            <h2 className="mb-4 text-lg font-semibold text-foreground">
+              Tax Settings
+            </h2>
             <p className="text-sm text-muted mb-4">
-              Used to estimate how much to set aside for taxes. Ask your accountant for the right numbers.
+              Used to estimate how much to set aside for taxes. Ask your
+              accountant for the right numbers.
             </p>
             <div className="space-y-4 max-w-md">
-              <FormField label="Your approximate tax rate (%)" hint="Used to calculate estimated tax on taxable income">
+              <FormField
+                label="Your approximate tax rate (%)"
+                hint="Used to calculate estimated tax on taxable income"
+              >
                 <Input
                   type="number"
                   min="0"
@@ -874,31 +1051,60 @@ export default function SettingsClient({
                   onChange={(e) => setTaxRate(Number(e.target.value) || 0)}
                 />
               </FormField>
-              <FormField label="Tax year starts in" hint="When your fiscal year begins (January for most)">
-                <Select value={fiscalYearStart} onChange={(e) => setFiscalYearStart(Number(e.target.value))}>
+              <FormField
+                label="Tax year starts in"
+                hint="When your fiscal year begins (January for most)"
+              >
+                <Select
+                  value={fiscalYearStart}
+                  onChange={(e) => setFiscalYearStart(Number(e.target.value))}
+                >
                   {[
-                    { n: 1, l: "January" }, { n: 2, l: "February" }, { n: 3, l: "March" },
-                    { n: 4, l: "April" }, { n: 5, l: "May" }, { n: 6, l: "June" },
-                    { n: 7, l: "July" }, { n: 8, l: "August" }, { n: 9, l: "September" },
-                    { n: 10, l: "October" }, { n: 11, l: "November" }, { n: 12, l: "December" },
+                    { n: 1, l: "January" },
+                    { n: 2, l: "February" },
+                    { n: 3, l: "March" },
+                    { n: 4, l: "April" },
+                    { n: 5, l: "May" },
+                    { n: 6, l: "June" },
+                    { n: 7, l: "July" },
+                    { n: 8, l: "August" },
+                    { n: 9, l: "September" },
+                    { n: 10, l: "October" },
+                    { n: 11, l: "November" },
+                    { n: 12, l: "December" },
                   ].map((m) => (
-                    <option key={m.n} value={m.n}>{m.l}</option>
+                    <option key={m.n} value={m.n}>
+                      {m.l}
+                    </option>
                   ))}
                 </Select>
               </FormField>
-              <FormField label="Base Currency" hint="Your default currency for new invoices and reports">
-                <Select value={baseCurrency} onChange={(e) => setBaseCurrency(e.target.value)}>
+              <FormField
+                label="Base Currency"
+                hint="Your default currency for new invoices and reports"
+              >
+                <Select
+                  value={baseCurrency}
+                  onChange={(e) => setBaseCurrency(e.target.value)}
+                >
                   {currenciesWithSymbol().map((c) => (
-                    <option key={c.code} value={c.code}>{c.label}</option>
+                    <option key={c.code} value={c.code}>
+                      {c.label}
+                    </option>
                   ))}
                 </Select>
               </FormField>
-              <FormField label="Default hourly rate ($)" hint="Used when creating invoices from time entries">
+              <FormField
+                label="Default hourly rate ($)"
+                hint="Used when creating invoices from time entries"
+              >
                 <Input
                   type="number"
                   min="0"
                   value={defaultHourlyRate}
-                  onChange={(e) => setDefaultHourlyRate(Number(e.target.value) || 0)}
+                  onChange={(e) =>
+                    setDefaultHourlyRate(Number(e.target.value) || 0)
+                  }
                 />
               </FormField>
               <div className="pt-2">
@@ -911,19 +1117,28 @@ export default function SettingsClient({
 
           {/* Receipt Email */}
           <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold text-foreground">Receipt Email</h2>
+            <h2 className="mb-4 text-lg font-semibold text-foreground">
+              Receipt Email
+            </h2>
             <p className="text-sm text-muted mb-4">
-              Forward any receipt email to your unique address. We'll log it as an expense automatically.
+              Forward any receipt email to your unique address. We'll log it as
+              an expense automatically.
             </p>
             {userProfile.receiptEmail ? (
               <div className="space-y-3 max-w-md">
                 <div className="flex items-center gap-2">
-                  <Input value={userProfile.receiptEmail} readOnly className="flex-1" />
+                  <Input
+                    value={userProfile.receiptEmail}
+                    readOnly
+                    className="flex-1"
+                  />
                   <Button
                     variant="secondary"
                     size="sm"
                     onClick={() => {
-                      navigator.clipboard.writeText(userProfile.receiptEmail ?? "");
+                      navigator.clipboard.writeText(
+                        userProfile.receiptEmail ?? "",
+                      );
                       toast.success("Email address copied");
                     }}
                   >
@@ -931,11 +1146,14 @@ export default function SettingsClient({
                   </Button>
                 </div>
                 <p className="text-xs text-muted">
-                  Send or forward receipt emails to this address. We'll extract the amount, vendor, and date, then create an expense record.
+                  Send or forward receipt emails to this address. We'll extract
+                  the amount, vendor, and date, then create an expense record.
                 </p>
               </div>
             ) : (
-              <p className="text-sm text-muted">Generating your receipt email address...</p>
+              <p className="text-sm text-muted">
+                Generating your receipt email address...
+              </p>
             )}
           </div>
         </div>
@@ -948,11 +1166,14 @@ export default function SettingsClient({
         <div className="space-y-6">
           {/* Client Portal Branding */}
           <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold text-foreground">Client Portal</h2>
+            <h2 className="mb-4 text-lg font-semibold text-foreground">
+              Client Portal
+            </h2>
             {!portalSettings.hasAccess ? (
               <div className="rounded-lg bg-[var(--warning-muted)] p-4">
                 <p className="text-sm text-[var(--warning)]">
-                  The client portal is not available on the Free plan. Upgrade to Pro or Agency to unlock this feature.
+                  The client portal is not available on the Free plan. Upgrade
+                  to Pro or Agency to unlock this feature.
                 </p>
                 <Link
                   href="/settings/billing"
@@ -965,9 +1186,12 @@ export default function SettingsClient({
               <>
                 <div className="mb-6 flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted">Enable Client Portal</p>
+                    <p className="text-sm font-medium text-muted">
+                      Enable Client Portal
+                    </p>
                     <p className="text-xs text-muted mt-0.5">
-                      Give clients a branded link to view invoices and make payments
+                      Give clients a branded link to view invoices and make
+                      payments
                     </p>
                   </div>
                   <Toggle checked={portalEnabled} onChange={setPortalEnabled} />
@@ -978,13 +1202,23 @@ export default function SettingsClient({
                     <FormField label="Business Name">
                       <Input
                         value={branding.businessName}
-                        onChange={(e) => setBranding((p) => ({ ...p, businessName: e.target.value }))}
+                        onChange={(e) =>
+                          setBranding((p) => ({
+                            ...p,
+                            businessName: e.target.value,
+                          }))
+                        }
                       />
                     </FormField>
                     <FormField label="Logo URL">
                       <Input
                         value={branding.logoUrl}
-                        onChange={(e) => setBranding((p) => ({ ...p, logoUrl: e.target.value }))}
+                        onChange={(e) =>
+                          setBranding((p) => ({
+                            ...p,
+                            logoUrl: e.target.value,
+                          }))
+                        }
                         placeholder="https://example.com/logo.png"
                       />
                     </FormField>
@@ -993,14 +1227,22 @@ export default function SettingsClient({
                         <input
                           type="color"
                           value={branding.accentColor}
-                          onChange={(e) => setBranding((p) => ({ ...p, accentColor: e.target.value }))}
+                          onChange={(e) =>
+                            setBranding((p) => ({
+                              ...p,
+                              accentColor: e.target.value,
+                            }))
+                          }
                           className="h-9 w-12 cursor-pointer rounded border border-border bg-surface"
                         />
                         <Input
                           value={branding.accentColor}
                           onChange={(e) => {
                             if (/^#[0-9a-fA-F]{0,6}$/.test(e.target.value)) {
-                              setBranding((p) => ({ ...p, accentColor: e.target.value }));
+                              setBranding((p) => ({
+                                ...p,
+                                accentColor: e.target.value,
+                              }));
                             }
                           }}
                           placeholder="#2563eb"
@@ -1011,14 +1253,24 @@ export default function SettingsClient({
                     <FormField label="Tagline">
                       <Input
                         value={branding.tagline}
-                        onChange={(e) => setBranding((p) => ({ ...p, tagline: e.target.value }))}
+                        onChange={(e) =>
+                          setBranding((p) => ({
+                            ...p,
+                            tagline: e.target.value,
+                          }))
+                        }
                         placeholder="e.g. Professional invoicing made simple"
                       />
                     </FormField>
                     <FormField label="Favicon URL">
                       <Input
                         value={branding.faviconUrl}
-                        onChange={(e) => setBranding((p) => ({ ...p, faviconUrl: e.target.value }))}
+                        onChange={(e) =>
+                          setBranding((p) => ({
+                            ...p,
+                            faviconUrl: e.target.value,
+                          }))
+                        }
                         placeholder="https://example.com/favicon.ico"
                       />
                     </FormField>
@@ -1026,7 +1278,11 @@ export default function SettingsClient({
                 )}
 
                 <div className="pt-2">
-                  <Button onClick={handleSavePortal} loading={savingPortal} size="sm">
+                  <Button
+                    onClick={handleSavePortal}
+                    loading={savingPortal}
+                    size="sm"
+                  >
                     Save Portal Settings
                   </Button>
                 </div>
@@ -1036,22 +1292,31 @@ export default function SettingsClient({
 
           {/* Accounting Integrations */}
           <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold text-foreground">Accounting Integrations</h2>
+            <h2 className="mb-4 text-lg font-semibold text-foreground">
+              Accounting Integrations
+            </h2>
             <p className="text-sm text-muted mb-6">
               Sync invoices and payment status with your accounting software.
             </p>
 
             {Object.entries(platformConfig).length === 0 && (
               <div className="rounded-lg bg-surface-muted p-4 text-center">
-                <p className="text-sm text-muted">No integrations available yet.</p>
+                <p className="text-sm text-muted">
+                  No integrations available yet.
+                </p>
               </div>
             )}
 
             {Object.entries(platformConfig).map(([platform, config]) => {
               const connected = isConnected(platform);
-              const integration = integrations.find((i) => i.platform === platform);
+              const integration = integrations.find(
+                (i) => i.platform === platform,
+              );
               return (
-                <div key={platform} className="flex items-center justify-between py-4 border-b border-border last:border-0 flex-wrap gap-2">
+                <div
+                  key={platform}
+                  className="flex items-center justify-between py-4 border-b border-border last:border-0 flex-wrap gap-2"
+                >
                   <div className="flex items-center gap-4">
                     <div
                       className="flex h-10 w-10 items-center justify-center rounded-lg text-sm font-bold text-white"
@@ -1060,10 +1325,15 @@ export default function SettingsClient({
                       {config.icon}
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-foreground">{config.label}</p>
+                      <p className="text-sm font-medium text-foreground">
+                        {config.label}
+                      </p>
                       {connected ? (
                         <p className="text-xs text-muted">
-                          Connected{integration?.connectedAt ? ` since ${new Date(integration.connectedAt).toLocaleDateString()}` : ""}
+                          Connected
+                          {integration?.connectedAt
+                            ? ` since ${new Date(integration.connectedAt).toLocaleDateString()}`
+                            : ""}
                         </p>
                       ) : (
                         <p className="text-xs text-muted">Not connected</p>
@@ -1073,10 +1343,19 @@ export default function SettingsClient({
                   <div className="flex items-center gap-2">
                     {connected ? (
                       <>
-                        <Button variant="secondary" size="sm" onClick={() => handleSync(platform)} loading={syncing[platform]}>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => handleSync(platform)}
+                          loading={syncing[platform]}
+                        >
                           Sync
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDisconnect(platform)}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDisconnect(platform)}
+                        >
                           Disconnect
                         </Button>
                       </>
@@ -1096,11 +1375,14 @@ export default function SettingsClient({
 
           {/* Late Fees */}
           <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold text-foreground">Late Fees & Interest</h2>
+            <h2 className="mb-4 text-lg font-semibold text-foreground">
+              Late Fees & Interest
+            </h2>
             {!lateFeeSettings.hasAccess ? (
               <div className="rounded-lg bg-[var(--warning-muted)] p-4">
                 <p className="text-sm text-[var(--warning)]">
-                  Late fees and interest are not available on the Free plan. Upgrade to Pro or Agency to unlock this feature.
+                  Late fees and interest are not available on the Free plan.
+                  Upgrade to Pro or Agency to unlock this feature.
                 </p>
                 <Link
                   href="/settings/billing"
@@ -1113,37 +1395,60 @@ export default function SettingsClient({
               <>
                 <div className="mb-6 flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted">Enable Late Fees & Interest</p>
+                    <p className="text-sm font-medium text-muted">
+                      Enable Late Fees & Interest
+                    </p>
                     <p className="text-xs text-muted mt-0.5">
                       Automatically apply fees to overdue invoices
                     </p>
                   </div>
-                  <Toggle checked={lateFeeEnabled} onChange={setLateFeeEnabled} />
+                  <Toggle
+                    checked={lateFeeEnabled}
+                    onChange={setLateFeeEnabled}
+                  />
                 </div>
 
                 {lateFeeEnabled && (
                   <div className="space-y-4 max-w-md">
                     <div className="rounded-lg border border-border bg-surface-muted p-4">
-                      <h3 className="text-sm font-medium text-foreground mb-3">Late Fee</h3>
+                      <h3 className="text-sm font-medium text-foreground mb-3">
+                        Late Fee
+                      </h3>
                       <div className="space-y-3">
                         <FormField label="Type">
-                          <Select value={lateFeeType} onChange={(e) => setLateFeeType(e.target.value)}>
+                          <Select
+                            value={lateFeeType}
+                            onChange={(e) => setLateFeeType(e.target.value)}
+                          >
                             <option value="fixed">Fixed amount</option>
-                            <option value="percentage">Percentage of invoice</option>
+                            <option value="percentage">
+                              Percentage of invoice
+                            </option>
                           </Select>
                         </FormField>
-                        <FormField label={lateFeeType === "fixed" ? "Amount" : "Percentage"}>
+                        <FormField
+                          label={
+                            lateFeeType === "fixed" ? "Amount" : "Percentage"
+                          }
+                        >
                           <Input
                             type="number"
                             value={lateFeeValue || ""}
-                            onChange={(e) => setLateFeeValue(parseFloat(e.target.value) || 0)}
+                            onChange={(e) =>
+                              setLateFeeValue(parseFloat(e.target.value) || 0)
+                            }
                             step="0.01"
                             min="0"
                             prefix={lateFeeType === "fixed" ? "$" : "%"}
                           />
                         </FormField>
                         <FormField label="Frequency">
-                          <Select value={lateFeeFrequency} onChange={(e) => setLateFeeFrequency(e.target.value)}>
+                          <Select
+                            value={lateFeeFrequency}
+                            onChange={(e) =>
+                              setLateFeeFrequency(e.target.value)
+                            }
+                          >
                             <option value="once">One-time</option>
                             <option value="recurring">Recurring</option>
                           </Select>
@@ -1152,18 +1457,30 @@ export default function SettingsClient({
                     </div>
 
                     <div className="rounded-lg border border-border bg-surface-muted p-4">
-                      <h3 className="text-sm font-medium text-foreground mb-3">Daily Interest</h3>
+                      <h3 className="text-sm font-medium text-foreground mb-3">
+                        Daily Interest
+                      </h3>
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                          <p className="text-sm text-muted">Enable Daily Interest</p>
-                          <Toggle checked={interestEnabled} onChange={setInterestEnabled} />
+                          <p className="text-sm text-muted">
+                            Enable Daily Interest
+                          </p>
+                          <Toggle
+                            checked={interestEnabled}
+                            onChange={setInterestEnabled}
+                          />
                         </div>
                         {interestEnabled && (
-                          <FormField label="Daily Rate (%)" hint="e.g. 0.05% = ~18.25% APR">
+                          <FormField
+                            label="Daily Rate (%)"
+                            hint="e.g. 0.05% = ~18.25% APR"
+                          >
                             <Input
                               type="number"
                               value={interestRate || ""}
-                              onChange={(e) => setInterestRate(parseFloat(e.target.value) || 0)}
+                              onChange={(e) =>
+                                setInterestRate(parseFloat(e.target.value) || 0)
+                              }
                               step="0.01"
                               min="0"
                               prefix="%"
@@ -1174,21 +1491,30 @@ export default function SettingsClient({
                     </div>
 
                     <div className="rounded-lg border border-border bg-surface-muted p-4">
-                      <h3 className="text-sm font-medium text-foreground mb-3">General</h3>
+                      <h3 className="text-sm font-medium text-foreground mb-3">
+                        General
+                      </h3>
                       <div className="space-y-3">
                         <FormField label="Grace Period (days)">
                           <Input
                             type="number"
                             value={graceDays || ""}
-                            onChange={(e) => setGraceDays(parseInt(e.target.value) || 0)}
+                            onChange={(e) =>
+                              setGraceDays(parseInt(e.target.value) || 0)
+                            }
                             min="0"
                           />
                         </FormField>
-                        <FormField label="Maximum Fee Cap ($)" hint="0 = no limit">
+                        <FormField
+                          label="Maximum Fee Cap ($)"
+                          hint="0 = no limit"
+                        >
                           <Input
                             type="number"
                             value={feeCap || ""}
-                            onChange={(e) => setFeeCap(parseFloat(e.target.value) || 0)}
+                            onChange={(e) =>
+                              setFeeCap(parseFloat(e.target.value) || 0)
+                            }
                             step="0.01"
                             min="0"
                             prefix="$"
@@ -1199,14 +1525,23 @@ export default function SettingsClient({
 
                     <div className="rounded-lg border border-[var(--warning-muted)] bg-[var(--warning-muted)]/50 p-4">
                       <p className="text-xs text-muted">
-                        <span className="font-medium text-foreground">Disclaimer:</span> This is not legal advice. Late fees, interest, and collections practices are subject to applicable laws. Consult a legal professional.
+                        <span className="font-medium text-foreground">
+                          Disclaimer:
+                        </span>{" "}
+                        This is not legal advice. Late fees, interest, and
+                        collections practices are subject to applicable laws.
+                        Consult a legal professional.
                       </p>
                     </div>
                   </div>
                 )}
 
                 <div className="pt-4 border-t border-border mt-6">
-                  <Button onClick={handleSaveLateFees} loading={savingLateFees} size="sm">
+                  <Button
+                    onClick={handleSaveLateFees}
+                    loading={savingLateFees}
+                    size="sm"
+                  >
                     Save Late Fee Settings
                   </Button>
                 </div>
@@ -1216,9 +1551,13 @@ export default function SettingsClient({
 
           {/* Promise Detection */}
           <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold text-foreground">AI Promise Detection</h2>
+            <h2 className="mb-4 text-lg font-semibold text-foreground">
+              AI Promise Detection
+            </h2>
             {!promiseSettings.hasAccess ? (
-              <p className="text-sm text-muted">Not available on the Free plan.</p>
+              <p className="text-sm text-muted">
+                Not available on the Free plan.
+              </p>
             ) : (
               <>
                 <p className="text-sm text-muted mb-4">
@@ -1226,15 +1565,21 @@ export default function SettingsClient({
                 </p>
                 <div className="grid grid-cols-3 gap-4 max-w-md">
                   <div className="rounded-lg bg-surface-muted p-3 text-center">
-                    <p className="text-xl font-bold text-[var(--success)]">{promiseSettings.active}</p>
+                    <p className="text-xl font-bold text-[var(--success)]">
+                      {promiseSettings.active}
+                    </p>
                     <p className="text-xs text-muted">Active</p>
                   </div>
                   <div className="rounded-lg bg-surface-muted p-3 text-center">
-                    <p className="text-xl font-bold text-[var(--warning)]">{promiseSettings.pending}</p>
+                    <p className="text-xl font-bold text-[var(--warning)]">
+                      {promiseSettings.pending}
+                    </p>
                     <p className="text-xs text-muted">Pending</p>
                   </div>
                   <div className="rounded-lg bg-surface-muted p-3 text-center">
-                    <p className="text-xl font-bold text-muted">{promiseSettings.expired}</p>
+                    <p className="text-xl font-bold text-muted">
+                      {promiseSettings.expired}
+                    </p>
                     <p className="text-xs text-muted">Expired</p>
                   </div>
                 </div>
@@ -1251,7 +1596,9 @@ export default function SettingsClient({
         <div className="space-y-6">
           {/* Reminder Schedule */}
           <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold text-foreground">Reminder Schedule</h2>
+            <h2 className="mb-4 text-lg font-semibold text-foreground">
+              Reminder Schedule
+            </h2>
 
             <div className="mb-6 max-w-xs">
               <FormField label="Schedule Name">
@@ -1284,21 +1631,30 @@ export default function SettingsClient({
                         <Input
                           type="number"
                           value={step.daysOffset}
-                          onChange={(e) => handleStepChange(index, "daysOffset", e.target.value)}
+                          onChange={(e) =>
+                            handleStepChange(
+                              index,
+                              "daysOffset",
+                              e.target.value,
+                            )
+                          }
                         />
                       </FormField>
                       <FormField label="Timing">
-                        <Input
-                          value={offsetLabel(step.daysOffset)}
-                          readOnly
-                        />
+                        <Input value={offsetLabel(step.daysOffset)} readOnly />
                       </FormField>
                     </div>
                     <div className="flex-1">
                       <FormField label="Email template">
                         <Input
                           value={step.emailTemplate}
-                          onChange={(e) => handleStepChange(index, "emailTemplate", e.target.value)}
+                          onChange={(e) =>
+                            handleStepChange(
+                              index,
+                              "emailTemplate",
+                              e.target.value,
+                            )
+                          }
                           placeholder="e.g. gentle_reminder"
                         />
                       </FormField>
@@ -1318,7 +1674,11 @@ export default function SettingsClient({
             </div>
 
             <div className="pt-4 border-t border-border">
-              <Button onClick={handleSaveSchedule} loading={savingSchedule} size="sm">
+              <Button
+                onClick={handleSaveSchedule}
+                loading={savingSchedule}
+                size="sm"
+              >
                 Save Schedule
               </Button>
             </div>
@@ -1326,7 +1686,9 @@ export default function SettingsClient({
 
           {/* AI Reminders */}
           <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold text-foreground">AI Reminders</h2>
+            <h2 className="mb-4 text-lg font-semibold text-foreground">
+              AI Reminders
+            </h2>
             {aiSettings.limit === 0 ? (
               <div className="rounded-lg bg-[var(--warning-muted)] p-4">
                 <p className="text-sm text-[var(--warning)]">
@@ -1343,7 +1705,9 @@ export default function SettingsClient({
               <>
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <p className="text-sm font-medium text-muted">Enable AI Reminders</p>
+                    <p className="text-sm font-medium text-muted">
+                      Enable AI Reminders
+                    </p>
                     <p className="text-xs text-muted mt-0.5">
                       Generate personalized reminder emails for each invoice
                     </p>
@@ -1353,7 +1717,9 @@ export default function SettingsClient({
 
                 <div className="mb-4">
                   <div className="flex items-center justify-between text-sm mb-1">
-                    <span className="text-muted">Monthly usage: {aiSettings.usage} / {aiSettings.limit}</span>
+                    <span className="text-muted">
+                      Monthly usage: {aiSettings.usage} / {aiSettings.limit}
+                    </span>
                     <span className="font-medium text-foreground">
                       {Math.round((aiSettings.usage / aiSettings.limit) * 100)}%
                     </span>
@@ -1364,16 +1730,22 @@ export default function SettingsClient({
                         aiSettings.usage >= aiSettings.limit
                           ? "bg-[var(--danger)]"
                           : (aiSettings.usage / aiSettings.limit) * 100 > 80
-                          ? "bg-[var(--warning)]"
-                          : "bg-purple-600"
+                            ? "bg-[var(--warning)]"
+                            : "bg-purple-600"
                       }`}
-                      style={{ width: `${Math.min((aiSettings.usage / aiSettings.limit) * 100, 100)}%` }}
+                      style={{
+                        width: `${Math.min((aiSettings.usage / aiSettings.limit) * 100, 100)}%`,
+                      }}
                     />
                   </div>
                 </div>
 
                 <div className="pt-2">
-                  <Button onClick={handleSaveAISettings} loading={savingAI} size="sm">
+                  <Button
+                    onClick={handleSaveAISettings}
+                    loading={savingAI}
+                    size="sm"
+                  >
                     Save AI Settings
                   </Button>
                 </div>
@@ -1383,8 +1755,11 @@ export default function SettingsClient({
 
           {/* SMS & WhatsApp */}
           <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold text-foreground">SMS & WhatsApp</h2>
-            {!notificationSettings.sms.enabled && !notificationSettings.whatsapp.enabled ? (
+            <h2 className="mb-4 text-lg font-semibold text-foreground">
+              SMS & WhatsApp
+            </h2>
+            {!notificationSettings.sms.enabled &&
+            !notificationSettings.whatsapp.enabled ? (
               <div className="rounded-lg bg-[var(--warning-muted)] p-4">
                 <p className="text-sm text-[var(--warning)]">
                   SMS and WhatsApp reminders are not available on the Free plan.
@@ -1401,14 +1776,22 @@ export default function SettingsClient({
                 {(["sms", "whatsapp"] as const).map((channel) => {
                   const info = notificationSettings[channel];
                   return (
-                    <div key={channel} className="rounded-lg bg-surface-muted p-4">
-                      <p className="text-sm font-medium text-foreground capitalize mb-2">{channel}</p>
+                    <div
+                      key={channel}
+                      className="rounded-lg bg-surface-muted p-4"
+                    >
+                      <p className="text-sm font-medium text-foreground capitalize mb-2">
+                        {channel}
+                      </p>
                       <div className="flex items-center justify-between text-sm mb-1">
                         <span className="text-muted">
                           {info.used} / {info.limit}
                         </span>
                         <span className="font-medium text-foreground">
-                          {info.limit > 0 ? Math.round((info.used / info.limit) * 100) : 0}%
+                          {info.limit > 0
+                            ? Math.round((info.used / info.limit) * 100)
+                            : 0}
+                          %
                         </span>
                       </div>
                       <div className="h-2 w-full overflow-hidden rounded-full bg-surface">
@@ -1416,11 +1799,14 @@ export default function SettingsClient({
                           className={`h-full rounded-full transition-all ${
                             info.used >= info.limit
                               ? "bg-[var(--danger)]"
-                              : info.limit > 0 && (info.used / info.limit) * 100 > 80
-                              ? "bg-[var(--warning)]"
-                              : "bg-accent"
+                              : info.limit > 0 &&
+                                  (info.used / info.limit) * 100 > 80
+                                ? "bg-[var(--warning)]"
+                                : "bg-accent"
                           }`}
-                          style={{ width: `${info.limit > 0 ? Math.min((info.used / info.limit) * 100, 100) : 0}%` }}
+                          style={{
+                            width: `${info.limit > 0 ? Math.min((info.used / info.limit) * 100, 100) : 0}%`,
+                          }}
                         />
                       </div>
                     </div>
@@ -1434,7 +1820,7 @@ export default function SettingsClient({
                 Configuration reference
               </summary>
               <pre className="mt-3 text-xs text-muted bg-surface-muted rounded-lg p-3 overflow-x-auto">
-{`TWILIO_ACCOUNT_SID=your_account_sid
+                {`TWILIO_ACCOUNT_SID=your_account_sid
 TWILIO_AUTH_TOKEN=your_auth_token
 TWILIO_PHONE_NUMBER=+12025551234
 TWILIO_WHATSAPP_NUMBER=+14155238886`}
@@ -1450,14 +1836,19 @@ TWILIO_WHATSAPP_NUMBER=+14155238886`}
       {activeTab === "accountant" && (
         <div className="space-y-6">
           <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold text-foreground">Accountant Access</h2>
+            <h2 className="mb-4 text-lg font-semibold text-foreground">
+              Accountant Access
+            </h2>
             <p className="text-sm text-muted mb-6">
-              Invite your accountant or bookkeeper to view your account in read-only mode.
+              Invite your accountant or bookkeeper to view your account in
+              read-only mode.
             </p>
 
             {/* Invite form */}
             <div className="mb-6 max-w-md">
-              <label className="block text-sm font-medium text-muted mb-2">Accountant email</label>
+              <label className="block text-sm font-medium text-muted mb-2">
+                Accountant email
+              </label>
               <div className="flex gap-2">
                 <Input
                   type="email"
@@ -1466,7 +1857,11 @@ TWILIO_WHATSAPP_NUMBER=+14155238886`}
                   placeholder="accountant@example.com"
                   className="flex-1"
                 />
-                <Button onClick={handleInviteAccountant} loading={sendingInvite} size="sm">
+                <Button
+                  onClick={handleInviteAccountant}
+                  loading={sendingInvite}
+                  size="sm"
+                >
                   Send Invite
                 </Button>
               </div>
@@ -1476,7 +1871,9 @@ TWILIO_WHATSAPP_NUMBER=+14155238886`}
             {accountantAccess.length === 0 ? (
               <div className="rounded-lg bg-surface-muted p-6 text-center">
                 <Mail className="mx-auto h-8 w-8 text-muted mb-3" />
-                <p className="text-sm text-muted">No accountants invited yet.</p>
+                <p className="text-sm text-muted">
+                  No accountants invited yet.
+                </p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -1490,11 +1887,14 @@ TWILIO_WHATSAPP_NUMBER=+14155238886`}
                         <Mail className="h-4 w-4 text-accent" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{access.accountantEmail}</p>
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {access.accountantEmail}
+                        </p>
                         <p className="text-xs text-muted">
                           {access.status === "active" && "Active"}
                           {access.status === "pending" && "Invitation sent"}
-                          {access.status === "revoked" && `Revoked${access.revokedAt ? ` on ${new Date(access.revokedAt).toLocaleDateString()}` : ""}`}
+                          {access.status === "revoked" &&
+                            `Revoked${access.revokedAt ? ` on ${new Date(access.revokedAt).toLocaleDateString()}` : ""}`}
                         </p>
                       </div>
                     </div>
@@ -1504,8 +1904,8 @@ TWILIO_WHATSAPP_NUMBER=+14155238886`}
                           access.status === "active"
                             ? "bg-[var(--success-muted)] text-[var(--success)]"
                             : access.status === "pending"
-                            ? "bg-[var(--warning-muted)] text-[var(--warning)]"
-                            : "bg-surface-muted text-muted"
+                              ? "bg-[var(--warning-muted)] text-[var(--warning)]"
+                              : "bg-surface-muted text-muted"
                         }`}
                       >
                         {access.status}
@@ -1535,25 +1935,30 @@ TWILIO_WHATSAPP_NUMBER=+14155238886`}
       {activeTab === "team" && (
         <div className="space-y-6">
           <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold text-foreground">Team Members</h2>
+            <h2 className="mb-4 text-lg font-semibold text-foreground">
+              Team Members
+            </h2>
 
             {teamSettings.hasAccess ? (
               <>
                 <p className="text-sm text-muted mb-6">
-                  Invite team members to your account. Members can create and edit invoices,
-                  expenses, and time entries. Viewers have read-only access.
+                  Invite team members to your account. Members can create and
+                  edit invoices, expenses, and time entries. Viewers have
+                  read-only access.
                 </p>
 
                 {/* Seat count */}
                 <p className="text-xs text-muted mb-4">
-                  {teamMembers.filter((m) => m.status !== "removed").length + 1} of{" "}
-                  {teamSettings.tier.teamSeats} seats used (you count as 1)
+                  {teamMembers.filter((m) => m.status !== "removed").length + 1}{" "}
+                  of {teamSettings.tier.teamSeats} seats used (you count as 1)
                 </p>
 
                 {/* Invite form */}
                 <div className="mb-6 max-w-md space-y-3">
                   <div>
-                    <label className="block text-sm font-medium text-muted mb-2">Email address</label>
+                    <label className="block text-sm font-medium text-muted mb-2">
+                      Email address
+                    </label>
                     <div className="flex gap-2">
                       <Input
                         type="email"
@@ -1566,17 +1971,25 @@ TWILIO_WHATSAPP_NUMBER=+14155238886`}
                   </div>
                   <div className="flex items-end gap-2">
                     <div className="flex-1">
-                      <label className="block text-sm font-medium text-muted mb-2">Role</label>
+                      <label className="block text-sm font-medium text-muted mb-2">
+                        Role
+                      </label>
                       <select
                         value={teamInviteRole}
                         onChange={(e) => setTeamInviteRole(e.target.value)}
                         className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground"
                       >
-                        <option value="member">Member (can create & edit)</option>
+                        <option value="member">
+                          Member (can create & edit)
+                        </option>
                         <option value="viewer">Viewer (read-only)</option>
                       </select>
                     </div>
-                    <Button onClick={handleInviteTeamMember} loading={sendingTeamInvite} size="sm">
+                    <Button
+                      onClick={handleInviteTeamMember}
+                      loading={sendingTeamInvite}
+                      size="sm"
+                    >
                       Send Invite
                     </Button>
                   </div>
@@ -1600,14 +2013,21 @@ TWILIO_WHATSAPP_NUMBER=+14155238886`}
                             <Users className="h-4 w-4 text-accent" />
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-medium text-foreground truncate">{member.memberEmail}</p>
+                            <p className="text-sm font-medium text-foreground truncate">
+                              {member.memberEmail}
+                            </p>
                             <p className="text-xs text-muted">
                               {member.status === "active" ? (
                                 <>
                                   Role:{" "}
                                   <select
                                     value={member.role}
-                                    onChange={(e) => handleChangeRole(member.id, e.target.value)}
+                                    onChange={(e) =>
+                                      handleChangeRole(
+                                        member.id,
+                                        e.target.value,
+                                      )
+                                    }
                                     className="bg-transparent border border-border-default rounded px-1 py-0.5 text-xs text-foreground"
                                   >
                                     <option value="member">Member</option>
@@ -1616,13 +2036,17 @@ TWILIO_WHATSAPP_NUMBER=+14155238886`}
                                 </>
                               ) : (
                                 <>
-                                  Role: <span className="capitalize">{member.role}</span>
+                                  Role:{" "}
+                                  <span className="capitalize">
+                                    {member.role}
+                                  </span>
                                 </>
                               )}
                               {" — "}
                               {member.status === "active" && "Active"}
                               {member.status === "pending" && "Invitation sent"}
-                              {member.status === "removed" && `Removed${member.removedAt ? ` on ${new Date(member.removedAt).toLocaleDateString()}` : ""}`}
+                              {member.status === "removed" &&
+                                `Removed${member.removedAt ? ` on ${new Date(member.removedAt).toLocaleDateString()}` : ""}`}
                             </p>
                           </div>
                         </div>
@@ -1632,8 +2056,8 @@ TWILIO_WHATSAPP_NUMBER=+14155238886`}
                               member.status === "active"
                                 ? "bg-[var(--success-muted)] text-[var(--success)]"
                                 : member.status === "pending"
-                                ? "bg-[var(--warning-muted)] text-[var(--warning)]"
-                                : "bg-surface-muted text-muted"
+                                  ? "bg-[var(--warning-muted)] text-[var(--warning)]"
+                                  : "bg-surface-muted text-muted"
                             }`}
                           >
                             {member.status}
@@ -1688,8 +2112,8 @@ TWILIO_WHATSAPP_NUMBER=+14155238886`}
                       billing.subscriptionStatus === "active"
                         ? "bg-[var(--success-muted)] text-[var(--success)]"
                         : billing.subscriptionStatus === "past_due"
-                        ? "bg-[var(--warning-muted)] text-[var(--warning)]"
-                        : "bg-surface-muted text-muted"
+                          ? "bg-[var(--warning-muted)] text-[var(--warning)]"
+                          : "bg-surface-muted text-muted"
                     }`}
                   >
                     {billing.subscriptionStatus}
@@ -1702,10 +2126,16 @@ TWILIO_WHATSAPP_NUMBER=+14155238886`}
               <div className="mb-4 max-w-sm">
                 <div className="flex items-center justify-between text-sm mb-1">
                   <span className="text-muted">
-                    Monthly usage: {billing.monthlyInvoiceCount} / {billing.tier.invoiceLimit} invoices
+                    Monthly usage: {billing.monthlyInvoiceCount} /{" "}
+                    {billing.tier.invoiceLimit} invoices
                   </span>
                   <span className="font-medium text-foreground">
-                    {Math.round((billing.monthlyInvoiceCount / billing.tier.invoiceLimit) * 100)}%
+                    {Math.round(
+                      (billing.monthlyInvoiceCount /
+                        billing.tier.invoiceLimit) *
+                        100,
+                    )}
+                    %
                   </span>
                 </div>
                 <div className="h-2 w-full overflow-hidden rounded-full bg-surface-muted">
@@ -1713,27 +2143,37 @@ TWILIO_WHATSAPP_NUMBER=+14155238886`}
                     className={`h-full rounded-full transition-all ${
                       billing.monthlyInvoiceCount >= billing.tier.invoiceLimit
                         ? "bg-[var(--danger)]"
-                        : (billing.monthlyInvoiceCount / billing.tier.invoiceLimit) * 100 > 80
-                        ? "bg-[var(--warning)]"
-                        : "bg-[var(--success)]"
+                        : (billing.monthlyInvoiceCount /
+                              billing.tier.invoiceLimit) *
+                              100 >
+                            80
+                          ? "bg-[var(--warning)]"
+                          : "bg-[var(--success)]"
                     }`}
-                    style={{ width: `${Math.min((billing.monthlyInvoiceCount / billing.tier.invoiceLimit) * 100, 100)}%` }}
+                    style={{
+                      width: `${Math.min((billing.monthlyInvoiceCount / billing.tier.invoiceLimit) * 100, 100)}%`,
+                    }}
                   />
                 </div>
                 {billing.monthlyInvoiceCount >= billing.tier.invoiceLimit && (
                   <p className="mt-2 text-sm text-[var(--danger)]">
                     Invoice limit reached.{" "}
-                    <Link href="/settings/billing" className="font-medium underline hover:text-foreground">
+                    <Link
+                      href="/settings/billing"
+                      className="font-medium underline hover:text-foreground"
+                    >
                       Upgrade your plan
                     </Link>
                   </p>
                 )}
               </div>
             ) : (
-              <p className="text-sm text-muted mb-4">Unlimited invoices this month.</p>
+              <p className="text-sm text-muted mb-4">
+                Unlimited invoices this month.
+              </p>
             )}
 
-            <div className="flex gap-3">
+            <div className="flex gap-3 flex-wrap">
               <Link
                 href="/settings/billing"
                 className="inline-flex items-center justify-center gap-2 rounded-md bg-accent px-4 py-2 text-sm font-medium text-surface shadow-sm transition hover:brightness-110"
@@ -1745,7 +2185,10 @@ TWILIO_WHATSAPP_NUMBER=+14155238886`}
                   variant="secondary"
                   onClick={async () => {
                     try {
-                      const res = await fetch("/api/stripe/create-portal-session", { method: "POST" });
+                      const res = await fetch(
+                        "/api/stripe/create-portal-session",
+                        { method: "POST" },
+                      );
                       const data = await res.json();
                       if (res.ok && data.url) {
                         window.location.href = data.url;
@@ -1757,7 +2200,7 @@ TWILIO_WHATSAPP_NUMBER=+14155238886`}
                     }
                   }}
                 >
-                   Manage Subscription
+                  Manage Subscription
                 </Button>
               )}
             </div>
@@ -1771,7 +2214,9 @@ TWILIO_WHATSAPP_NUMBER=+14155238886`}
       {activeTab === "danger" && (
         <div className="space-y-6">
           <div className="rounded-xl border border-danger/30 bg-surface p-6 shadow-sm">
-            <h2 className="mb-2 text-lg font-semibold text-foreground">Danger Zone</h2>
+            <h2 className="mb-2 text-lg font-semibold text-foreground">
+              Danger Zone
+            </h2>
             <p className="text-sm text-muted mb-6">
               Irreversible actions. Proceed with caution.
             </p>
@@ -1779,7 +2224,9 @@ TWILIO_WHATSAPP_NUMBER=+14155238886`}
             <div className="rounded-lg border border-danger/20 bg-danger/5 p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-foreground">Delete Account</p>
+                  <p className="text-sm font-medium text-foreground">
+                    Delete Account
+                  </p>
                   <p className="text-xs text-muted mt-0.5">
                     Permanently delete your account and all associated data
                   </p>
@@ -1801,7 +2248,10 @@ TWILIO_WHATSAPP_NUMBER=+14155238886`}
       {/* Delete Account Modal */}
       <Modal
         open={showDeleteModal}
-        onClose={() => { setShowDeleteModal(false); setDeleteConfirm(""); }}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setDeleteConfirm("");
+        }}
         title="Delete Account"
         description="This action cannot be undone. All your data will be permanently deleted."
         size="sm"
@@ -1810,7 +2260,10 @@ TWILIO_WHATSAPP_NUMBER=+14155238886`}
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => { setShowDeleteModal(false); setDeleteConfirm(""); }}
+              onClick={() => {
+                setShowDeleteModal(false);
+                setDeleteConfirm("");
+              }}
             >
               Cancel
             </Button>
@@ -1819,7 +2272,9 @@ TWILIO_WHATSAPP_NUMBER=+14155238886`}
               size="sm"
               disabled={deleteConfirm !== "DELETE"}
               onClick={() => {
-                toast.error("Account deletion is not yet implemented. Contact support.");
+                toast.error(
+                  "Account deletion is not yet implemented. Contact support.",
+                );
                 setShowDeleteModal(false);
                 setDeleteConfirm("");
               }}
@@ -1830,7 +2285,9 @@ TWILIO_WHATSAPP_NUMBER=+14155238886`}
         }
       >
         <p className="text-sm text-muted mb-4">
-          Type <span className="font-mono font-bold text-foreground">DELETE</span> to confirm.
+          Type{" "}
+          <span className="font-mono font-bold text-foreground">DELETE</span> to
+          confirm.
         </p>
         <Input
           value={deleteConfirm}

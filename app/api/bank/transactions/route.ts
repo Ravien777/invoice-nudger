@@ -23,6 +23,17 @@ export async function GET(request: Request) {
     where: { userId: user.id },
     orderBy: { date: "desc" },
     take: limit,
+    select: {
+      id: true,
+      date: true,
+      description: true,
+      amount: true,
+      currency: true,
+      category: true,
+      matchedInvoiceId: true,
+      matchedExpenseId: true,
+      status: true,
+    },
   });
 
   const invoiceIds = transactions.filter((t) => t.matchedInvoiceId).map((t) => t.matchedInvoiceId!);
@@ -71,5 +82,7 @@ export async function GET(request: Request) {
     };
   });
 
-  return NextResponse.json(serialized);
+  return NextResponse.json(serialized, {
+    headers: { "Cache-Control": "private, max-age=60, stale-while-revalidate=300" },
+  });
 }

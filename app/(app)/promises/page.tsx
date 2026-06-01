@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { getTier } from "@/lib/tiers";
+
+export const metadata: Metadata = { title: "Promises" };
 import PromisesClient from "./PromisesClient";
 import { PageShell } from "@/app/components/layout/PageShell";
 

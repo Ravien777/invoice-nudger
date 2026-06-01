@@ -29,9 +29,32 @@ export async function GET(request: Request) {
     where: { userId: effectiveUserId },
     orderBy: { createdAt: "desc" },
     take: limit,
+    select: {
+      id: true,
+      clientName: true,
+      clientEmail: true,
+      clientPhone: true,
+      amount: true,
+      currency: true,
+      frequency: true,
+      dayOfMonth: true,
+      nextRunDate: true,
+      endDate: true,
+      description: true,
+      lineItems: true,
+      status: true,
+      autoSend: true,
+      reminderScheduleId: true,
+      invoicesCreated: true,
+      lastRunDate: true,
+      createdAt: true,
+      updatedAt: true,
+    },
   });
 
-  return NextResponse.json(recurring);
+  return NextResponse.json(recurring, {
+    headers: { "Cache-Control": "private, max-age=300, stale-while-revalidate=600" },
+  });
 }
 
 export async function POST(request: Request) {

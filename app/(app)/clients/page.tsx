@@ -1,9 +1,12 @@
+import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import ClientsClient from "./ClientsClient";
 import { PageShell } from "@/app/components/layout/PageShell";
+
+export const metadata: Metadata = { title: "Clients" };
 
 export default async function ClientsPage() {
   const session = await getServerSession(authOptions);
@@ -20,6 +23,20 @@ export default async function ClientsPage() {
     where: { userId: user!.id },
     orderBy: { riskScore: "desc" },
     take: 100,
+    select: {
+      id: true,
+      userId: true,
+      clientEmail: true,
+      totalInvoices: true,
+      paidInvoices: true,
+      onTimePayments: true,
+      totalAmount: true,
+      avgDaysLate: true,
+      lastPaymentDate: true,
+      riskScore: true,
+      updatedAt: true,
+      createdAt: true,
+    },
   });
 
   const serialized = profiles.map((p) => ({

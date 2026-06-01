@@ -271,7 +271,7 @@ export default function BankClient({
         </div>
       )}
 
-      <div className="flex items-center gap-1 border-b border-border-default">
+      <div className="flex items-center gap-1 border-b border-border-default flex-wrap">
         {(["to-review", "matched", "ignored"] as const).map((t) => (
           <button
             key={t}

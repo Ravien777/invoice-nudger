@@ -31,12 +31,28 @@ export async function GET(request: Request) {
     where: { userId: user.id },
     orderBy: { createdAt: "desc" },
     take: limit,
-    include: {
+    select: {
+      id: true,
+      templateId: true,
+      quoteId: true,
+      invoiceId: true,
+      clientName: true,
+      clientEmail: true,
+      title: true,
+      status: true,
+      signedAt: true,
+      pdfUrl: true,
+      sentAt: true,
+      expiresAt: true,
+      createdAt: true,
+      updatedAt: true,
       template: { select: { name: true } },
     },
   });
 
-  return Response.json(contracts);
+  return Response.json(contracts, {
+    headers: { "Cache-Control": "private, max-age=300, stale-while-revalidate=600" },
+  });
 }
 
 export async function POST(request: Request) {

@@ -53,7 +53,9 @@ export async function GET(request: Request) {
     orderBy: { detectedAt: "desc" },
   });
 
-  return NextResponse.json({ promises });
+  return NextResponse.json({ promises }, {
+    headers: { "Cache-Control": "private, max-age=60, stale-while-revalidate=300" },
+  });
 }
 
 export async function POST(request: Request) {

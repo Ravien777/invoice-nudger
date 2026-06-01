@@ -1,11 +1,29 @@
 import { NextResponse } from "next/server";
+import { encode } from "next-auth/jwt";
 import { prisma } from "@/lib/prisma";
 import { seedDefaultSchedule, seedSampleInvoices } from "@/lib/seed";
 
-export async function GET() {
+function isLocalRequest(request: Request): boolean {
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    request.headers.get("x-real-ip") ||
+    "unknown";
+  return ip === "::1" || ip === "127.0.0.1" || ip === "localhost" || ip.startsWith("192.168.") || ip.startsWith("10.") || ip.startsWith("172.16.");
+}
+
+function guardDevAccess(request: Request): NextResponse | null {
   if (process.env.NODE_ENV === "production") {
     return NextResponse.json({ error: "Not available in production" }, { status: 403 });
   }
+  if (!isLocalRequest(request)) {
+    return NextResponse.json({ error: "Localhost only" }, { status: 403 });
+  }
+  return null;
+}
+
+export async function GET(request: Request) {
+  const guard = guardDevAccess(request);
+  if (guard) return guard;
 
   const users = await prisma.user.findMany({
     select: { id: true, email: true, name: true },
@@ -16,9 +34,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  if (process.env.NODE_ENV === "production") {
-    return NextResponse.json({ error: "Not available in production" }, { status: 403 });
-  }
+  const guard = guardDevAccess(request);
+  if (guard) return guard;
 
   const { email } = await request.json();
 
@@ -30,32 +47,34 @@ export async function POST(request: Request) {
 
   if (!user) {
     user = await prisma.user.create({
-      data: { email, name: email.split("@")[0], plan: "agency" },
+      data: { email, name: email.split("@")[0], plan: "agency", emailVerified: new Date() },
     });
     await seedDefaultSchedule(user.id);
     await seedSampleInvoices(user.id);
   }
 
-  const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-  const sessionToken = crypto.randomUUID();
+  const secret = process.env.NEXTAUTH_SECRET;
+  if (!secret) {
+    return NextResponse.json({ error: "NEXTAUTH_SECRET not set" }, { status: 500 });
+  }
 
-  await prisma.session.create({
-    data: {
-      userId: user.id,
-      sessionToken,
-      expires,
-    },
-  });
+  const token = {
+    sub: user.id,
+    email: user.email,
+    name: user.name,
+    id: user.id,
+  };
+
+  const jwt = await encode({ token, secret });
 
   const response = NextResponse.json({
     success: true,
     email: user.email,
   });
 
-  response.cookies.set("next-auth.session-token", sessionToken, {
+  response.cookies.set("next-auth.session-token", jwt, {
     httpOnly: true,
     path: "/",
-    expires,
     sameSite: "lax",
   });
 

@@ -2,12 +2,31 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Pencil, Trash2, Receipt, X, Paperclip, Upload, Loader2 } from "lucide-react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Receipt,
+  X,
+  Paperclip,
+  Upload,
+  Loader2,
+} from "lucide-react";
 import { Button } from "@/app/components/ui/Button";
-import { Table, TableHead, TableBody, TableRow, TableCell } from "@/app/components/ui/Table";
+import {
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+} from "@/app/components/ui/Table";
 import { EmptyState } from "@/app/components/ui/EmptyState";
 import toast from "react-hot-toast";
-import { formatCurrency, SUPPORTED_CURRENCIES, currenciesWithSymbol } from "@/lib/format-currency";
+import {
+  formatCurrency,
+  SUPPORTED_CURRENCIES,
+  currenciesWithSymbol,
+} from "@/lib/format-currency";
 
 interface Category {
   id: string;
@@ -30,8 +49,18 @@ interface Expense {
 }
 
 const MONTH_NAMES = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
 export default function ExpensesClient({
@@ -68,7 +97,9 @@ export default function ExpensesClient({
   const [receiptUrl, setReceiptUrl] = useState("");
   const [receiptUploading, setReceiptUploading] = useState(false);
   const [receiptBannerDismissed, setReceiptBannerDismissed] = useState(
-    () => typeof window !== "undefined" && localStorage.getItem("receipt-banner-dismissed") === "true",
+    () =>
+      typeof window !== "undefined" &&
+      localStorage.getItem("receipt-banner-dismissed") === "true",
   );
 
   const dismissReceiptBanner = () => {
@@ -126,7 +157,11 @@ export default function ExpensesClient({
 
       if (!res.ok) {
         const err = await res.json();
-        toast.error(Object.values(err.error || {}).flat().join(", ") || "Failed to save");
+        toast.error(
+          Object.values(err.error || {})
+            .flat()
+            .join(", ") || "Failed to save",
+        );
         return;
       }
 
@@ -252,17 +287,23 @@ export default function ExpensesClient({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs text-text-secondary mb-1">Description *</label>
+              <label className="block text-xs text-text-secondary mb-1">
+                Description *
+              </label>
               <input
                 required
                 value={form.description}
-                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, description: e.target.value }))
+                }
                 className="w-full rounded-lg border border-border-default bg-surface-secondary px-3 py-2 text-sm text-text-primary placeholder-text-tertiary"
                 placeholder="e.g. Adobe Creative Cloud"
               />
             </div>
             <div>
-              <label className="block text-xs text-text-secondary mb-1">Amount *</label>
+              <label className="block text-xs text-text-secondary mb-1">
+                Amount *
+              </label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-text-tertiary">
                   {formatCurrency(0, form.currency).charAt(0)}
@@ -273,45 +314,63 @@ export default function ExpensesClient({
                   step="0.01"
                   min="0.01"
                   value={form.amount}
-                  onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, amount: e.target.value }))
+                  }
                   className="w-full rounded-lg border border-border-default bg-surface-secondary pl-7 pr-3 py-2 text-sm text-text-primary placeholder-text-tertiary"
                   placeholder="0.00"
                 />
               </div>
             </div>
             <div>
-              <label className="block text-xs text-text-secondary mb-1">Currency</label>
+              <label className="block text-xs text-text-secondary mb-1">
+                Currency
+              </label>
               <select
                 value={form.currency}
-                onChange={(e) => setForm((f) => ({ ...f, currency: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, currency: e.target.value }))
+                }
                 className="w-full rounded-lg border border-border-default bg-surface-secondary px-3 py-2 text-sm text-text-primary"
               >
                 {currenciesWithSymbol().map((c) => (
-                  <option key={c.code} value={c.code}>{c.label}</option>
+                  <option key={c.code} value={c.code}>
+                    {c.label}
+                  </option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-xs text-text-secondary mb-1">Date *</label>
+              <label className="block text-xs text-text-secondary mb-1">
+                Date *
+              </label>
               <input
                 required
                 type="date"
                 value={form.date}
-                onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, date: e.target.value }))
+                }
                 className="w-full rounded-lg border border-border-default bg-surface-secondary px-3 py-2 text-sm text-text-primary"
               />
             </div>
             <div>
-              <label className="block text-xs text-text-secondary mb-1">Vendor</label>
+              <label className="block text-xs text-text-secondary mb-1">
+                Vendor
+              </label>
               <input
                 value={form.vendor}
-                onChange={(e) => setForm((f) => ({ ...f, vendor: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, vendor: e.target.value }))
+                }
                 className="w-full rounded-lg border border-border-default bg-surface-secondary px-3 py-2 text-sm text-text-primary placeholder-text-tertiary"
                 placeholder="e.g. Amazon, Adobe"
               />
             </div>
             <div>
-              <label className="block text-xs text-text-secondary mb-1">Category</label>
+              <label className="block text-xs text-text-secondary mb-1">
+                Category
+              </label>
               <select
                 value={form.categoryId}
                 onChange={async (e) => {
@@ -355,23 +414,29 @@ export default function ExpensesClient({
                 <input
                   type="checkbox"
                   checked={form.taxDeductible}
-                  onChange={(e) => setForm((f) => ({ ...f, taxDeductible: e.target.checked }))}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, taxDeductible: e.target.checked }))
+                  }
                   className="rounded border-border-default"
                 />
-                <span className="text-sm text-text-secondary">Tax deductible</span>
+                <span className="text-sm text-text-secondary">
+                  Tax deductible
+                </span>
               </label>
             </div>
           </div>
 
           <div>
-            <label className="block text-xs text-text-secondary mb-1">Receipt (optional)</label>
+            <label className="block text-xs text-text-secondary mb-1">
+              Receipt (optional)
+            </label>
             {receiptUploading ? (
               <div className="flex items-center gap-2 text-sm text-text-tertiary">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Uploading...
               </div>
             ) : receiptUrl ? (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 flex-wrap">
                 <a
                   href={receiptUrl}
                   target="_blank"
@@ -399,7 +464,7 @@ export default function ExpensesClient({
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <label className="cursor-pointer inline-flex items-center gap-2 rounded-lg border border-border-default bg-surface-secondary px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:border-border-focus transition-colors">
                   <Upload className="h-4 w-4" />
                   Choose file
@@ -410,7 +475,9 @@ export default function ExpensesClient({
                     className="hidden"
                   />
                 </label>
-                <span className="text-xs text-text-tertiary">JPEG, PNG, WebP, or PDF (10 MB max)</span>
+                <span className="text-xs text-text-tertiary">
+                  JPEG, PNG, WebP, or PDF (10 MB max)
+                </span>
               </div>
             )}
           </div>
@@ -432,15 +499,22 @@ export default function ExpensesClient({
             <div className="flex items-start gap-3">
               <Receipt className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
               <div>
-                <p className="text-sm font-medium text-foreground">Email your receipts</p>
+                <p className="text-sm font-medium text-foreground">
+                  Email your receipts
+                </p>
                 <p className="mt-1 text-sm text-muted">
                   Forward any receipt to{" "}
-                  <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">{receiptEmail}</code>{" "}
+                  <code className="rounded bg-black py-0.5 text-xs font-mono text-blue-600">
+                    {receiptEmail}
+                  </code>{" "}
                   and we'll automatically create an expense for you.
                 </p>
               </div>
             </div>
-            <button onClick={dismissReceiptBanner} className="shrink-0 p-1 text-muted hover:text-foreground">
+            <button
+              onClick={dismissReceiptBanner}
+              className="shrink-0 p-1 text-muted hover:text-foreground"
+            >
               <X className="h-4 w-4" />
             </button>
           </div>
@@ -451,7 +525,11 @@ export default function ExpensesClient({
         <EmptyState
           title="No expenses yet"
           description="Start tracking your spending by adding an expense."
-          action={showForm ? undefined : { label: "Add Expense", onClick: () => setShowForm(true) }}
+          action={
+            showForm
+              ? undefined
+              : { label: "Add Expense", onClick: () => setShowForm(true) }
+          }
         >
           <Receipt className="h-12 w-12 text-text-tertiary" />
         </EmptyState>
@@ -479,19 +557,27 @@ export default function ExpensesClient({
                   <TableCell className="font-medium text-text-primary">
                     {expense.description}
                   </TableCell>
-                  <TableCell className="text-sm text-text-secondary" hideBelow="sm">
+                  <TableCell
+                    className="text-sm text-text-secondary"
+                    hideBelow="sm"
+                  >
                     {expense.vendor || "-"}
                   </TableCell>
                   <TableCell hideBelow="sm">
                     {expense.category ? (
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-tertiary px-2.5 py-0.5 text-xs text-text-secondary">
                         {expense.category.color && (
-                          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: expense.category.color }} />
+                          <span
+                            className="h-2 w-2 rounded-full"
+                            style={{ backgroundColor: expense.category.color }}
+                          />
                         )}
                         {expense.category.name}
                       </span>
                     ) : (
-                      <span className="text-sm text-text-tertiary">Uncategorised</span>
+                      <span className="text-sm text-text-tertiary">
+                        Uncategorised
+                      </span>
                     )}
                   </TableCell>
                   <TableCell className="text-center">
@@ -545,7 +631,8 @@ export default function ExpensesClient({
 
       {total > 0 && (
         <p className="text-xs text-text-tertiary text-center">
-          Showing {expenses.length} of {total} expense{total !== 1 ? "s" : ""} this month
+          Showing {expenses.length} of {total} expense{total !== 1 ? "s" : ""}{" "}
+          this month
         </p>
       )}
     </div>

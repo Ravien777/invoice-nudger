@@ -34,10 +34,22 @@ export async function GET(request: Request) {
     where: { userId: user.id },
     orderBy: { createdAt: "desc" },
     take: limit,
-    include: { _count: { select: { payments: true } } },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      rate: true,
+      rateType: true,
+      taxId: true,
+      createdAt: true,
+      _count: { select: { payments: true } },
+    },
   });
 
-  return NextResponse.json(contractors);
+  return NextResponse.json(contractors, {
+    headers: { "Cache-Control": "private, max-age=300, stale-while-revalidate=600" },
+  });
 }
 
 export async function POST(request: Request) {

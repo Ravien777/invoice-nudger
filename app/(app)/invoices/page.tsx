@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import InvoicesClient from "./InvoicesClient";
+
+export const metadata: Metadata = { title: "Invoices" };
 
 export default async function InvoicesPage() {
   const session = await getServerSession(authOptions);
@@ -60,5 +63,7 @@ export default async function InvoicesPage() {
     daysOffset: s.daysOffset,
   })) ?? [];
 
-  return <InvoicesClient initialInvoices={serialized} scheduleSteps={scheduleSteps} userTone={user?.aiTone} riskScores={riskScores} probabilities={probabilities} userPlan={user?.plan ?? "free"} />;
+  return (
+      <InvoicesClient initialInvoices={serialized} scheduleSteps={scheduleSteps} userTone={user?.aiTone} riskScores={riskScores} probabilities={probabilities} userPlan={user?.plan ?? "free"} />
+  );
 }

@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { startOfMonth, endOfMonth, format } from "date-fns";
+
+export const metadata: Metadata = { title: "Expenses" };
 import { PageShell } from "@/app/components/layout/PageShell";
 import { seedDefaultExpenseCategories } from "@/lib/expense-categories";
 import { assignReceiptEmail } from "@/lib/assign-receipt-emails";
