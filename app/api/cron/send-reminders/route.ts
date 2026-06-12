@@ -6,6 +6,7 @@ import { generateReminderCopy } from "@/lib/openai";
 import { getTier } from "@/lib/tiers";
 import { canGenerateAI, incrementAIUsage, canSendNotification, incrementNotificationUsage } from "@/lib/subscriptions";
 import { getTemplate } from "@/lib/email-templates";
+import { dispatchWebhook } from "@/lib/webhook-dispatcher";
 
 const CRON_SECRET = process.env.CRON_SECRET;
 
@@ -265,6 +266,16 @@ export async function GET(request: Request) {
                   where: { id: invoice.id },
                   data: { status: "overdue" },
                 });
+
+                dispatchWebhook(invoice.userId, "invoice.overdue", {
+                  invoiceId: invoice.id,
+                  invoiceNumber: invoice.invoiceNumber,
+                  clientName: invoice.clientName,
+                  clientEmail: invoice.clientEmail,
+                  amount: invoice.amount,
+                  currency: invoice.currency,
+                  dueDate: invoice.dueDate.toISOString(),
+                }).catch(console.error);
               }
             } else {
               errors++;
@@ -378,6 +389,16 @@ export async function GET(request: Request) {
             where: { id: invoice.id },
             data: { status: "overdue" },
           });
+
+          dispatchWebhook(invoice.userId, "invoice.overdue", {
+            invoiceId: invoice.id,
+            invoiceNumber: invoice.invoiceNumber,
+            clientName: invoice.clientName,
+            clientEmail: invoice.clientEmail,
+            amount: invoice.amount,
+            currency: invoice.currency,
+            dueDate: invoice.dueDate.toISOString(),
+          }).catch(console.error);
         }
       } else {
         const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";

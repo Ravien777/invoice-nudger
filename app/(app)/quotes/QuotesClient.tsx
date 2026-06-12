@@ -150,21 +150,21 @@ export default function QuotesClient({ quotes: initialQuotes }: { quotes: Quote[
                         <>
                           <Link
                             href={`/quotes/${quote.id}/edit`}
-                            className="p-1.5 rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-tertiary transition-colors"
+                            className="p-2.5 rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-tertiary transition-colors"
                             title="Edit"
                           >
                             <Pencil className="h-3.5 w-3.5" />
                           </Link>
                           <button
                             onClick={() => handleSend(quote.id)}
-                            className="p-1.5 rounded-md text-text-tertiary hover:text-accent hover:bg-surface-tertiary transition-colors"
+                            className="p-2.5 rounded-md text-text-tertiary hover:text-accent hover:bg-surface-tertiary transition-colors"
                             title="Send"
                           >
                             <Send className="h-3.5 w-3.5" />
                           </button>
                           <button
                             onClick={() => handleDelete(quote.id)}
-                            className="p-1.5 rounded-md text-text-tertiary hover:text-[var(--danger)] hover:bg-surface-tertiary transition-colors"
+                            className="p-2.5 rounded-md text-text-tertiary hover:text-[var(--danger)] hover:bg-surface-tertiary transition-colors"
                             title="Delete"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -175,21 +175,21 @@ export default function QuotesClient({ quotes: initialQuotes }: { quotes: Quote[
                         <>
                           <Link
                             href={`/quotes/${quote.id}`}
-                            className="p-1.5 rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-tertiary transition-colors"
+                            className="p-2.5 rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-tertiary transition-colors"
                             title="View"
                           >
                             <Eye className="h-3.5 w-3.5" />
                           </Link>
                           <button
                             onClick={() => handleConvert(quote.id)}
-                            className="p-1.5 rounded-md text-text-tertiary hover:text-[var(--success)] hover:bg-surface-tertiary transition-colors"
+                            className="p-2.5 rounded-md text-text-tertiary hover:text-[var(--success)] hover:bg-surface-tertiary transition-colors"
                             title="Convert to Invoice"
                           >
                             <ArrowRight className="h-3.5 w-3.5" />
                           </button>
                           <button
                             onClick={() => handleDecline(quote.id)}
-                            className="p-1.5 rounded-md text-text-tertiary hover:text-[var(--danger)] hover:bg-surface-tertiary transition-colors"
+                            className="p-2.5 rounded-md text-text-tertiary hover:text-[var(--danger)] hover:bg-surface-tertiary transition-colors"
                             title="Mark Declined"
                           >
                             <Ban className="h-3.5 w-3.5" />
@@ -200,7 +200,7 @@ export default function QuotesClient({ quotes: initialQuotes }: { quotes: Quote[
                         <>
                           <Link
                             href={`/quotes/${quote.id}`}
-                            className="p-1.5 rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-tertiary transition-colors"
+                            className="p-2.5 rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-tertiary transition-colors"
                             title="View"
                           >
                             <Eye className="h-3.5 w-3.5" />
@@ -208,7 +208,7 @@ export default function QuotesClient({ quotes: initialQuotes }: { quotes: Quote[
                           {quote.convertedToInvoiceId && (
                             <Link
                               href={`/invoices/${quote.convertedToInvoiceId}/edit`}
-                              className="p-1.5 rounded-md text-text-tertiary hover:text-[var(--success)] hover:bg-surface-tertiary transition-colors"
+                              className="p-2.5 rounded-md text-text-tertiary hover:text-[var(--success)] hover:bg-surface-tertiary transition-colors"
                               title="View Invoice"
                             >
                               <FileText className="h-3.5 w-3.5" />
@@ -220,14 +220,14 @@ export default function QuotesClient({ quotes: initialQuotes }: { quotes: Quote[
                         <>
                           <Link
                             href={`/quotes/${quote.id}`}
-                            className="p-1.5 rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-tertiary transition-colors"
+                            className="p-2.5 rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-tertiary transition-colors"
                             title="View"
                           >
                             <Eye className="h-3.5 w-3.5" />
                           </Link>
                           <button
                             onClick={() => handleDelete(quote.id)}
-                            className="p-1.5 rounded-md text-text-tertiary hover:text-[var(--danger)] hover:bg-surface-tertiary transition-colors"
+                            className="p-2.5 rounded-md text-text-tertiary hover:text-[var(--danger)] hover:bg-surface-tertiary transition-colors"
                             title="Delete"
                           >
                             <Trash2 className="h-3.5 w-3.5" />

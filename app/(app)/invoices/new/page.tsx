@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import InvoiceForm from "@/app/components/InvoiceForm";
 import { PageShell } from "@/app/components/layout/PageShell";
+
+export const metadata: Metadata = { title: "New Invoice" };
 
 export default async function NewInvoicePage() {
   const session = await getServerSession(authOptions);

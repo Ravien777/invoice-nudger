@@ -1,4 +1,5 @@
 import React from "react";
+import { formatCurrency } from "./format-currency";
 
 interface PayslipProps {
   businessName: string;
@@ -136,9 +137,7 @@ export async function generatePayslipPdf(props: PayslipProps): Promise<Buffer> {
             <ReactPDF.Text
               style={{ fontSize: 14, fontWeight: "bold", color: "#1a1a1a" }}
             >
-              {currency === "USD"
-                ? `$${amount.toFixed(2)}`
-                : `${amount.toFixed(2)} ${currency}`}
+              {formatCurrency(amount, currency)}
             </ReactPDF.Text>
           </ReactPDF.View>
           <ReactPDF.View

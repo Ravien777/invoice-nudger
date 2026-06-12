@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -12,6 +13,8 @@ const ClientDetailClient = nextDynamic(() => import("./ClientDetailClient"), {
 });
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+
+export const metadata: Metadata = { title: "Client Details" };
 
 export default async function ClientDetailPage({
   params,

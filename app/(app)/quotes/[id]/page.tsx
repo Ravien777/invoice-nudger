@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -6,6 +7,8 @@ import { notFound } from "next/navigation";
 import { format } from "date-fns";
 import { PageShell } from "@/app/components/layout/PageShell";
 import QuoteDetailClient from "./QuoteDetailClient";
+
+export const metadata: Metadata = { title: "Quote Details" };
 
 export default async function QuoteDetailPage({
   params,

@@ -631,7 +631,7 @@ export default function InvoiceTable({
                   ) : null}
                   <Link
                     href={`/invoices/${inv.id}/edit`}
-                    className="rounded-md p-1.5 text-accent hover:bg-surface-tertiary transition-colors"
+                    className="rounded-md p-2.5 text-accent hover:bg-surface-tertiary transition-colors"
                     title="Edit"
                   >
                     <Pencil className="h-4 w-4" />

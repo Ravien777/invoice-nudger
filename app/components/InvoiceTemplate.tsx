@@ -156,6 +156,7 @@ export function InvoiceTemplate({
 
       {/* Line items */}
       {lineItems.length > 0 ? (
+        <div className="overflow-x-auto">
         <table className="w-full text-sm mb-8">
           <thead>
             <tr className="border-b border-[#e5e7eb]">
@@ -197,6 +198,7 @@ export function InvoiceTemplate({
             ))}
           </tbody>
         </table>
+        </div>
       ) : (
         <div className="mb-8 py-4 border-y border-[#e5e7eb]">
           <div className="flex justify-between items-center text-sm">

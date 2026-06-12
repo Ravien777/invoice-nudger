@@ -186,7 +186,7 @@ export default function ForecastWidget({ forecast, hasAccess, baseCurrency = "US
         </ResponsiveContainer>
       </div>
 
-      <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
+      <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2 text-center text-xs">
         <div>
           <p className="text-text-secondary">Expected</p>
           <p className="font-semibold text-text-primary">{formatCurrency(visibleTotals.expected, baseCurrency)}</p>

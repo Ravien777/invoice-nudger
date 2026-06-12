@@ -8,14 +8,6 @@
 - **Strong in:** Full-stack SaaS architecture, API design, database modelling, Stripe integration, cron-based automation
 - **Still learning:** Advanced AI/ML, React Server Components deep internals, WebSocket real-time patterns
 
-## Current Project Context
-
-- **Project:** Maroni — automated invoice reminder SaaS
-- **Goal:** Build an indispensable AR (accounts receivable) platform for freelancers, indie hackers, and micro-agencies. Phase 1 (core SaaS) and Phase 2 (advanced features) are complete. Strategy 2 (Insights-to-Expert Flywheel) is in progress.
-- **Audience:** Freelancers, small agencies, indie hackers who hate chasing late payments
-- **Stack:** Next.js (App Router) + TypeScript + Tailwind CSS + Prisma + PostgreSQL (Supabase/Neon) + NextAuth.js + Resend + Vercel Cron Jobs + Stripe + PapaParse + date-fns + react-hot-toast
-- **What to avoid:** Kubernetes, microservices, custom auth, premature scaling, any suggestion to swap the stack without being asked
-
 ## My Communication Preferences
 
 - **Kill the filler.** Never open with "Great question!", "Of course!", "Certainly!". Start with the answer.
@@ -138,31 +130,6 @@ For questions involving system architecture, performance tradeoffs, database des
 
 ---
 
-## Tech Stack (Locked)
-
-Always use these. Never suggest alternatives unless I explicitly ask:
-
-| Layer | Technology |
-|---|---|
-| Language | TypeScript (strict mode) |
-| Framework | Next.js (App Router) |
-| Styling | Tailwind CSS |
-| ORM | Prisma |
-| Database | PostgreSQL (Supabase / Neon) |
-| Auth | NextAuth.js (Email provider via Resend) |
-| Email | Resend |
-| Cron | Vercel Cron Jobs |
-| CSV Parsing | PapaParse |
-| Payments | Stripe (Checkout, Payment Links, Webhooks, Customer Portal) |
-| Notifications | react-hot-toast |
-| Date Handling | date-fns |
-| Hosting | Vercel |
-| Package Manager | npm (or whatever is in lockfile) |
-
-If something seems like the wrong tool, flag it. But use the defined stack unless I explicitly say otherwise.
-
----
-
 ## Project-Specific Permanent Facts
 
 These are always true. Apply them to every session without exception:
@@ -179,42 +146,6 @@ These are always true. Apply them to every session without exception:
 10. **Client data is identified by `clientEmail`** within a user's scope. No global client table — use `ClientPaymentProfile` for analytics.
 11. **All analytics queries** should read from `InvoiceDailySummary` and `ClientPaymentProfile` tables where possible, not scan raw `Invoice` tables.
 12. **Never deploy, run migrations, or modify production data** without explicit confirmation.
-
----
-
-## Current Project State
-
-### Completed (Phase 1 — Core SaaS)
-- User authentication (NextAuth.js magic link)
-- Invoice CRUD with dashboard
-- CSV bulk upload
-- Reminder schedules (default + per-invoice)
-- Email templates (5 escalation tones) + Resend sending
-- Daily cron job for automated reminders
-- Manual payment status tracking
-- Landing page + onboarding
-
-### Completed (Phase 1 — Monetisation)
-- Stripe Payment Links embedded in reminder emails
-- Stripe webhook auto-marks invoices as paid
-- Subscription tiers (Free / Pro $12/mo / Agency $29/mo) via Stripe Checkout
-- Invoice limits enforced per plan
-- Public "Invoice Reminder Email Templates" page for SEO
-
-### Completed (Phase 2 — Beyond the Basics)
-- Xero & QuickBooks OAuth integration + invoice sync
-- AI-powered personalized reminder copy (OpenAI)
-- White-labeled client portal
-- Smart escalation with AI promise detection
-- Multi-channel nudges (SMS via Twilio, WhatsApp)
-- Late payment fees & interest calculator
-- Automated payment reconciliation
-
-### In Progress (Strategy 2 — Insights-to-Expert Flywheel)
-Building the analytics data layer and insights features. See `MEMORY.md` for the current Strategy 2 implementation status.
-
-### Key Database Models
-`User`, `Invoice`, `ReminderSchedule`, `ReminderStep`, `ReminderLog`, `AccountIntegration`, `ClientPaymentProfile`, `InvoiceDailySummary`, `IndustryBenchmark`, `Notification`
 
 ---
 

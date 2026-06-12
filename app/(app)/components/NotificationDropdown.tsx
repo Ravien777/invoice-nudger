@@ -97,7 +97,7 @@ export default function NotificationDropdown() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="relative rounded-lg p-1.5 text-muted transition hover:bg-surface-muted hover:text-foreground"
+        className="relative rounded-lg p-2.5 text-muted transition hover:bg-surface-muted hover:text-foreground"
         title="Notifications"
       >
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

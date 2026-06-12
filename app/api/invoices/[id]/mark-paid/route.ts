@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { createPaymentRecord } from "@/lib/reconciliation";
 import { createAllocationRecord } from "@/lib/allocation";
 import { computeClientProfilesForUser, recomputePaymentProbabilitiesForClient } from "@/lib/analytics";
+import { dispatchWebhook } from "@/lib/webhook-dispatcher";
+import { sendWebhook } from "@/lib/plazaos-webhook";
 
 export async function POST(
   _request: Request,
@@ -67,6 +69,28 @@ export async function POST(
 
   await computeClientProfilesForUser(user.id);
   await recomputePaymentProbabilitiesForClient(user.id, invoice.clientEmail);
+
+  dispatchWebhook(user.id, "invoice.paid", {
+    invoiceId: id,
+    invoiceNumber: invoice.invoiceNumber,
+    clientName: invoice.clientName,
+    clientEmail: invoice.clientEmail,
+    amount: invoice.amount,
+    currency: invoice.currency,
+    paidAt: new Date().toISOString(),
+  }).catch(console.error);
+
+  prisma.plazaosClient
+    .findFirst({ where: { email: invoice.clientEmail } })
+    .then((client) => {
+      if (client) {
+        sendWebhook("invoice.paid", {
+          client_id: client.id,
+          invoice_id: id,
+        });
+      }
+    })
+    .catch(console.error);
 
   return NextResponse.json(updated);
 }

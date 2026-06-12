@@ -197,7 +197,7 @@ export default function PromisesClient({
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 text-sm mb-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm mb-3">
                     <div>
                       <span className="text-text-secondary">Invoice:</span>{" "}
                       <span className="text-text-primary">

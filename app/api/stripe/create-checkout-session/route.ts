@@ -1,11 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import Stripe from "stripe";
-
-function getStripe(): Stripe {
-  return new Stripe(process.env.STRIPE_SECRET_KEY || "");
-}
+import { getStripe } from "@/lib/stripe";
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);

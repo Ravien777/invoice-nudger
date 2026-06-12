@@ -43,7 +43,6 @@ export default function RootLayout({
       <head>
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" sizes="180x180" href="/icon-192.png" />
-        <link rel="icon" type="image/svg+xml" href="/icon-512.svg" />
         <link rel="icon" type="image/png" sizes="32x32" href="/icon-192.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />

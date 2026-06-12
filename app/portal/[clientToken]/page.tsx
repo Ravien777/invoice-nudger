@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { validatePortalToken, getClientInvoices } from "@/lib/portal";
+import { signQuoteToken } from "@/lib/quote-token";
 import PortalClient from "./PortalClient";
 
 export async function generateMetadata({
@@ -92,6 +93,7 @@ export default async function PortalPage({
         status: q.status,
         issueDate: q.issueDate.toISOString(),
         expiryDate: q.expiryDate?.toISOString() ?? null,
+        quoteToken: signQuoteToken(q.id),
       }))}
       branding={validated.branding}
       clientName={validated.clientName}

@@ -1,11 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import Stripe from "stripe";
-
-function getStripe(): Stripe {
-  return new Stripe(process.env.STRIPE_SECRET_KEY || "");
-}
+import { getStripe } from "@/lib/stripe";
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
@@ -47,11 +43,30 @@ export async function POST(request: Request) {
     );
   }
 
+  const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+
+  const plan = await prisma.paymentPlan.findUnique({
+    where: { invoiceId },
+    include: { installmentsList: { orderBy: { dueDate: "asc" } } },
+  });
+
+  if (plan && plan.status === "active") {
+    return Response.json({
+      url: `${baseUrl}/pay/${invoiceId}`,
+      plan: {
+        installments: plan.installmentsList.map((i) => ({
+          amount: i.amount,
+          dueDate: i.dueDate.toISOString(),
+          status: i.status,
+        })),
+      },
+    });
+  }
+
   if (invoice.paymentLink) {
     return Response.json({ url: invoice.paymentLink });
   }
 
-  const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
   const ref = invoice.invoiceNumber ? `#${invoice.invoiceNumber}` : "";
   const productName = `Invoice${ref} - ${invoice.clientName}`;
 

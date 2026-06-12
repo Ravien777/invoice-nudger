@@ -197,6 +197,7 @@ export default function RecurringClient({ initial, schedules, baseCurrency = "US
       reminderScheduleId: "",
     });
     setLineItems([]);
+    lineItemIdx.current = 0;
     setEditingId(null);
     setShowForm(false);
   };
@@ -480,7 +481,7 @@ export default function RecurringClient({ initial, schedules, baseCurrency = "US
                     <button
                       type="button"
                       onClick={() => removeLineItem(li.tempId)}
-                      className="self-start sm:self-auto p-1.5 rounded-md text-text-tertiary hover:text-[var(--danger)] hover:bg-surface-tertiary transition-colors"
+                      className="self-start sm:self-auto p-2.5 rounded-md text-text-tertiary hover:text-[var(--danger)] hover:bg-surface-tertiary transition-colors"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -579,7 +580,7 @@ export default function RecurringClient({ initial, schedules, baseCurrency = "US
                     <div className="flex items-center justify-end gap-1">
                       <button
                         onClick={() => handleEdit(item)}
-                        className="p-1.5 rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-tertiary transition-colors"
+                        className="p-2.5 rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-tertiary transition-colors"
                         title="Edit"
                       >
                         <Pencil className="h-3.5 w-3.5" />
@@ -587,7 +588,7 @@ export default function RecurringClient({ initial, schedules, baseCurrency = "US
                       {item.status === "active" ? (
                         <button
                           onClick={() => toggleStatus(item, "paused")}
-                          className="p-1.5 rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-tertiary transition-colors"
+                          className="p-2.5 rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-tertiary transition-colors"
                           title="Pause"
                         >
                           <Pause className="h-3.5 w-3.5" />
@@ -595,7 +596,7 @@ export default function RecurringClient({ initial, schedules, baseCurrency = "US
                       ) : item.status === "paused" ? (
                         <button
                           onClick={() => toggleStatus(item, "active")}
-                          className="p-1.5 rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-tertiary transition-colors"
+                          className="p-2.5 rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-tertiary transition-colors"
                           title="Resume"
                         >
                           <Play className="h-3.5 w-3.5" />
@@ -603,7 +604,7 @@ export default function RecurringClient({ initial, schedules, baseCurrency = "US
                       ) : null}
                       <button
                         onClick={() => handleDelete(item.id)}
-                        className="p-1.5 rounded-md text-text-tertiary hover:text-[var(--danger)] hover:bg-surface-tertiary transition-colors"
+                        className="p-2.5 rounded-md text-text-tertiary hover:text-[var(--danger)] hover:bg-surface-tertiary transition-colors"
                         title="Delete"
                       >
                         <Trash2 className="h-3.5 w-3.5" />

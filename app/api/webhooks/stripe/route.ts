@@ -1,11 +1,11 @@
-import Stripe from "stripe";
+import type Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
+import { getStripe } from "@/lib/stripe";
 import { createPaymentRecord } from "@/lib/reconciliation";
 import { createAllocationRecord } from "@/lib/allocation";
-
-function getStripe(): Stripe {
-  return new Stripe(process.env.STRIPE_SECRET_KEY || "");
-}
+import { handleChargeSuccess, handleChargeFailure } from "@/lib/auto-charge";
+import { handleInstallmentSuccess, handleInstallmentFailure, handleEarlyPayoffSuccess } from "@/lib/payment-plan";
+import { dispatchWebhook } from "@/lib/webhook-dispatcher";
 
 function getPlanFromPriceId(priceId: string): string {
   const proPrice = process.env.STRIPE_PRO_PRICE_ID || "";
@@ -222,6 +222,66 @@ export async function POST(request: Request) {
       });
     }
 
+    return new Response("OK");
+  }
+
+  if (event.type === "payment_intent.succeeded") {
+    const paymentIntent = event.data.object as Stripe.PaymentIntent;
+    const paymentType = paymentIntent.metadata?.type;
+    const installmentId = paymentIntent.metadata?.installmentId;
+
+    if (paymentType === "installment" && installmentId) {
+      await handleInstallmentSuccess(installmentId, paymentIntent);
+    } else if (paymentType === "early_payoff") {
+      await handleEarlyPayoffSuccess(paymentIntent);
+    } else {
+      await handleChargeSuccess(paymentIntent);
+    }
+
+    const invoiceId = paymentIntent.metadata?.invoiceId;
+    if (invoiceId) {
+      const paidInvoice = await prisma.invoice.findUnique({
+        where: { id: invoiceId },
+        select: { userId: true, clientName: true, clientEmail: true, invoiceNumber: true, amount: true, currency: true },
+      });
+      if (paidInvoice) {
+        dispatchWebhook(paidInvoice.userId, "payment.received", {
+          invoiceId,
+          invoiceNumber: paidInvoice.invoiceNumber,
+          clientName: paidInvoice.clientName,
+          clientEmail: paidInvoice.clientEmail,
+          amount: paidInvoice.amount,
+          currency: paidInvoice.currency,
+          stripePaymentIntentId: paymentIntent.id,
+        }).catch(console.error);
+      }
+    }
+
+    return new Response("OK");
+  }
+
+  if (event.type === "payment_intent.payment_failed") {
+    const paymentIntent = event.data.object as Stripe.PaymentIntent;
+    const paymentType = paymentIntent.metadata?.type;
+    const installmentId = paymentIntent.metadata?.installmentId;
+
+    if (paymentType === "installment" && installmentId) {
+      await handleInstallmentFailure(installmentId, paymentIntent);
+    } else {
+      await handleChargeFailure(paymentIntent);
+    }
+    return new Response("OK");
+  }
+
+  if (event.type === "setup_intent.succeeded") {
+    const setupIntent = event.data.object as Stripe.SetupIntent;
+    console.log(`SetupIntent succeeded: ${setupIntent.id} for customer ${setupIntent.customer}`);
+    return new Response("OK");
+  }
+
+  if (event.type === "setup_intent.setup_failed") {
+    const setupIntent = event.data.object as Stripe.SetupIntent;
+    console.error(`SetupIntent failed: ${setupIntent.id} - ${setupIntent.last_setup_error?.message}`);
     return new Response("OK");
   }
 

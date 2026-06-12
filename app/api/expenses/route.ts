@@ -7,6 +7,7 @@ import { startOfMonth, endOfMonth, parse } from "date-fns";
 import { seedDefaultExpenseCategories } from "@/lib/expense-categories";
 import { getOwnerIdForAccountant } from "@/lib/accountant-session";
 import { getTeamContext } from "@/lib/team-session";
+import { dispatchWebhook } from "@/lib/webhook-dispatcher";
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -113,6 +114,15 @@ export async function POST(req: NextRequest) {
     },
     include: { category: { select: { id: true, name: true, color: true } } },
   });
+
+  dispatchWebhook(effectiveUserId, "expense.created", {
+    expenseId: expense.id,
+    amount: expense.amount,
+    currency: expense.currency,
+    description: expense.description,
+    date: expense.date.toISOString(),
+    categoryName: expense.category?.name ?? null,
+  }).catch(console.error);
 
   return NextResponse.json({ expense }, { status: 201 });
 }

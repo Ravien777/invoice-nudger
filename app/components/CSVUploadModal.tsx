@@ -380,7 +380,7 @@ export default function CSVUploadModal({
                   )}
 
                   {parsedRows.length > 0 && (
-                    <div className="max-h-64 overflow-y-auto rounded-lg border border-border">
+                    <div className="max-h-64 overflow-x-auto overflow-y-auto rounded-lg border border-border">
                       <table className="w-full text-left text-xs">
                         <thead className="sticky top-0 bg-surface-muted">
                           <tr>

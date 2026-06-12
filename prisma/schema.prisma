@@ -165,6 +165,12 @@ model Invoice {
   @@index([userId, createdAt])
   @@index([userId, reconciliationStatus])
   @@index([userId, clientEmail])
+  autoCharge              Boolean   @default(false)
+  autoChargeRetryCount    Int       @default(0)
+  autoChargeLastError     String?
+  autoChargeLastAttemptAt DateTime?
+  stripePaymentIntentId   String?
+  paymentPlan             PaymentPlan?
   @@index([lateFeeEnabled, status])
 }
 
@@ -410,11 +416,13 @@ model Expense {
   taxDeductible Boolean          @default(true)
   notes         String?
   status        String           @default("confirmed") // confirmed | draft
+  clientEmail   String?
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
 
   @@index([userId, date])
   @@index([userId, status, date])
+  @@index([clientEmail])
 }
 
 model TimeEntry {
@@ -551,6 +559,24 @@ model IndustryBenchmark {
   @@unique([industry, metric, computedAt])
 }
 
+model PlazaosClient {
+  id               String   @id @default(cuid())
+  plazaosClientId  Int      @unique
+  companyName      String
+  contactName      String
+  email            String
+  phone            String?
+  website          String?
+  industry         String?
+  city             String?
+  country          String?
+  status           String   @default("active")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([email])
+}
+
 model AccountantAccess {
   id              String   @id @default(cuid())
   ownerId         String
@@ -675,4 +701,115 @@ model Contract {
   expiresAt    DateTime?
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
+}
+
+model ClientPaymentMethod {
+  id                    String    @id @default(cuid())
+  userId                String
+  clientEmail           String
+  clientName            String?
+  stripeCustomerId      String
+  stripePaymentMethodId String
+  stripeSetupIntentId   String?
+  isDefault             Boolean   @default(false)
+  status                String    @default("active") // active | expired | removed
+  lastChargedAt         DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId, clientEmail])
+  @@index([stripeCustomerId])
+}
+
+model PaymentPlan {
+  id           String   @id @default(cuid())
+  invoiceId    String   @unique
+  invoice      Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  totalAmount  Float
+  currency     String   @default("USD")
+  installments Int      @default(1)
+  intervalDays Int      @default(30)
+  status       String   @default("active") // active | completed | cancelled | paused
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  installmentsList PaymentPlanInstallment[]
+
+  @@index([invoiceId])
+  @@index([status])
+}
+
+model PaymentPlanInstallment {
+  id              String    @id @default(cuid())
+  planId          String
+  plan            PaymentPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  amount          Float
+  dueDate         DateTime
+  status          String    @default("pending") // pending | paid | failed | skipped
+  stripePaymentIntentId String?
+  paidAt          DateTime?
+  failedAt        DateTime?
+  failureReason   String?
+  createdAt       DateTime  @default(now())
+
+  @@index([planId])
+  @@index([status, dueDate])
+}
+
+model ApiKey {
+  id          String   @id @default(cuid())
+  userId      String
+  label       String
+  keyPrefix   String
+  keyHash     String   @unique
+  scopes      String   @default("read") // read | write
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+  status      String   @default("active") // active | revoked
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId, status])
+}
+
+model WebhookEndpoint {
+  id              String   @id @default(cuid())
+  userId          String
+  url             String
+  secret          String
+  events          String[] // ["invoice.paid", "client.created", ...]
+  status          String   @default("active") // active | paused | disabled
+  lastDeliveredAt DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId, status])
+}
+
+model WebhookDelivery {
+  id            String   @id @default(cuid())
+  endpointId    String
+  event         String
+  payload       Json
+  status        String   // success | failed
+  responseCode  Int?
+  responseBody  String?
+  durationMs    Int?
+  errorMessage  String?
+  attemptNumber Int      @default(1)
+  nextRetryAt   DateTime?
+  deliveredAt   DateTime?
+  createdAt     DateTime @default(now())
+
+  @@index([endpointId, createdAt])
+  @@index([nextRetryAt])
+}
+
+model ApiRateLimit {
+  id        String   @id @default(cuid())
+  keyId     String
+  windowStart DateTime
+  count     Int      @default(0)
+
+  @@unique([keyId, windowStart])
+  @@index([keyId, windowStart])
 }

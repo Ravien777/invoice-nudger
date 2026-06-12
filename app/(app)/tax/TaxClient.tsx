@@ -398,16 +398,17 @@ export default function TaxClient({
                     <h4 className="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-2">
                       Income
                     </h4>
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="text-text-tertiary text-xs uppercase border-b border-border-default">
-                          <th className="text-left py-2">Month</th>
-                          <th className="text-right py-2">Invoices</th>
-                          <th className="text-right py-2">Total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {pnl.income.map((row) => (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="text-text-tertiary text-xs uppercase border-b border-border-default">
+                            <th className="text-left py-2">Month</th>
+                            <th className="text-right py-2">Invoices</th>
+                            <th className="text-right py-2">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {pnl.income.map((row) => (
                           <tr
                             key={row.month}
                             className="border-b border-border-default/50"
@@ -437,13 +438,15 @@ export default function TaxClient({
                         </tr>
                       </tbody>
                     </table>
-                  </div>
+                    </div>
+                   </div>
 
-                  {/* Expenses section */}
+                   {/* Expenses section */}
                   <div>
                     <h4 className="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-2">
                       Expenses by Category
                     </h4>
+                    <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="text-text-tertiary text-xs uppercase border-b border-border-default">
@@ -483,6 +486,7 @@ export default function TaxClient({
                         </tr>
                       </tbody>
                     </table>
+                    </div>
                   </div>
 
                   {/* Summary */}

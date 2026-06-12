@@ -27,6 +27,7 @@ interface QuoteData {
   status: string;
   issueDate: string;
   expiryDate: string | null;
+  quoteToken: string;
 }
 
 interface PortalClientProps {
@@ -110,10 +111,11 @@ export default function PortalClient({ invoices, quotes, branding, clientName }:
   const otherQuotes = quotes.filter((q) => q.status !== "sent");
 
   const handleQuoteAction = async (quoteId: string, action: "accepted" | "declined") => {
+    const quote = quotes.find((q) => q.id === quoteId);
     const res = await fetch(`/api/quotes/${quoteId}/respond`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action }),
+      body: JSON.stringify({ action, token: quote?.quoteToken }),
     });
     if (res.ok) {
       setActionedQuotes((prev) => new Set(prev).add(quoteId));

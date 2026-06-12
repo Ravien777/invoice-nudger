@@ -2,7 +2,21 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { z } from "zod";
 import { canUseClientPortal } from "@/lib/subscriptions";
+
+const portalBrandingSchema = z.object({
+  businessName: z.string().max(100).optional(),
+  logoUrl: z.string().max(500).url().nullable().optional(),
+  accentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).nullable().optional(),
+  tagline: z.string().max(200).nullable().optional(),
+  faviconUrl: z.string().max(500).nullable().optional(),
+}).optional();
+
+const portalSchema = z.object({
+  enabled: z.boolean(),
+  branding: portalBrandingSchema,
+});
 
 export async function PUT(request: Request) {
   const session = await getServerSession(authOptions);
@@ -25,49 +39,14 @@ export async function PUT(request: Request) {
   }
 
   const body = await request.json();
-  const { enabled, branding } = body;
-
-  if (typeof enabled !== "boolean") {
-    return NextResponse.json({ error: "enabled must be a boolean" }, { status: 400 });
+  const parsed = portalSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
   }
 
-  const brandingData: Record<string, string> = {};
-
-  if (branding && typeof branding === "object") {
-    if (branding.businessName !== undefined) {
-      if (typeof branding.businessName !== "string" || branding.businessName.length > 100) {
-        return NextResponse.json({ error: "businessName must be a string under 100 characters" }, { status: 400 });
-      }
-      brandingData.businessName = branding.businessName;
-    }
-    if (branding.logoUrl !== undefined) {
-      if (branding.logoUrl !== null && (typeof branding.logoUrl !== "string" || branding.logoUrl.length > 500)) {
-        return NextResponse.json({ error: "logoUrl must be a valid URL under 500 characters" }, { status: 400 });
-      }
-      brandingData.logoUrl = branding.logoUrl;
-    }
-    if (branding.accentColor !== undefined) {
-      if (branding.accentColor !== null && !/^#[0-9a-fA-F]{6}$/.test(branding.accentColor)) {
-        return NextResponse.json({ error: "accentColor must be a valid hex color" }, { status: 400 });
-      }
-      brandingData.accentColor = branding.accentColor;
-    }
-    if (branding.tagline !== undefined) {
-      if (branding.tagline !== null && (typeof branding.tagline !== "string" || branding.tagline.length > 200)) {
-        return NextResponse.json({ error: "tagline must be a string under 200 characters" }, { status: 400 });
-      }
-      brandingData.tagline = branding.tagline;
-    }
-    if (branding.faviconUrl !== undefined) {
-      if (branding.faviconUrl !== null && (typeof branding.faviconUrl !== "string" || branding.faviconUrl.length > 500)) {
-        return NextResponse.json({ error: "faviconUrl must be a valid URL under 500 characters" }, { status: 400 });
-      }
-      brandingData.faviconUrl = branding.faviconUrl;
-    }
-  }
-
+  const { enabled, branding } = parsed.data;
   const existingBranding = user.portalBranding ? JSON.parse(user.portalBranding) : {};
-  const mergedBranding = { ...existingBranding, ...brandingData };
+  const mergedBranding = { ...existingBranding, ...branding };
 
   await prisma.user.update({
     where: { id: user.id },

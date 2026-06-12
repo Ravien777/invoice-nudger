@@ -367,7 +367,7 @@ export default function BankClient({
                           {tx.amount < 0 && (
                             <button
                               onClick={() => handleConvertToExpense(tx.id)}
-                              className="p-1.5 rounded-md text-accent hover:bg-accent/10 transition-colors"
+                              className="p-2.5 rounded-md text-accent hover:bg-accent/10 transition-colors"
                               title="Add as Expense"
                             >
                               <Plus className="h-3.5 w-3.5" />
@@ -376,7 +376,7 @@ export default function BankClient({
                           {tx.matchedInvoiceId && (
                             <button
                               onClick={() => handleConfirmMatch(tx.id)}
-                              className="p-1.5 rounded-md text-success hover:bg-success/10 transition-colors"
+                              className="p-2.5 rounded-md text-success hover:bg-success/10 transition-colors"
                               title="Confirm match"
                             >
                               <Check className="h-3.5 w-3.5" />
@@ -384,7 +384,7 @@ export default function BankClient({
                           )}
                           <button
                             onClick={() => handleIgnoreTransaction(tx.id)}
-                            className="p-1.5 rounded-md text-text-tertiary hover:text-danger hover:bg-surface-tertiary transition-colors"
+                            className="p-2.5 rounded-md text-text-tertiary hover:text-danger hover:bg-surface-tertiary transition-colors"
                             title="Ignore"
                           >
                             <X className="h-3.5 w-3.5" />
@@ -394,7 +394,7 @@ export default function BankClient({
                       {tab === "matched" && (
                         <button
                           onClick={() => handleUnmatchTransaction(tx.id)}
-                          className="p-1.5 rounded-md text-text-tertiary hover:text-danger hover:bg-surface-tertiary transition-colors"
+                          className="p-2.5 rounded-md text-text-tertiary hover:text-danger hover:bg-surface-tertiary transition-colors"
                           title="Unmatch"
                         >
                           <X className="h-3.5 w-3.5" />

@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import AcceptButton from "./AcceptButton";
+
+export const metadata: Metadata = { title: "Team Invitation" };
 
 export default async function TeamAcceptPage({
   searchParams,

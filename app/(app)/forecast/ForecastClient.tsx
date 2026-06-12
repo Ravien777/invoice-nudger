@@ -61,9 +61,11 @@ function ConfidenceBadge({
 function SixtyDayCallout({
   balance,
   date,
+  baseCurrency,
 }: {
   balance: number;
   date: string;
+  baseCurrency: string;
 }) {
   const isPositive = balance >= 0;
   return (
@@ -83,7 +85,7 @@ function SixtyDayCallout({
             isPositive ? "text-green-600" : "text-red-600"
           }`}
         >
-          {formatCurrency(balance)}
+          {formatCurrency(balance, baseCurrency)}
         </span>
         .
       </p>
@@ -91,7 +93,11 @@ function SixtyDayCallout({
   );
 }
 
-export default function ForecastClient() {
+export default function ForecastClient({
+  baseCurrency = "USD",
+}: {
+  baseCurrency?: string;
+}) {
   const [data, setData] = useState<ForecastResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -160,13 +166,13 @@ export default function ForecastClient() {
           <div className="text-right">
             <p className="text-text-secondary">Expected Income</p>
             <p className="font-semibold text-green-600">
-              {formatCurrency(data.totalExpectedIncome)}
+              {formatCurrency(data.totalExpectedIncome, baseCurrency)}
             </p>
           </div>
           <div className="text-right">
             <p className="text-text-secondary">Expected Expenses</p>
             <p className="font-semibold text-red-600">
-              {formatCurrency(data.totalExpectedExpenses)}
+              {formatCurrency(data.totalExpectedExpenses, baseCurrency)}
             </p>
           </div>
           <div className="text-right">
@@ -176,7 +182,7 @@ export default function ForecastClient() {
                 data.totalNetCashFlow >= 0 ? "text-green-600" : "text-red-600"
               }`}
             >
-              {formatCurrency(data.totalNetCashFlow)}
+              {formatCurrency(data.totalNetCashFlow, baseCurrency)}
             </p>
           </div>
         </div>
@@ -209,7 +215,7 @@ export default function ForecastClient() {
               />
               <YAxis
                 tick={{ fontSize: 10, fill: "var(--muted)" }}
-                tickFormatter={(val: number) => formatCurrency(val)}
+                tickFormatter={(val: number) => formatCurrency(val, baseCurrency)}
                 tickMargin={4}
               />
               <Tooltip
@@ -220,11 +226,11 @@ export default function ForecastClient() {
                   return (
                     <div className="rounded-lg border border-border-default bg-surface-secondary px-3 py-2 text-xs shadow-lg">
                       <p className="mb-1 font-medium text-text-primary">{d.label}</p>
-                      <p className="text-green-600">Income: {formatCurrency(d.income)}</p>
-                      <p className="text-red-600">Expenses: {formatCurrency(d.expenses)}</p>
-                      <p className="text-text-primary">Net: {formatCurrency(d.netCashFlow)}</p>
+                      <p className="text-green-600">Income: {formatCurrency(d.income, baseCurrency)}</p>
+                      <p className="text-red-600">Expenses: {formatCurrency(d.expenses, baseCurrency)}</p>
+                      <p className="text-text-primary">Net: {formatCurrency(d.netCashFlow, baseCurrency)}</p>
                       <p className="text-blue-600 font-medium">
-                        Cumulative: {formatCurrency(d.cumulative)}
+                        Cumulative: {formatCurrency(d.cumulative, baseCurrency)}
                       </p>
                     </div>
                   );
@@ -268,7 +274,7 @@ export default function ForecastClient() {
       </div>
 
       {/* 60-day callout */}
-      <SixtyDayCallout balance={data.sixtyDayBalance} date={data.sixtyDayDate} />
+      <SixtyDayCallout balance={data.sixtyDayBalance} date={data.sixtyDayDate} baseCurrency={baseCurrency} />
 
       {/* Weekly breakdown table */}
       <div className="rounded-xl border border-border-default bg-surface-secondary p-6">
@@ -291,16 +297,16 @@ export default function ForecastClient() {
                 <tr key={w.weekStart} className="border-b border-border-default hover:bg-surface-tertiary/50 transition-colors">
                   <td className="py-2 px-2 text-text-primary">{formatDate(w.weekStart)}</td>
                   <td className="py-2 px-2 text-right text-green-600 tabular-nums">
-                    {formatCurrency(w.expectedIncome)}
+                    {formatCurrency(w.expectedIncome, baseCurrency)}
                   </td>
                   <td className="py-2 px-2 text-right text-red-600 tabular-nums">
-                    {formatCurrency(w.expectedExpenses)}
+                    {formatCurrency(w.expectedExpenses, baseCurrency)}
                   </td>
                   <td className="py-2 px-2 text-right tabular-nums" style={{ color: w.netCashFlow >= 0 ? "var(--success)" : "var(--danger)" }}>
-                    {formatCurrency(w.netCashFlow)}
+                    {formatCurrency(w.netCashFlow, baseCurrency)}
                   </td>
                   <td className="py-2 px-2 text-right tabular-nums font-medium" style={{ color: w.cumulativeBalance >= 0 ? "var(--success)" : "var(--danger)" }}>
-                    {formatCurrency(w.cumulativeBalance)}
+                    {formatCurrency(w.cumulativeBalance, baseCurrency)}
                   </td>
                 </tr>
               ))}

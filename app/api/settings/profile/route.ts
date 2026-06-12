@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { encode, decode } from "next-auth/jwt";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -39,7 +40,7 @@ export async function GET() {
   });
 }
 
-export async function PUT(request: Request) {
+export async function PUT(request: NextRequest) {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.email) {
@@ -62,7 +63,10 @@ export async function PUT(request: Request) {
 
   if (body.name !== undefined) {
     if (typeof body.name !== "string") {
-      return NextResponse.json({ error: "name must be a string" }, { status: 400 });
+      return NextResponse.json(
+        { error: "name must be a string" },
+        { status: 400 },
+      );
     }
     data.name = body.name.trim() || null;
   }
@@ -70,7 +74,10 @@ export async function PUT(request: Request) {
   if (body.taxRate !== undefined) {
     const rate = Number(body.taxRate);
     if (isNaN(rate) || rate < 0 || rate > 100) {
-      return NextResponse.json({ error: "taxRate must be between 0 and 100" }, { status: 400 });
+      return NextResponse.json(
+        { error: "taxRate must be between 0 and 100" },
+        { status: 400 },
+      );
     }
     bpData.taxRate = rate / 100;
   }
@@ -78,7 +85,10 @@ export async function PUT(request: Request) {
   if (body.fiscalYearStart !== undefined) {
     const month = Number(body.fiscalYearStart);
     if (!Number.isInteger(month) || month < 1 || month > 12) {
-      return NextResponse.json({ error: "fiscalYearStart must be 1-12" }, { status: 400 });
+      return NextResponse.json(
+        { error: "fiscalYearStart must be 1-12" },
+        { status: 400 },
+      );
     }
     bpData.fiscalYearStart = month;
   }
@@ -86,7 +96,10 @@ export async function PUT(request: Request) {
   if (body.taxSavingsAmount !== undefined) {
     const amount = Number(body.taxSavingsAmount);
     if (isNaN(amount) || amount < 0) {
-      return NextResponse.json({ error: "taxSavingsAmount must be a non-negative number" }, { status: 400 });
+      return NextResponse.json(
+        { error: "taxSavingsAmount must be a non-negative number" },
+        { status: 400 },
+      );
     }
     bpData.taxSavingsAmount = amount;
   }
@@ -94,7 +107,10 @@ export async function PUT(request: Request) {
   if (body.baseCurrency !== undefined) {
     const currency = String(body.baseCurrency).toUpperCase();
     if (currency.length !== 3) {
-      return NextResponse.json({ error: "baseCurrency must be a 3-letter ISO code" }, { status: 400 });
+      return NextResponse.json(
+        { error: "baseCurrency must be a 3-letter ISO code" },
+        { status: 400 },
+      );
     }
     bpData.baseCurrency = currency;
   }
@@ -102,7 +118,10 @@ export async function PUT(request: Request) {
   if (body.defaultHourlyRate !== undefined) {
     const rate = Number(body.defaultHourlyRate);
     if (isNaN(rate) || rate < 0) {
-      return NextResponse.json({ error: "defaultHourlyRate must be a non-negative number" }, { status: 400 });
+      return NextResponse.json(
+        { error: "defaultHourlyRate must be a non-negative number" },
+        { status: 400 },
+      );
     }
     bpData.defaultHourlyRate = rate;
   }
@@ -122,5 +141,37 @@ export async function PUT(request: Request) {
     });
   }
 
-  return NextResponse.json({ success: true });
+  const response = NextResponse.json({ success: true });
+
+  if (body.name !== undefined) {
+    try {
+      const secret = process.env.NEXTAUTH_SECRET;
+      if (secret) {
+        console.log("Updating session token with new name:", body.name);
+        const isSecure = process.env.NODE_ENV === "production";
+        const cookieName = isSecure
+          ? "__Secure-next-auth.session-token"
+          : "next-auth.session-token";
+        const oldEncoded = request.cookies.get(cookieName)?.value;
+        if (oldEncoded) {
+          const token = await decode({ token: oldEncoded, secret });
+          if (token) {
+            token.name = body.name.trim() || null;
+            const newEncoded = await encode({ token, secret });
+            response.cookies.set(cookieName, newEncoded, {
+              httpOnly: true,
+              sameSite: "lax",
+              path: "/",
+              secure: isSecure,
+              maxAge: 30 * 24 * 60 * 60,
+            });
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Failed to update session token:", err);
+    }
+  }
+
+  return response;
 }

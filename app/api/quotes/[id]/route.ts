@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { quoteSchema } from "@/lib/validations";
 import { getOwnerIdForAccountant } from "@/lib/accountant-session";
+import { signQuoteToken } from "@/lib/quote-token";
 
 export async function GET(
   req: NextRequest,
@@ -86,7 +87,8 @@ export async function PUT(
     if (body.status === "sent") {
       try {
         const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
-        const quoteLink = `${baseUrl}/quotes/${id}`;
+        const token = signQuoteToken(id);
+        const quoteLink = `${baseUrl}/quote/${id}?token=${token}`;
         const resend = (await import("resend")).Resend;
         const client = new resend(process.env.RESEND_API_KEY ?? "");
         await client.emails.send({

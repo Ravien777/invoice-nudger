@@ -1,6 +1,7 @@
 import { prisma } from "./prisma";
 import { subDays, addDays, differenceInCalendarDays, startOfDay } from "date-fns";
 import { computeForecast } from "./forecast";
+import { formatCurrency } from "./format-currency";
 
 interface AlertPreferences {
   highRiskInvoices: boolean;
@@ -72,6 +73,7 @@ export async function checkHighRiskInvoices(userId: string) {
       clientName: true,
       clientEmail: true,
       amount: true,
+      currency: true,
       dueDate: true,
       status: true,
       paymentProbability: true,
@@ -96,7 +98,7 @@ export async function checkHighRiskInvoices(userId: string) {
         userId,
         type: "high_risk_invoice",
         title: "High-Risk Invoice",
-        message: `${inv.clientName} (${inv.invoiceNumber || "no #"}) — $${inv.amount.toFixed(2)}, ${daysLabel}, ${Math.round((1 - (inv.paymentProbability ?? 0)) * 100)}% risk of not being paid on time.`,
+        message: `${inv.clientName} (${inv.invoiceNumber || "no #"}) — ${formatCurrency(inv.amount, inv.currency)}, ${daysLabel}, ${Math.round((1 - (inv.paymentProbability ?? 0)) * 100)}% risk of not being paid on time.`,
         metadata: { invoiceId: inv.id, clientEmail: inv.clientEmail, riskScore: 1 - (inv.paymentProbability ?? 0) },
       },
     });
@@ -183,10 +185,11 @@ export async function checkClientDeterioration(userId: string) {
 export async function checkCashFlowGap(userId: string) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { alertPreferences: true },
+    select: { alertPreferences: true, businessProfile: { select: { baseCurrency: true } } },
   });
 
   const prefs = parsePreferences(user?.alertPreferences);
+  const baseCurrency = user?.businessProfile?.baseCurrency ?? "USD";
   const threshold = prefs.cashFlowThreshold / 100;
 
   const forecast = await computeForecast(userId, 15);
@@ -220,7 +223,7 @@ export async function checkCashFlowGap(userId: string) {
         userId,
         type: "cash_flow_gap",
         title: "Cash Flow Gap Detected",
-        message: `Forecasted inflow over next 15 days ($${forecastTotal.toFixed(2)}) is below ${prefs.cashFlowThreshold}% of last month's collection ($${previousMonthCollected.toFixed(2)}).`,
+        message: `Forecasted inflow over next 15 days (${formatCurrency(forecastTotal, baseCurrency)}) is below ${prefs.cashFlowThreshold}% of last month's collection (${formatCurrency(previousMonthCollected, baseCurrency)}).`,
         metadata: { forecastTotal, previousMonthCollected, threshold: prefs.cashFlowThreshold },
       },
     });

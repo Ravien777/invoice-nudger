@@ -2,9 +2,18 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { z } from "zod";
 
-const VALID_TYPES = ["fixed", "percentage"];
-const VALID_FREQUENCIES = ["once", "recurring"];
+const lateFeeSchema = z.object({
+  lateFeeEnabled: z.boolean(),
+  lateFeeType: z.enum(["fixed", "percentage"]).optional(),
+  lateFeeValue: z.number().min(0).optional(),
+  lateFeeFrequency: z.enum(["once", "recurring"]).optional(),
+  interestEnabled: z.boolean().optional(),
+  interestRate: z.number().min(0).optional(),
+  lateFeeGraceDays: z.number().min(0).int().optional(),
+  feeCap: z.number().min(0).optional(),
+});
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -50,44 +59,12 @@ export async function PUT(request: Request) {
   }
 
   const body = await request.json();
-  const {
-    lateFeeEnabled,
-    lateFeeType,
-    lateFeeValue,
-    lateFeeFrequency,
-    interestEnabled,
-    interestRate,
-    lateFeeGraceDays,
-    feeCap,
-  } = body;
-
-  if (typeof lateFeeEnabled !== "boolean") {
-    return NextResponse.json({ error: "lateFeeEnabled must be a boolean" }, { status: 400 });
+  const parsed = lateFeeSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
   }
 
-  if (lateFeeType && !VALID_TYPES.includes(lateFeeType)) {
-    return NextResponse.json({ error: "Invalid lateFeeType. Must be 'fixed' or 'percentage'" }, { status: 400 });
-  }
-
-  if (lateFeeFrequency && !VALID_FREQUENCIES.includes(lateFeeFrequency)) {
-    return NextResponse.json({ error: "Invalid lateFeeFrequency. Must be 'once' or 'recurring'" }, { status: 400 });
-  }
-
-  if (lateFeeValue !== undefined && (typeof lateFeeValue !== "number" || lateFeeValue < 0)) {
-    return NextResponse.json({ error: "lateFeeValue must be a non-negative number" }, { status: 400 });
-  }
-
-  if (interestRate !== undefined && (typeof interestRate !== "number" || interestRate < 0)) {
-    return NextResponse.json({ error: "interestRate must be a non-negative number" }, { status: 400 });
-  }
-
-  if (lateFeeGraceDays !== undefined && (typeof lateFeeGraceDays !== "number" || lateFeeGraceDays < 0)) {
-    return NextResponse.json({ error: "lateFeeGraceDays must be a non-negative number" }, { status: 400 });
-  }
-
-  if (feeCap !== undefined && (typeof feeCap !== "number" || feeCap < 0)) {
-    return NextResponse.json({ error: "feeCap must be a non-negative number" }, { status: 400 });
-  }
+  const { lateFeeEnabled, lateFeeType, lateFeeValue, lateFeeFrequency, interestEnabled, interestRate, lateFeeGraceDays, feeCap } = parsed.data;
 
   await prisma.user.update({
     where: { id: user.id },

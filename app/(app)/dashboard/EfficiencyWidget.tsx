@@ -104,7 +104,7 @@ export default function EfficiencyWidget({ metrics, plan }: EfficiencyWidgetProp
       {byTemplate.length > 0 && (
         <div className="mb-6">
           <h3 className="mb-2 text-xs font-semibold text-text-secondary">Per Template</h3>
-          <div className="overflow-hidden rounded-lg border border-border-default">
+          <div className="overflow-x-auto rounded-lg border border-border-default">
             <table className="w-full text-left text-xs">
               <thead>
                 <tr className="border-b border-border-default bg-surface-tertiary">

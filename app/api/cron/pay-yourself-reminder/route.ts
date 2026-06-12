@@ -26,6 +26,7 @@ export async function GET(request: Request) {
       },
     },
     select: { id: true, name: true, email: true, businessProfile: { select: { baseCurrency: true, lastPayYourselfDate: true } }, allocationProfile: { select: { ownerPayPercent: true } } },
+    take: 1000,
   });
 
   const results: Array<{ userId: string; available: number; notified: boolean }> = [];

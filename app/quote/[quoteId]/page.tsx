@@ -7,10 +7,13 @@ export const dynamic = "force-dynamic";
 
 export default async function QuotePublicPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ quoteId: string }>;
+  searchParams: Promise<{ token?: string }>;
 }) {
   const { quoteId } = await params;
+  const { token } = await searchParams;
 
   const quote = await prisma.quote.findUnique({
     where: { id: quoteId },
@@ -64,5 +67,5 @@ export default async function QuotePublicPage({
     })),
   };
 
-  return <QuotePublicClient quote={serialized} />;
+  return <QuotePublicClient quote={serialized} token={token} />;
 }

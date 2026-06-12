@@ -22,6 +22,8 @@ beforeEach(async () => {
   vi.mocked(canCreateInvoice).mockResolvedValue({ allowed: true, current: 0, limit: 50, tier: "pro" });
   const setup = await import("../setup");
   prisma = setup.prisma;
+  prisma.plazaosClient.findFirst.mockResolvedValue(null);
+  prisma.plazaosClient.findUnique.mockResolvedValue(null);
 });
 
 function mockInvoice(overrides: Record<string, unknown> = {}) {

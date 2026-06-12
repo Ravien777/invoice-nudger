@@ -230,9 +230,48 @@ All authenticated pages now use a unified dark theme with collapsible sidebar, `
 | Agency gating | Only Agency plan users see full UI; Free/Pro see upgrade prompt | Contractor payroll is a high-value team feature | Free tier access (no monetisation lever) |
 | Sidebar placement | "Payroll" in Zone 1 (main features) after Tax | Primary financial feature, not a setting | Zone 3 / Settings (logically incorrect despite spec wording) |
 
+## PlazaOS Integration (Complete)
+
+| Feature | Decision | Rationale | Rejected alternatives |
+|---|---|---|---|
+| Client sync model | `PlazaosClient` model with `plazaosClientId` (Int, unique) keyed to PlazaOS | Clean foreign key; no schema changes to existing models | Invoice-level foreign keys (backfill required, fragile) |
+| Invoice/client link | Join on `email` (Invoice.clientEmail ↔ PlazaosClient.email) | Works with existing invoice schema; no migration needed | `plazaosClientId` on Invoice (would need backfill) |
+| Expense/client link | Optional `clientEmail` on Expense model | Enables expense-by-client queries without altering core expense model | New join table (overkill) |
+| API auth | Per-route `validateApiKey()` checking `X-API-Key` header | Consistent with existing patterns; no global middleware needed | Global `middleware.ts` (less explicit, harder to test) |
+| Webhook signing | HMAC-SHA256 with `WEBHOOK_SECRET`, raw body | Matches PRD spec; standard webhook security practice | JWT (overkill for service-to-service) |
+| Webhook delivery | Fire-and-forget with console.error logging | Consistent with existing `computePaymentProbabilityForInvoice` pattern | Queue with retry (more complex, no requirement yet) |
+
+### Inbound endpoints
+
+| Route | Purpose |
+|---|---|
+| `POST /api/plazaos-webhook` | Create/update client records from PlazaOS |
+| `GET /api/clients/[maroniClientId]/invoices` | Invoice list for a PlazaOS client |
+| `GET /api/clients/[maroniClientId]/expenses` | Expense list for a PlazaOS client |
+| `GET /api/clients/[maroniClientId]/summary` | Billed/paid/outstanding for a client |
+| `GET /api/dashboard/summary` | Aggregate monthly revenue + outstanding |
+
+### Outbound webhooks
+
+| Event | Trigger | Payload |
+|---|---|---|
+| `invoice.created` | Invoice created via `POST /api/invoices` | `{ client_id, invoice_id }` |
+| `invoice.paid` | Invoice marked paid via `POST /api/invoices/[id]/mark-paid` | `{ client_id, invoice_id }` |
+| `client.updated` | PlazaOS client updated via `POST /api/plazaos-webhook` | `{ client_id }` |
+
+### Implementation order (per PRD)
+1. ✅ Auth middleware (`lib/plazaos-auth.ts`)
+2. ✅ Client model + `POST /api/plazaos-webhook`
+3. ✅ `GET /api/clients/:id/summary`
+4. ✅ `GET /api/clients/:id/invoices`
+5. ✅ `GET /api/clients/:id/expenses`
+6. ✅ `GET /api/dashboard/summary`
+7. ✅ Outbound webhook sender (`lib/plazaos-webhook.ts`) + hooks
+8. ❌ End-to-end testing with PlazaOS (external, pending)
+
 ## Current State
 
-**Phases B–P core complete. Phases G, I, J, K fully complete (all audit items resolved).** The product now covers:
+**Phases B–P + PlazaOS Integration core complete. Phases G, I, J, K fully complete (all audit items resolved).** The product now covers:
 1. Core invoice management + automated reminders
 2. Monetisation (Stripe subscriptions, payment links)
 3. Advanced features (accounting integrations, AI reminders, client portal, promise detection, multi-channel, late fees, reconciliation)
@@ -252,6 +291,7 @@ All authenticated pages now use a unified dark theme with collapsible sidebar, `
 17. Email Receipts to Account (inbound receipt parsing, assign-receipt-emails) — Phase N
 18. Instant Payouts (Stripe Connect, payout API) — Phase O
 19. Contractor Payroll (micro-teams, payslip PDF, contractor CRUD, pay + expense + email) — Phase P
+20. **PlazaOS integration** (client sync webhook, invoice/expense/summary read APIs, outbound events) — **Complete ✅**
 
 ## Next Priorities
 
@@ -269,6 +309,7 @@ All authenticated pages now use a unified dark theme with collapsible sidebar, `
 | 8 | **S** | Credit score & client health (PDF certificate, avgDaysLate fix, missing stats, table population, score algorithm) |
 | 9 | **T** | Cash flow forecast & pay yourself (unify forecast engines, accounting chart, field moves, notification content, tests, sidebar cleanup) |
 | 10 | **Q** | Accountant/bookkeeper access (full feature: model, invite/accept/revoke APIs, session context, read-only dashboard, plan gate) |
+| 11 | **PlazaOS** | E2E testing with PlazaOS |
 
 ### Meta
 - Add test coverage where missing (each phase verification step).

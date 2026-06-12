@@ -6,6 +6,7 @@ import {
   useState,
   useEffect,
   useMemo,
+  useCallback,
   type ReactNode,
 } from "react";
 
@@ -68,9 +69,9 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("resize", handleResize);
   }, [collapsed]);
 
-  const toggle = () => setCollapsed((prev) => !prev);
-  const toggleMobile = () => setMobileOpen((prev) => !prev);
-  const closeMobile = () => setMobileOpen(false);
+  const toggle = useCallback(() => setCollapsed((prev) => !prev), []);
+  const toggleMobile = useCallback(() => setMobileOpen((prev) => !prev), []);
+  const closeMobile = useCallback(() => setMobileOpen(false), []);
 
   const value = useMemo(
     () => ({ collapsed, toggle, mobileOpen, toggleMobile, closeMobile }),

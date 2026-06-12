@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { formatCurrency } from "@/lib/format-currency";
+import { verifyQuoteToken } from "@/lib/quote-token";
 
 export async function POST(
   req: NextRequest,
@@ -17,7 +18,11 @@ export async function POST(
   }
 
   const body = await req.json();
-  const { action } = body;
+  const { action, token } = body;
+
+  if (!token || !verifyQuoteToken(token, id)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   if (action !== "accepted" && action !== "declined") {
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });

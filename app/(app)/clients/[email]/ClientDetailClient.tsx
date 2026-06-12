@@ -23,6 +23,7 @@ import {
   TableCell,
 } from "@/app/components/ui/Table";
 import { formatCurrency } from "@/lib/format-currency";
+import AutoPaySection from "../components/AutoPaySection";
 
 interface ClientProfile {
   id: string;
@@ -292,6 +293,12 @@ export default function ClientDetailClient({
           </div>
         </div>
       )}
+
+      {/* Auto-Pay */}
+      <AutoPaySection
+        clientEmail={profile.clientEmail}
+        clientName={profile.clientEmail}
+      />
 
       {/* Invoices table */}
       <div className="rounded-xl border border-border-default bg-surface-secondary p-6 shadow-sm">

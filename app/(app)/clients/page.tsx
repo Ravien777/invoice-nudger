@@ -17,7 +17,10 @@ export default async function ClientsPage() {
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
+    include: { businessProfile: { select: { baseCurrency: true } } },
   });
+
+  const baseCurrency = user?.businessProfile?.baseCurrency ?? "USD";
 
   const profiles = await prisma.clientPaymentProfile.findMany({
     where: { userId: user!.id },
@@ -51,7 +54,7 @@ export default async function ClientsPage() {
       title="Clients"
       subtitle="View and manage client payment profiles"
     >
-      <ClientsClient initialProfiles={serialized} />
+      <ClientsClient initialProfiles={serialized} currency={baseCurrency} />
     </PageShell>
   );
 }

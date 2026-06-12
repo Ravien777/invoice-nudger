@@ -33,14 +33,14 @@ interface QuoteData {
   lineItems: QuoteLineItem[];
 }
 
-export default function QuotePublicClient({ quote }: { quote: QuoteData }) {
+export default function QuotePublicClient({ quote, token }: { quote: QuoteData; token?: string }) {
   const [actioned, setActioned] = useState(false);
 
   const handleAction = async (action: "accepted" | "declined") => {
     const res = await fetch(`/api/quotes/${quote.id}/respond`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action }),
+      body: JSON.stringify({ action, token }),
     });
     if (!res.ok) {
       const err = await res.json();

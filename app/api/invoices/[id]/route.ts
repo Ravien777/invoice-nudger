@@ -6,6 +6,7 @@ import { invoiceSchema } from "@/lib/validations";
 import { computePaymentProbabilityForInvoice } from "@/lib/analytics";
 import { getOwnerIdForAccountant } from "@/lib/accountant-session";
 import { getTeamContext } from "@/lib/team-session";
+import { dispatchWebhook } from "@/lib/webhook-dispatcher";
 
 async function getInvoiceAndVerify(id: string, userId: string) {
   const invoice = await prisma.invoice.findUnique({
@@ -162,6 +163,17 @@ export async function PUT(
 
   computePaymentProbabilityForInvoice(id).catch(console.error);
 
+  dispatchWebhook(user.id, "invoice.updated", {
+    invoiceId: id,
+    invoiceNumber: updated.invoiceNumber,
+    clientName: updated.clientName,
+    clientEmail: updated.clientEmail,
+    amount: updated.amount,
+    currency: updated.currency,
+    status: updated.status,
+    dueDate: updated.dueDate.toISOString(),
+  }).catch(console.error);
+
   return NextResponse.json(updated);
 }
 
@@ -201,6 +213,16 @@ export async function DELETE(
 
   if (!result) {
     return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
+  }
+
+  const invoice = await prisma.invoice.findUnique({ where: { id }, select: { userId: true, clientName: true, clientEmail: true, invoiceNumber: true } });
+  if (invoice) {
+    dispatchWebhook(invoice.userId, "invoice.deleted", {
+      invoiceId: id,
+      invoiceNumber: invoice.invoiceNumber,
+      clientName: invoice.clientName,
+      clientEmail: invoice.clientEmail,
+    }).catch(console.error);
   }
 
   await prisma.reminderLog.deleteMany({ where: { invoiceId: id } });

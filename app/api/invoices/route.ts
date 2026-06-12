@@ -7,6 +7,8 @@ import { canCreateInvoice } from "@/lib/subscriptions";
 import { computePaymentProbabilityForInvoice } from "@/lib/analytics";
 import { getOwnerIdForAccountant } from "@/lib/accountant-session";
 import { getTeamContext } from "@/lib/team-session";
+import { dispatchWebhook } from "@/lib/webhook-dispatcher";
+import { sendWebhook } from "@/lib/plazaos-webhook";
 
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
@@ -161,6 +163,28 @@ export async function POST(request: Request) {
   });
 
   computePaymentProbabilityForInvoice(invoice.id).catch(console.error);
+
+  dispatchWebhook(effectiveUserId, "invoice.created", {
+    invoiceId: invoice.id,
+    invoiceNumber: invoice.invoiceNumber,
+    clientName: invoice.clientName,
+    clientEmail: invoice.clientEmail,
+    amount: invoice.amount,
+    currency: invoice.currency,
+    dueDate: invoice.dueDate.toISOString(),
+  }).catch(console.error);
+
+  prisma.plazaosClient
+    .findFirst({ where: { email: invoice.clientEmail } })
+    .then((client) => {
+      if (client) {
+        sendWebhook("invoice.created", {
+          client_id: client.id,
+          invoice_id: invoice.id,
+        });
+      }
+    })
+    .catch(console.error);
 
   return NextResponse.json(invoice, { status: 201 });
 }

@@ -24,7 +24,7 @@ export default async function ForecastPage() {
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
-    select: { id: true, plan: true },
+    select: { id: true, plan: true, businessProfile: { select: { baseCurrency: true } } },
   });
 
   if (!user) {
@@ -32,6 +32,7 @@ export default async function ForecastPage() {
   }
 
   const tier = getTier(user.plan);
+  const baseCurrency = user.businessProfile?.baseCurrency ?? "USD";
   const hasAccess = tier.features.includes("cash_flow_forecast");
 
   if (!hasAccess) {
@@ -90,7 +91,7 @@ export default async function ForecastPage() {
       title="Cash Flow Forecast"
       subtitle="Project your cash position over the next 90 days"
     >
-      <ForecastClient />
+      <ForecastClient baseCurrency={baseCurrency} />
     </PageShell>
   );
 }

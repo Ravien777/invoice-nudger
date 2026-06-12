@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
     "date-fns": {
       transform: "date-fns/{{member}}",
     },
+    "lucide-react": {
+      transform: "lucide-react/icons/{{member}}",
+    },
   },
   async headers() {
     return [

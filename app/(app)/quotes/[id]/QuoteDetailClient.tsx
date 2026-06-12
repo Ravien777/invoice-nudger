@@ -143,6 +143,7 @@ export default function QuoteDetailClient({ quote }: { quote: QuoteData }) {
         </div>
 
         {quote.lineItems.length > 0 && (
+          <div className="overflow-x-auto">
           <table className="w-full mb-6 text-sm">
             <thead>
               <tr className="border-b border-gray-300">
@@ -163,6 +164,7 @@ export default function QuoteDetailClient({ quote }: { quote: QuoteData }) {
               ))}
             </tbody>
           </table>
+          </div>
         )}
 
         <div className="flex justify-end mb-6">

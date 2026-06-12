@@ -608,14 +608,14 @@ export default function ExpensesClient({
                     <div className="flex items-center justify-end gap-1">
                       <button
                         onClick={() => handleEdit(expense)}
-                        className="p-1.5 rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-tertiary transition-colors"
+                        className="p-2.5 rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-tertiary transition-colors"
                         title="Edit"
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
                       <button
                         onClick={() => handleDelete(expense.id)}
-                        className="p-1.5 rounded-md text-text-tertiary hover:text-[var(--danger)] hover:bg-surface-tertiary transition-colors"
+                        className="p-2.5 rounded-md text-text-tertiary hover:text-[var(--danger)] hover:bg-surface-tertiary transition-colors"
                         title="Delete"
                       >
                         <Trash2 className="h-3.5 w-3.5" />

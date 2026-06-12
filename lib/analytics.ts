@@ -272,6 +272,7 @@ export async function computeIndustryBenchmarks() {
   const optedInUsers = await prisma.user.findMany({
     where: { benchmarksOptOut: false },
     select: { id: true, industry: true },
+    take: 2000,
   });
 
   const optedInWithIndustry = optedInUsers.filter((u) => u.industry !== null);
@@ -426,10 +427,21 @@ export async function recomputePaymentProbabilitiesForUser(userId: string) {
 }
 
 export async function recomputePaymentProbabilitiesForAll() {
-  const users = await prisma.user.findMany({ select: { id: true } });
-  for (const user of users) {
-    await recomputePaymentProbabilitiesForUser(user.id);
-  }
+  let cursor: string | undefined;
+  do {
+    const users = await prisma.user.findMany({
+      select: { id: true },
+      take: BATCH_SIZE,
+      orderBy: { id: "asc" },
+      ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+    });
+
+    for (const user of users) {
+      await recomputePaymentProbabilitiesForUser(user.id);
+    }
+
+    cursor = users[users.length - 1]?.id;
+  } while (cursor);
 }
 
 export interface CollectionEfficiencyMetrics {

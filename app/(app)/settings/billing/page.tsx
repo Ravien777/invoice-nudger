@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -5,6 +6,8 @@ import { redirect } from "next/navigation";
 import { getMonthlyInvoiceCount, getTier } from "@/lib/subscriptions";
 import BillingClient from "./BillingClient";
 import { PageShell } from "@/app/components/layout/PageShell";
+
+export const metadata: Metadata = { title: "Billing" };
 
 export default async function BillingPage() {
   const session = await getServerSession(authOptions);

@@ -139,6 +139,8 @@ Make small-business finance so simple that a 15-year-old starting their first la
 
 [✅] **Contracts & e-signature** — Three system templates (Freelance Service Agreement, Retainer Agreement, Project-Based Agreement) auto-seeded on first use. Contract CRUD with template picker, variable interpolation, public signing page, and PDF generation. Signed PDFs uploaded to Blob storage (not base64 in DB). "Save as Draft" and "Send to Client" options. Email notifications on send and sign.
 
+[✅] **PlazaOS CRM integration** — 5 inbound API endpoints (client sync, invoices, expenses, client summary, dashboard aggregate) authenticated via shared API key. Outbound webhooks for invoice created, invoice paid, and client updated — HMAC-SHA256 signed.
+
 ---
 
 ## UI Component Library
@@ -220,7 +222,8 @@ npm install
 
 # Copy environment variables
 cp .env.example .env.local
-# Fill in: DATABASE_URL, RESEND_API_KEY, STRIPE_*, OPENAI_API_KEY, etc.
+# Fill in: DATABASE_URL, RESEND_API_KEY, STRIPE_*, OPENAI_API_KEY,
+#          MARONI_API_KEY, WEBHOOK_SECRET, PLAZAOS_WEBHOOK_URL, etc.
 
 # Run database migrations
 npx prisma db push
@@ -238,6 +241,14 @@ Open [http://localhost:3000](http://localhost:3000).
 **NextAuth.js** (magic link auth)
 **Resend** (email) · **Twilio** (SMS/WhatsApp) · **Stripe** (payments)
 **OpenAI** (AI copy & promise detection)
+
+### PlazaOS integration env vars
+
+```
+MARONI_API_KEY=<shared_secret_plazaos_will_use>
+WEBHOOK_SECRET=<shared_secret_for_hmac_signing>
+PLAZAOS_WEBHOOK_URL=https://plazaos.app/api/maroni/webhook
+```
 
 ---
 

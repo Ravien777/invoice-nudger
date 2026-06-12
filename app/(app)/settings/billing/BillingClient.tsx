@@ -4,6 +4,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { Check } from "lucide-react";
 import { TIERS } from "@/lib/tiers";
+import { formatCurrency } from "@/lib/format-currency";
 import { Button } from "@/app/components/ui/Button";
 import { Badge } from "@/app/components/ui/Badge";
 import type { BadgeVariant } from "@/app/components/ui/Badge";
@@ -182,7 +183,7 @@ export default function BillingClient({ user, tier, monthlyInvoiceCount }: Billi
               <p className="mt-1 text-2xl font-bold text-text-primary">
                 {t.priceCents === 0
                   ? "Free"
-                  : `$${(t.priceCents / 100).toFixed(2)}`}
+                  : formatCurrency(t.priceCents / 100, "USD")}
                 {t.priceCents > 0 && (
                   <span className="text-sm font-normal text-text-secondary">/mo</span>
                 )}

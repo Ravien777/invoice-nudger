@@ -1,9 +1,13 @@
+import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import InvoiceForm from "@/app/components/InvoiceForm";
 import { PageShell } from "@/app/components/layout/PageShell";
+import PaymentPlanSection from "../../components/PaymentPlanSection";
+
+export const metadata: Metadata = { title: "Edit Invoice" };
 
 export default async function EditInvoicePage({
   params,
@@ -39,6 +43,10 @@ export default async function EditInvoicePage({
     orderBy: [{ isDefault: "desc" }, { name: "asc" }],
   });
 
+  const hasPaymentMethod = !!(await prisma.clientPaymentMethod.findFirst({
+    where: { userId: user.id, clientEmail: invoice.clientEmail, status: "active" },
+  }));
+
   return (
     <PageShell
       title="Edit Invoice"
@@ -64,6 +72,9 @@ export default async function EditInvoicePage({
           promiseStatus: invoice.promiseStatus,
         }}
       />
+      <div className="mt-6">
+        <PaymentPlanSection invoiceId={invoice.id} hasPaymentMethod={hasPaymentMethod} />
+      </div>
     </PageShell>
   );
 }

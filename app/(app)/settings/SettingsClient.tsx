@@ -1,9 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 import Link from "next/link";
-import { Trash2, Mail, UserX, Users } from "lucide-react";
+import { Trash2, Mail, UserX, Users, Code2 } from "lucide-react";
+
+import ApiKeysSection from "./components/ApiKeysSection";
+import WebhookEndpointsSection from "./components/WebhookEndpointsSection";
 
 import { currenciesWithSymbol } from "@/lib/format-currency";
 
@@ -42,7 +46,13 @@ interface Integration {
 interface BillingData {
   plan: string;
   subscriptionStatus: string | null;
-  tier: { name: string; invoiceLimit: number | null; priceCents: number };
+  tier: {
+    name: string;
+    invoiceLimit: number | null;
+    priceCents: number;
+    apiKeysLimit: number;
+    webhookEndpointsLimit: number;
+  };
   monthlyInvoiceCount: number;
 }
 
@@ -178,6 +188,7 @@ type Tab =
   | "notifications"
   | "accountant"
   | "team"
+  | "developers"
   | "billing"
   | "danger";
 
@@ -248,6 +259,7 @@ export default function SettingsClient({
   accountantAccess: initialAccountantAccess,
   teamSettings,
 }: SettingsClientProps) {
+  const { update } = useSession();
   const [activeTab, setActiveTab] = useState<Tab>("profile");
 
   // Profile tab
@@ -382,6 +394,7 @@ export default function SettingsClient({
         return;
       }
       toast.success("Name saved");
+      await update({ name });
     } catch {
       toast.error("Network error");
     } finally {
@@ -825,6 +838,13 @@ export default function SettingsClient({
           active={activeTab === "team"}
         >
           Team
+        </TabBtn>
+        <TabBtn
+          onClick={() => setActiveTab("developers")}
+          active={activeTab === "developers"}
+        >
+          <Code2 className="w-4 h-4 mr-1" />
+          Developers
         </TabBtn>
         <TabBtn
           onClick={() => setActiveTab("billing")}
@@ -1563,7 +1583,7 @@ export default function SettingsClient({
                 <p className="text-sm text-muted mb-4">
                   Automatically detect when clients promise to pay via email.
                 </p>
-                <div className="grid grid-cols-3 gap-4 max-w-md">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-md">
                   <div className="rounded-lg bg-surface-muted p-3 text-center">
                     <p className="text-xl font-bold text-[var(--success)]">
                       {promiseSettings.active}
@@ -1772,7 +1792,7 @@ export default function SettingsClient({
                 </Link>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-4 max-w-md">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-md">
                 {(["sms", "whatsapp"] as const).map((channel) => {
                   const info = notificationSettings[channel];
                   return (
@@ -2205,6 +2225,16 @@ TWILIO_WHATSAPP_NUMBER=+14155238886`}
               )}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ================================================================= */}
+      {/* DEVELOPERS TAB */}
+      {/* ================================================================= */}
+      {activeTab === "developers" && (
+        <div className="space-y-6">
+          <ApiKeysSection tier={{ apiKeysLimit: billing.tier.apiKeysLimit }} />
+          <WebhookEndpointsSection tier={{ webhookEndpointsLimit: billing.tier.webhookEndpointsLimit }} />
         </div>
       )}
 

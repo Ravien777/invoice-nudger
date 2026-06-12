@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import AIQueueClient from "./AIQueueClient";
 import { PageShell } from "@/app/components/layout/PageShell";
+
+export const metadata: Metadata = { title: "AI Reminder Queue" };
 
 export default async function AIQueuePage() {
   const session = await getServerSession(authOptions);

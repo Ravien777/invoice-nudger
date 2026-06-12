@@ -383,7 +383,7 @@ export default function ContractsClient({
                       {(c.status === "draft") && (
                         <button
                           onClick={() => handleSend(c.id)}
-                          className="p-1.5 rounded-md text-text-tertiary hover:text-accent hover:bg-surface-tertiary transition-colors"
+                          className="p-2.5 rounded-md text-text-tertiary hover:text-accent hover:bg-surface-tertiary transition-colors"
                           title="Send"
                         >
                           <Send className="h-3.5 w-3.5" />
@@ -394,7 +394,7 @@ export default function ContractsClient({
                           href={`/sign/${c.signingToken}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-1.5 rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-tertiary transition-colors"
+                          className="p-2.5 rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-tertiary transition-colors"
                           title="View signing page"
                         >
                           <Eye className="h-3.5 w-3.5" />
@@ -404,7 +404,7 @@ export default function ContractsClient({
                         <a
                           href={c.pdfUrl}
                           download
-                          className="p-1.5 rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-tertiary transition-colors"
+                          className="p-2.5 rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-tertiary transition-colors"
                           title="Download PDF"
                         >
                           <FileText className="h-3.5 w-3.5" />
@@ -413,7 +413,7 @@ export default function ContractsClient({
                       {(c.status === "draft" || c.status === "declined") && (
                         <button
                           onClick={() => handleDelete(c.id)}
-                          className="p-1.5 rounded-md text-text-tertiary hover:text-[var(--danger)] hover:bg-surface-tertiary transition-colors"
+                          className="p-2.5 rounded-md text-text-tertiary hover:text-[var(--danger)] hover:bg-surface-tertiary transition-colors"
                           title="Delete"
                         >
                           <Trash2 className="h-3.5 w-3.5" />

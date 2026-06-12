@@ -77,10 +77,19 @@ export async function seedSampleInvoices(userId: string) {
 }
 
 export async function seedHistoricalAnalytics() {
-  const users = await prisma.user.findMany({ select: { id: true } });
+  let cursor: string | undefined;
+  const BATCH_SIZE = 200;
 
-  for (const user of users) {
-    const invoices = await prisma.invoice.findMany({
+  do {
+    const users = await prisma.user.findMany({
+      select: { id: true },
+      take: BATCH_SIZE,
+      orderBy: { id: "asc" },
+      ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+    });
+
+    for (const user of users) {
+      const invoices = await prisma.invoice.findMany({
       where: { userId: user.id },
       select: {
         status: true,
@@ -265,6 +274,8 @@ export async function seedHistoricalAnalytics() {
       });
     }
   }
+    cursor = users[users.length - 1]?.id;
+  } while (cursor);
 
   return { seeded: true };
 }

@@ -30,6 +30,7 @@ interface ClientProfile {
 
 interface ClientsClientProps {
   initialProfiles: ClientProfile[];
+  currency?: string;
 }
 
 type SortField =
@@ -65,6 +66,7 @@ function onTimePercent(paid: number, onTime: number): string {
 
 export default function ClientsClient({
   initialProfiles,
+  currency = "USD",
 }: ClientsClientProps) {
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState<SortField>("riskScore");
@@ -201,7 +203,7 @@ export default function ClientsClient({
                   </span>
                 </TableCell>
                 <TableCell className="font-medium text-text-primary">
-                  {formatCurrency(p.totalAmount)}
+                  {formatCurrency(p.totalAmount, currency)}
                 </TableCell>
                 <TableCell hideBelow="sm">{formatDate(p.lastPaymentDate)}</TableCell>
               </TableRow>
